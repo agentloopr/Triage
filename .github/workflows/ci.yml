@@ -34,9 +34,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # full history — the scan must cover every commit, not just the tip
+
+      # The gitleaks BINARY, not gitleaks-action: the action requires a paid licence key for
+      # organization-owned repositories, which would make this gate depend on a subscription rather
+      # than on the code. The binary is the same scanner with no such condition.
+      - name: gitleaks (full history)
+        run: |
+          VERSION=8.28.0
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          ./gitleaks --version
+          # `git` scans every commit; `dir` scans the working tree. `detect` is a deprecated alias
+          # whose --no-git flag silently does nothing on 8.28 — do not reintroduce it.
+          ./gitleaks git . --config .gitleaks.toml --redact --exit-code 1
+          ./gitleaks dir . --config .gitleaks.toml --redact --exit-code 1
+
       - name: no internal debug routes
         run: '! grep -rn "debug/clarify-test" --include="*.ts" --include="*.md" . || exit 1'

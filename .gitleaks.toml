@@ -1,0 +1,44 @@
+# Secret-scanning rules, on top of gitleaks' defaults.
+#
+# The extras below exist because a green scan is only as good as its rule set, and the default set
+# does not know every token format a project touches. An audit of the system this was extracted from
+# found a live credential sitting in a tracked file that gitleaks had never had a rule for — the scan
+# had been passing for months and proving nothing.
+#
+# Add a rule here whenever this repo starts handling a new provider's tokens.
+#
+# ⚠️ Testing a rule: use a RANDOM-looking value, never `pk_123456789_ABCDEF…`. Gitleaks' default
+# allowlist filters obvious placeholder values, so an obviously-fake token produces "no leaks found"
+# and reads exactly like a broken rule. That same behaviour is why `.env.example` does not trip it.
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "clickup-api-token"
+description = "ClickUp personal API token"
+# ClickUp tokens are `pk_` followed by a numeric user id and an alphanumeric secret. There is no
+# default rule for this format anywhere in gitleaks.
+regex = '''pk_[0-9]{6,}_[A-Z0-9]{20,}'''
+keywords = ["pk_"]
+
+[[rules]]
+id = "deepseek-api-key"
+description = "DeepSeek API key"
+regex = '''sk-[a-f0-9]{32}'''
+keywords = ["sk-"]
+
+[[rules]]
+id = "linear-api-key"
+description = "Linear API key"
+regex = '''lin_api_[A-Za-z0-9]{32,}'''
+keywords = ["lin_api_"]
+
+[allowlist]
+description = "Synthetic values that exist to prove redaction works"
+paths = [
+  # Asserts that a token pasted into a card comment is scrubbed before it reaches a prompt.
+  '''src/pipeline/evidence/tier2Prefetch\.test\.ts''',
+  # Placeholders only — every value is empty or an obvious stand-in.
+  '''\.env\.example''',
+]

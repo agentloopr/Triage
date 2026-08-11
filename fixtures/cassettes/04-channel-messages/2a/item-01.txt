@@ -1,12 +1,11 @@
 ITEM: 1
-TITLE: Raise connection pool size and add alert for pool exhaustion
+TITLE: Raise connection pool size
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
-PRIORITY: urgent
-DUE_DATE: 2026-08-14
+PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Increase the connection pool size on the staging server to resolve the 502 errors caused by pool exhaustion. Add an alert that triggers before pool exhaustion to prevent future outages.
+FINAL_DESC: Increase the connection pool size on the staging service to resolve the 502 errors caused by pool exhaustion. This is the direct configuration change Avery committed to.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: No open card in the board snapshot covers staging connection pool or alerting. This is a net-new deliverable.
+RATIONALE: No open card in the snapshot covers staging 502s or connection pool tuning; the only card (t800) is for search relevance. This is a new deliverable, so NEW_TASK.

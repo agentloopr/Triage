@@ -1,8 +1,11 @@
 ITEM: 3
-TITLE: Onboarding main flow drafted
-CATEGORY: UPDATE
-EXISTING_TASK_ID: t100
-FINAL_DESC: Rowan reported that the main onboarding flow design has been drafted. He is also writing the welcome email copy within the same revamp, which ships when the onboarding revamp ships.
-UNCERTAIN_FIELDS: NONE
+TITLE: Write welcome email copy for onboarding revamp
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t100
+LIST: design
+ASSIGNEE: Rowan Diaz
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Draft the welcome email copy as part of the onboarding revamp, to ship when the main onboarding flow ships.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t100 — no prior comments, so the "drafted" progress is genuinely new. The existing t100 card covers the onboarding redesign; this is a status update, not a separate deliverable.]
+RATIONALE: [Tier-2: task-comments on t100 — no prior activity] Rowan explicitly says the welcome email copy "sits inside the onboarding revamp, it ships when that ships." Parent t100 is open, in design, and assigned to Rowan. Containment is clear — closing t100 would also close this work. Evidence confirms the parent exists and is active, though the comments are empty.

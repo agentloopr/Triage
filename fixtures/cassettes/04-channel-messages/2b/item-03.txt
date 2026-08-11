@@ -1,7 +1,6 @@
-VERDICT_CATEGORY: UPDATE
-MATCH_TASK_ID: t800
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
-GROUNDED: no
-CARD_STILL_MATCHES: yes
-ROUTING_OK: n/a
-RATIONALE: The source message [11:15] says "Search relevance work is now in review", which reports progress on the existing card t800 "Search relevance tuning". The tier-2 evidence shows no prior comments on t800, so this is genuinely new progress (an advancement from in‑progress to review). The term "tuning" does not appear in the source (it says "work"), but the underlying deliverable is identical — the card still matches the real topic.
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The board snapshot contains only t800 (search relevance), irrelevant to a runbook for connection pool exhaustion. No existing card captures this deliverable. In the source, Sky Patel explicitly commits to write the runbook — a concrete, trackable task a PM would board.

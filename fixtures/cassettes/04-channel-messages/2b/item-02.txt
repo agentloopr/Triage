@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The only existing board card, t800 "Search relevance tuning", is unrelated to documenting a 502/pool exhaustion runbook. No match found. The source confirms Jules requested the documentation and Sky committed to writing it; it's a concrete, trackable deliverable.
+RATIONALE: No existing board card covers adding a monitoring alert for connection pool exhaustion. The only open card is t800 (Search relevance tuning), which is unrelated. Avery's direct statement "I'll raise the pool size and add an alert" makes this a concrete, trackable deliverable, so WORTH_A_CARD is real_task.

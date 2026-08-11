@@ -1,15 +1,12 @@
 {
-  "description": "A channel log through the identical 1 → 2d chain: one create, one status comment, one hold for an unclear list, one incident report correctly skipped.",
+  "description": "A channel log through the identical 1 → 2d chain: three creates and one status comment, proving the pipeline is source-agnostic.",
   "inventoryCount": 4,
   "categories": {
     "NEW_TASK": 3,
     "UPDATE": 1
   },
-  "cleanCount": 2,
-  "heldCount": 1,
-  "skippedNotTaskCount": 1,
-  "createdCount": 1,
-  "heldGates": [
-    "uncertain field(s)"
-  ]
+  "cleanCount": 4,
+  "heldCount": 0,
+  "skippedNotTaskCount": 0,
+  "createdCount": 3
 }

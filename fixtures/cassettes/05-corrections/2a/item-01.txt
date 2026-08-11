@@ -1,10 +1,11 @@
 ITEM: 1
-TITLE: Fix invoice PDF layout so totals column no longer overlaps notes
+TITLE: Fix the billing invoice API endpoint
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Rowan Diaz
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Invoice PDFs are rendering with the totals column overlapping the notes. Rowan Diaz committed to correcting the layout, citing that he built the original template.
+FINAL_DESC: The billing invoice API endpoint returns totals in the wrong field, causing PDFs to render with overlapping columns. Rowan Diaz, who originally wrote the endpoint, will fix the field mapping so the totals appear correctly.
+UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: No open card in the snapshot covers invoice PDF layout; t900 tracks billing webhook retry, and the learned facts confirm invoice rendering is a separate workstream. This deliverable is net-new.
+RATIONALE: No open card covers the invoice API endpoint; t900 handles billing webhook retries, a separate workstream. No evidence read is needed for a net-new deliverable.

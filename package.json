@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "demo": "tsx src/cli/demo.ts",
     "record": "tsx src/cli/record.ts",
+    "record:regression": "tsx src/cli/recordRegression.ts",
     "eval": "tsx src/cli/eval.ts"
   },
   "dependencies": {

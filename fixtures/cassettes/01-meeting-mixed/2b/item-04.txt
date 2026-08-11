@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: SUBTASK
-MATCH_TASK_ID: t100
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t300
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: Rowan states the welcome email copy sits inside the onboarding revamp and ships with it. That is containment — the email copy is a deliverable that would close when the parent t100 closes. Tier-2 evidence confirms t100 has no existing comments, so this is not already tracked. A concrete, trackable deliverable.
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t300 — no prior comments] t300 "Q3 pricing page refresh" is explicitly about updating the pricing copy after a tier change. Noor's statement that she'll refresh the copy this week (because it's stale) is a genuine status change — moving it from not-started into active commitment — so it updates the existing card, not a new one.

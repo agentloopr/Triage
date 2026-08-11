@@ -1,0 +1,6 @@
+--- ACTION INVENTORY ---
+1. Draft and send structured client questionnaire | quote: "I'll draft the questionnaire, review it, and send it across today with a note offering a Monday call."
+   DESC: Alex asked Sam to build a structured questionnaire covering the CRM changes and pricing-formula work and send it today. Sam committed to drafting, reviewing, and sending it today, including a note that offers a Monday call once the client responds.
+   TIMESTAMP: 00:02:10 - 00:02:40
+   POSSIBLE_MATCH_HINT: (none)
+--- END ACTION INVENTORY ---

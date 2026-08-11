@@ -11,20 +11,20 @@
   "lines": [
     {
       "start": 0,
-      "end": 46,
+      "end": 48,
       "speaker": "Jules Kim",
-      "text": "The invoice PDFs are coming out with the totals column overlapping the notes. Can we fix the invoice PDF layout?",
+      "text": "The billing invoice API endpoint is returning totals in the wrong field, so the PDFs render with the columns overlapping. Can someone fix the invoice API endpoint?",
       "confidence": 0.96
     },
     {
-      "start": 46,
-      "end": 70,
+      "start": 48,
+      "end": 72,
       "speaker": "Rowan Diaz",
-      "text": "I can take that — I did the original template.",
+      "text": "I can take that — I wrote the original endpoint.",
       "confidence": 0.96
     },
     {
-      "start": 70,
+      "start": 72,
       "end": 92,
       "speaker": "Jules Kim",
       "text": "Great, it is yours.",

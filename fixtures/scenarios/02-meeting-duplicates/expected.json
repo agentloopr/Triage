@@ -1,13 +1,15 @@
 {
-  "description": "Work that already exists on the board under different wording, plus a bare status-check that is correctly not turned into a card.",
-  "note": "The CROSS-BOUNDARY dispute hold (2a says new, 2b says existing) is covered by unit tests rather than a cassette: forcing two independent reads to disagree would mean fabricating a model reply, which defeats the point of recording. Here the first read caught the duplicate on its own, which is the healthy outcome.",
+  "description": "Work that already exists on the board under different wording. One is caught outright; on the other the two reads disagree across the new-vs-existing boundary, so it goes to a human.",
+  "note": "This is the headline path: Pass 2b re-derives the categorization blind and disagrees with 2a, and the disagreement becomes a question rather than a write. Both cassettes are real recordings — no reply was hand-authored to produce it.",
   "inventoryCount": 2,
   "categories": {
-    "DUPLICATE": 1,
-    "NEW_TASK": 1
+    "DUPLICATE": 2
   },
   "cleanCount": 1,
-  "heldCount": 0,
-  "skippedNotTaskCount": 1,
-  "createdCount": 0
+  "heldCount": 1,
+  "skippedNotTaskCount": 0,
+  "createdCount": 0,
+  "heldGates": [
+    "category dispute"
+  ]
 }

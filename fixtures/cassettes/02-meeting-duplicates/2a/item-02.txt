@@ -1,10 +1,6 @@
 ITEM: 2
-TITLE: Check for an existing card covering the deploy partial-failure issue
-CATEGORY: NEW_TASK
-LIST: platform
-ASSIGNEE: Sky Patel
-PRIORITY: normal
-STATUS: not started
-FINAL_DESC: Sky Patel will check whether a card already tracks the issue of deploys failing halfway and leaving the cluster in an inconsistent state, and identify it if it exists.
+TITLE: Check whether there is an existing card for handling deploy partial failures
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t600
 CONFIDENCE: high
-RATIONALE: No open card covers the meta-task of verifying card existence. The board has t600 (Deploy pipeline hardening), but the action of checking is a distinct step not yet done; it is a new deliverable.
+RATIONALE: [Tier-2: task-comments on t600 — no comments, but the card description] The board snapshot shows t600 “Deploy pipeline hardening” (list: platform, assignee: Sky Patel, status: in progress) with description: “Make the deploy pipeline resilient to partial failures.” This exactly matches the issue Sky raised. The source item only commits to verifying the existence of the card and adds no new scope, status, or info beyond what t600 already captures. The deliverable is already tracked.

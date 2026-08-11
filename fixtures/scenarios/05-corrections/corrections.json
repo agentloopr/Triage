@@ -9,7 +9,7 @@
   "nameAliases": {},
   "notDuplicatePairs": [
     {
-      "proposedTitle": "Fix the invoice PDF layout",
+      "proposedTitle": "Fix the invoice API endpoint",
       "existingId": "t900",
       "by": "Jules Kim",
       "at": "2026-08-01T00:00:00Z"

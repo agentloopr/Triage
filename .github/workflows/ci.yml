@@ -28,6 +28,8 @@ jobs:
       # No secrets in this job's env — that is the point. This step passing in public is what proves
       # the "runs with no API key" claim, rather than the README asserting it.
       - run: npm run demo -- --twice
+      # Never --labels here: that path calls a judge model, and this job has no secrets.
+      - run: npm run eval
 
   secrets:
     runs-on: ubuntu-latest

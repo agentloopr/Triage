@@ -3,4 +3,4 @@ MATCH_TASK_ID: t200
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: The item captures Avery's report that rate limiting is done and in review, which is direct progress on the existing "Public API rate limiting" card (t200). The tier-2 evidence shows t200 has no comments, so this status update is new information not yet recorded there.
+RATIONALE: [Tier-2: task-comments on t200 — no comments] The item reports progress directly from Avery's standup statement that rate limiting is done and in review, token bucket finished, waiting for Sky's sign-off, shipping Friday. This is a status update on the existing t200 "Public API rate limiting" card, not a new deliverable.

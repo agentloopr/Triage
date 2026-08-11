@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: NEW_TASK
-MATCH_TASK_ID: (none)
-WORTH_A_CARD: not_a_task
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t800
+WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: The item is a pure status report — Sky Patel's initial notification that staging is returning 502s — with no named deliverable or owner for the report itself. The actual work (connection pool fix, alert, runbook) is being handled elsewhere; tracking the notification as a card would be noise. No existing board card matches this.
+ROUTING_OK: n/a
+RATIONALE: The source message at [11:15] explicitly states “Search relevance work is now in review … ready for a look.” This reports a concrete status change on existing card t800 (currently “in progress”), making it a genuine progress update. [Tier-2: task-comments on t800 — no prior comments, but the update is clear from the source.]

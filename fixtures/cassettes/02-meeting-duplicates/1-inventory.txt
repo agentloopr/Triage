@@ -1,10 +1,11 @@
 --- ACTION INVENTORY ---
-1. Own the onboarding revamp for new signups | quote: "Yes, I can take it."
-   DESC: Rowan Diaz agreed to Jules Kim's request to own the work on an onboarding revamp that walks new signups through the first meaningful action instead of dropping them on an empty dashboard.
-   TIMESTAMP: 00:01:18-00:01:56
-   POSSIBLE_MATCH_HINT: t500 | New-user first-run flow
-2. Check for an existing card covering the deploy partial-failure issue | quote: "I'll double check."
-   DESC: Sky Patel will check whether a card already exists for the issue where deploys fail halfway and leave the cluster in a weird state, which needs the pipeline to handle partial failure properly.
-   TIMESTAMP: 00:02:56-00:03:16
-   POSSIBLE_MATCH_HINT: t600 | Deploy pipeline hardening
+1. Own the onboarding revamp for new signups | quote: "Rowan, can you own that? Yes, I can take it."
+   DESC: Jules raised that new signups don't know what to do first and suggested shipping an onboarding revamp. Rowan agreed and committed to own that work.
+   TIMESTAMP: [00:01:18-00:01:56]
+   POSSIBLE_MATCH_HINT: New-user first-run flow | id:t500
+
+2. Check whether there is an existing card for handling deploy partial failures | quote: "Maybe? I'll double check."
+   DESC: Sky reported that deploys are failing halfway and leaving the cluster in a weird state, and that the pipeline needs to handle partial failure properly. Jules asked if a card already exists for this, and Sky committed to checking.
+   TIMESTAMP: [00:02:56-00:03:16]
+   POSSIBLE_MATCH_HINT: Deploy pipeline hardening | id:t600
 --- END ACTION INVENTORY ---

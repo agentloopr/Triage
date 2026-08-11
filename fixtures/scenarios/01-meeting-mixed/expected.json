@@ -1,15 +1,17 @@
 {
-  "description": "A normal standup exercising all five categories, plus two holds and a duplicate skip.",
-  "inventoryCount": 7,
+  "description": "A normal standup exercising all five categories, plus a held disagreement between the two reads.",
+  "inventoryCount": 6,
   "categories": {
-    "NEW_TASK": 2,
-    "UPDATE": 2,
-    "SUBTASK": 2,
+    "NEW_TASK": 3,
+    "UPDATE": 1,
+    "SUBTASK": 1,
     "DUPLICATE": 1
   },
   "cleanCount": 5,
-  "heldCount": 2,
+  "heldCount": 1,
   "skippedNotTaskCount": 0,
-  "createdCount": 2,
-  "heldGates": ["uncertain field(s)"]
+  "createdCount": 3,
+  "heldGates": [
+    "category dispute"
+  ]
 }

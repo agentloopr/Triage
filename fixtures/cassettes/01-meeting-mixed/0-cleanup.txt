@@ -11,5 +11,5 @@
 [00:04:38-00:05:00] Jules Kim: Sure, let us know.
 [00:05:00-00:05:38] Sky Patel: Also, going forward we should always run the full suite before a release, not just the smoke tests.
 [00:05:38-00:05:58] Jules Kim: Noted, that's a process thing — let's discuss separately.
-[00:05:58-00:06:22] Sky Patel: One more — I'd like a written spec for the usage-based billing idea before we commit to anything.
+[00:05:58-00:06:22] Wren Alvarez: One more — I'd like a written spec for the usage-based billing idea before we commit to anything.
 [00:06:22-00:06:38] Jules Kim: I'll write that up. Anything else? No? Thanks all.

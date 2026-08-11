@@ -1,6 +1,11 @@
 ITEM: 5
-TITLE: Refresh pricing page copy
-CATEGORY: DUPLICATE
-EXISTING_TASK_ID: t300
+TITLE: Investigate noisy nightly build alerts and report back Wednesday
+CATEGORY: NEW_TASK
+LIST: platform
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+DUE_DATE: 2026-08-12
+STATUS: not started
+FINAL_DESC: Sky will investigate the cause of noisy nightly build alerts, specifically whether a flaky authentication test is responsible, and report findings by Wednesday.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t300 — no activity] The board already contains t300 "Q3 pricing page refresh" assigned to Noor Haddad with the same scope (update stale pricing copy showing old tiers). The source merely re-states the deliverable without adding any new status, due date, or assignee information; it is the same work already tracked, therefore a duplicate.
+RATIONALE: No open card covers this specific investigation; the existing t400 is general alerting setup, not the noise root-cause task. This is a net-new deliverable.

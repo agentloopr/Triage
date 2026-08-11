@@ -1,14 +1,18 @@
 --- ACTION INVENTORY ---
-1. Raise connection pool size and add alert for pool exhaustion | quote: "I'll raise the pool size and add an alert so we catch it before users do."
-   DESC: Avery Chen identified the staging 502s as connection pool exhaustion and committed to increasing the pool size and adding an alert to catch the issue before users notice.
+1. Raise connection pool size | quote: "Confirmed, pool exhaustion. I'll raise the pool size and add an alert so we catch it before users do."
+   DESC: Avery diagnosed the staging 502s as connection pool exhaustion and committed to increasing the pool size as part of the fix. This is a concrete change to the service configuration.
    TIMESTAMP: [09:31]
    POSSIBLE_MATCH_HINT: (none)
-2. Document runbook for 502 / pool exhaustion | quote: "I'll write it up."
-   DESC: Jules Kim requested documentation for the recurring pool exhaustion runbook, and Sky Patel committed to writing it.
+2. Add alert for connection pool exhaustion | quote: "Confirmed, pool exhaustion. I'll raise the pool size and add an alert so we catch it before users do."
+   DESC: Avery also committed to creating a monitoring alert for the connection pool, so the team is notified before users experience it.
+   TIMESTAMP: [09:31]
+   POSSIBLE_MATCH_HINT: (none)
+3. Document the runbook for connection pool exhaustion | quote: "I'll write it up."
+   DESC: Sky Patel committed to writing up the runbook for this recurring issue, after Jules Kim noted it has happened twice before.
    TIMESTAMP: [09:42]
    POSSIBLE_MATCH_HINT: (none)
-3. Search relevance tuning is now in review | quote: "Search relevance work is now in review by the way, ready for a look."
-   DESC: Avery Chen reported that the search relevance tuning work has progressed to the review stage and is ready for review.
+4. Search relevance work is in review | quote: "Search relevance work is now in review by the way, ready for a look."
+   DESC: Avery Chen reported that the search relevance tuning work has moved from in-progress to in-review, and is ready for a code review.
    TIMESTAMP: [11:15]
-   POSSIBLE_MATCH_HINT: id:t800
+   POSSIBLE_MATCH_HINT: t800 | Search relevance tuning
 --- END ACTION INVENTORY ---

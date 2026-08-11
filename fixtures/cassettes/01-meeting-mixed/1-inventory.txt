@@ -1,36 +1,26 @@
 --- ACTION INVENTORY ---
-1. Rate limiting implementation is done and in review | quote: "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday."
-   DESC: Avery reported that the token‑bucket rate limiting is complete, is in review, and is waiting for Sky Patel’s sign‑off before a planned Friday shipment.
+1. Report rate limiting status | quote: "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday."
+   DESC: Avery reported that the rate limiting work is complete, the token bucket implementation is finished, and it is now in review. It is waiting for Sky to sign off. Expected to ship on Friday.
    TIMESTAMP: 00:00:12-00:00:48
-   POSSIBLE_MATCH_HINT: id:t200
-
-2. Add hard request-size limit on upload endpoint | quote: "I'll add a hard limit."
-   DESC: In response to a 400 MB payload that took workers down last week, Avery committed to adding a hard limit on the upload endpoint. Jules agreed.
+   POSSIBLE_MATCH_HINT: t200 | Public API rate limiting
+2. Add hard request-size cap on upload endpoint | quote: "I'll add a hard limit."
+   DESC: Avery noted there is no request-size cap on the upload endpoint, which recently caused a worker outage from a 400 MB payload. They committed to adding a hard limit.
    TIMESTAMP: 00:01:10-00:01:36
    POSSIBLE_MATCH_HINT: (none)
-
-3. Onboarding main flow drafted | quote: "Main flow is drafted."
-   DESC: Rowan reported that the main onboarding flow design has been drafted.
+3. Write welcome email copy for onboarding revamp | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
+   DESC: Rowan reported the main onboarding flow is drafted and committed to writing the welcome email copy. This work is part of the onboarding revamp and will ship alongside it.
    TIMESTAMP: 00:01:58-00:02:30
-   POSSIBLE_MATCH_HINT: id:t100
-
-4. Write welcome email copy | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
-   DESC: Rowan committed to writing the welcome email copy as part of the onboarding revamp; it will ship together with the revamp. Jules confirmed.
-   TIMESTAMP: 00:01:58-00:02:30
-   POSSIBLE_MATCH_HINT: id:t100
-
-5. Refresh pricing page copy | quote: "I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers."
-   DESC: Noor committed to updating the pricing page copy this week because it still shows the old three-tier structure.
+   POSSIBLE_MATCH_HINT: t100 | Redesign the onboarding flow
+4. Refresh pricing page copy | quote: "I'm going to refresh the pricing page copy this week."
+   DESC: Noor committed to updating the pricing page copy this week, noting the current page is stale and still shows the old three tiers.
    TIMESTAMP: 00:02:52-00:03:34
-   POSSIBLE_MATCH_HINT: id:t300
-
-6. Investigate whether flaky auth test is causing noisy build alerts | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
-   DESC: Sky noted that nightly build alerts have been noisy and committed to checking if a flaky auth test is the cause, with a report due on Wednesday.
+   POSSIBLE_MATCH_HINT: t300 | Q3 pricing page refresh
+5. Investigate noisy nightly build alerts and report back Wednesday | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
+   DESC: Sky said the nightly build alerts have been noisy. They committed to investigating whether the flaky authentication test is the cause and will report their findings on Wednesday.
    TIMESTAMP: 00:03:56-00:04:38
-   POSSIBLE_MATCH_HINT: id:t400
-
-7. Write spec for usage-based billing idea | quote: "I'll write that up."
-   DESC: In response to Sky’s request for a written spec on usage‑based billing, Jules committed to producing the spec.
+   POSSIBLE_MATCH_HINT: t400 | Nightly build monitoring
+6. Write spec for usage-based billing idea | quote: "I'll write that up."
+   DESC: Wren requested a written spec for the usage-based billing idea before committing to it. Jules committed to writing the spec.
    TIMESTAMP: 00:06:22-00:06:38
    POSSIBLE_MATCH_HINT: (none)
 --- END ACTION INVENTORY ---

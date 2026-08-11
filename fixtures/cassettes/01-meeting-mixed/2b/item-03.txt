@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
+VERDICT_CATEGORY: SUBTASK
 MATCH_TASK_ID: t100
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: n/a
-RATIONALE: Rowan reports the main onboarding flow is drafted, a status update on the existing "Redesign the onboarding flow" card (t100). The source explicitly ties it to that card ("keep it under that card"). No comments on t100, but this is a direct standup progress report — it's new information that belongs on the existing task.
+ROUTING_OK: yes
+RATIONALE: [Tier-2: task-comments on t100 — no comments] In the source, Rowan says the welcome email copy “sits inside the onboarding revamp, it ships when that ships” and Jules says “keep it under that card.” This deliverable is contained by t100 and would close with it, so it is a subtask, not a new standalone card.

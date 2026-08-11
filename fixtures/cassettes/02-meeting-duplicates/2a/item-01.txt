@@ -3,4 +3,4 @@ TITLE: Own the onboarding revamp for new signups
 CATEGORY: DUPLICATE
 EXISTING_TASK_ID: t500
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t500 — no comments] The existing card t500 "New-user first-run flow" covers building the first-run experience for new signups (welcome, setup, first action), which is the same deliverable as the described onboarding revamp that walks new users through a meaningful first action. The source's assignment of Rowan Diaz as owner is already reflected on the card (assignee: Rowan Diaz, status: in progress), and no new scope or status is introduced beyond what the card already tracks.
+RATIONALE: [Tier-2: task-comments on t500 — no comments, but card description suffices] t500 ("New-user first-run flow") explicitly scopes the build of the first-run experience for new signups, which is the same deliverable as the onboarding revamp. Rowan Diaz is already assigned and the card is in progress. The source merely confirms Rowan’s ownership, which is already reflected on the board; no new status, scope, or information was added.

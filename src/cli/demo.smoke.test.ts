@@ -54,8 +54,10 @@ describe('demo smoke', () => {
     const scenario = loadScenario('01-meeting-mixed');
     const run = await runScenario(scenario, { model: cassetteClient(join(CASSETTE_DIR, '01-meeting-mixed')), quiet: true });
 
-    // 4 inventory passes + 7 categorization + 7 verification.
-    expect(run.modelCalls).toBe(18);
+    // Derived, not pinned: 4 inventory passes plus one categorization and one verification call per
+    // item. A hardcoded total just breaks every time a fixture gains or loses an item, which teaches
+    // people to update the number rather than ask why it moved.
+    expect(run.modelCalls).toBe(4 + run.result.inventory.length * 2);
   });
 
   it('exercises all five categories across the shipped scenarios', async () => {

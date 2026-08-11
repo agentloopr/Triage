@@ -6,6 +6,8 @@ import { memoryStore } from '../idempotency/memory';
 import type { IngestedSource } from '../ingest';
 import { type OpsRegistry, setOpsRegistryPath } from '../registry/opsRegistry';
 import { setCorrectionsPath } from '../state/corrections';
+import { pendingHumanStore } from '../state/pendingHuman';
+import { resumeHold } from './resume';
 import type { BoardTask } from '../trackers';
 import { memoryTracker } from '../trackers/memory';
 import { PipelineEvents, type PipelineEvent } from './events';
@@ -238,6 +240,60 @@ describe('degraded paths', () => {
     expect(out.held[0]!.gate).toBe('category dispute');
     expect(out.exec?.created).toBe(0);
     expect(events.find((e) => e.type === 'items:held')).toBeDefined();
+  });
+
+  /**
+   * PRD §9 gate 5, end to end and across a restart.
+   *
+   * A gate that holds is only half a feature. Testing the store in isolation proves nothing about
+   * whether `runPipeline` ever calls it — and a hold that never reaches disk is lost by the next
+   * deploy, silently, after the run has already told someone a question was coming.
+   */
+  it('persists a hold, and a human can answer it after a restart with no model call', async () => {
+    const path = join(DIR, 'pending.json');
+    const { deps, calls } = makeDeps({
+      pendingHuman: pendingHumanStore(path),
+      runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
+    });
+
+    const out = await runPipeline(SOURCE, deps);
+    expect(out.held).toHaveLength(1);
+    expect(out.exec?.created).toBe(0);
+
+    const reloaded = pendingHumanStore(path); // fresh instance, no shared memory
+    const [hold] = reloaded.list('meeting-1');
+    expect(hold?.gate).toBe('category dispute');
+
+    const callsBefore = calls.length;
+    const resumed = await resumeHold(reloaded, hold!.id, 'approve', { tracker: deps.tracker });
+
+    expect(resumed.status).toBe('executed');
+    if (resumed.status !== 'executed') throw new Error('unreachable');
+    expect(resumed.exec.created).toBe(1);
+    expect(calls.length).toBe(callsBefore); // the answer replays the stored decision; no model runs
+    expect(reloaded.list()).toEqual([]);
+  });
+
+  it('reports rather than throws when the hold store cannot be written', async () => {
+    const { deps, events } = makeDeps({
+      pendingHuman: {
+        register: () => {
+          throw new Error('disk full');
+        },
+        list: () => [],
+        get: () => null,
+        resolve: () => ({ status: 'unknown' }),
+      },
+      runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
+    });
+
+    const out = await runPipeline(SOURCE, deps);
+
+    // Losing the durable copy is bad; taking the whole run down with it is worse. The hold is still
+    // announced, and the failure is surfaced rather than swallowed.
+    expect(out.status).toBe('completed');
+    expect(events.find((e) => e.type === 'items:held')).toBeDefined();
+    expect(events.find((e) => e.type === 'alert' && e.detail.includes('disk full'))).toBeDefined();
   });
 
   it('auto-skips a confident not-a-task and reports it rather than dropping it', async () => {

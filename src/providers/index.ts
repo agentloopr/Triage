@@ -56,8 +56,15 @@ export interface ModelClient {
 export const DEFAULT_TIMEOUT_MS = 600_000;
 export const DEFAULT_MAX_OUTPUT_TOKENS = 16_384;
 
-/** Don't start (or retry into) an attempt with less budget left than this. */
-const MIN_ATTEMPT_MS = 5_000;
+/**
+ * Don't start a RETRY with less budget left than this — a doomed second call just burns the
+ * remainder to arrive at the same failure.
+ *
+ * The first attempt is deliberately exempt. Gating it too means any `timeoutMs` below this floor
+ * makes zero calls and fails with "no result within the Nms budget", which is true, useless, and
+ * looks exactly like a provider outage.
+ */
+const MIN_RETRY_MS = 5_000;
 const MAX_ATTEMPTS = 3;
 const RETRY_BASE_MS = 2_000;
 
@@ -88,7 +95,8 @@ export async function withRetryBudget<T>(
 
   for (let n = 1; n <= MAX_ATTEMPTS; n++) {
     const remaining = deadline - Date.now();
-    if (remaining < MIN_ATTEMPT_MS) break;
+    // The first attempt always runs if any budget remains; only retries are subject to the floor.
+    if (remaining <= 0 || (n > 1 && remaining < MIN_RETRY_MS)) break;
 
     try {
       return await attempt(AbortSignal.timeout(remaining), n);
@@ -98,7 +106,7 @@ export async function withRetryBudget<T>(
       if (askedMs === null) throw err; // provider says this one is not worth retrying
 
       const backoffMs = Math.min(askedMs, Math.max(0, deadline - Date.now()));
-      if (n >= MAX_ATTEMPTS || deadline - Date.now() - backoffMs < MIN_ATTEMPT_MS) break;
+      if (n >= MAX_ATTEMPTS || deadline - Date.now() - backoffMs < MIN_RETRY_MS) break;
 
       console.warn(
         `[${label}] attempt ${n}/${MAX_ATTEMPTS} failed (${errText(err)}) — retrying in ${backoffMs}ms`

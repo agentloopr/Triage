@@ -65,6 +65,18 @@ export const ASR_PROVENANCE_FLOOR = num('ASR_PROVENANCE_FLOOR', 0.5);
 /** When the registry is degraded, hold the entire batch rather than writing against an empty roster. */
 export const REGISTRY_FAIL_CLOSED = bool('REGISTRY_FAIL_CLOSED', true);
 
+// ── Observability ───────────────────────────────────────────────────────────
+/**
+ * Attach prompts and replies to spans.
+ *
+ * **Off by default, and it should stay that way in anything resembling production.** Prompt text is
+ * the meeting: names, salaries, whatever was said in the room. A tracing backend is rarely held to
+ * the same access rules as the meeting itself, and "we turned on tracing" is not the moment anyone
+ * expects to have widened who can read a transcript. On, it is still redacted and truncated.
+ */
+export const OTEL_CAPTURE_IO = bool('OTEL_CAPTURE_IO', false);
+export const OTEL_CAPTURE_IO_MAX_CHARS = int('OTEL_CAPTURE_IO_MAX_CHARS', 8_000);
+
 // ── Paths ───────────────────────────────────────────────────────────────────
 export const OPS_REGISTRY_PATH = resolve(str('OPS_REGISTRY_PATH', './config/ops-registry.json'));
 export const STATE_DIR = resolve(str('STATE_DIR', './.state'));

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { trace } from '@opentelemetry/api';
+import { BasicTracerProvider, InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { CASSETTE_DIR } from '../config';
 import { listScenarios, loadScenario } from '../fixtures';
 import { categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
@@ -68,6 +70,43 @@ describe('demo smoke', () => {
       for (const c of Object.keys(categoryBreakdown(run.result.manifest))) seen.add(c);
     }
     expect(seen).toEqual(new Set(['NEW_TASK', 'DUPLICATE', 'SUBTASK', 'UPDATE']));
+  });
+
+  /**
+   * The observability wiring, asserted end to end.
+   *
+   * `runScenario` wraps the client and the event emitter, and a unit test of the wrapper proves
+   * nothing about whether anyone calls it — an import that was dropped in a refactor would leave
+   * every span test green and the pipeline silent. So this registers a real provider, runs a real
+   * scenario, and reads what came out.
+   */
+  it('emits spans for the passes and every model call when a provider is registered', async () => {
+    const exporter = new InMemorySpanExporter();
+    trace.disable();
+    trace.setGlobalTracerProvider(new BasicTracerProvider({ spanProcessors: [new SimpleSpanProcessor(exporter)] }));
+
+    try {
+      const run = await runScenario(loadScenario('01-meeting-mixed'), {
+        model: cassetteClient(join(CASSETTE_DIR, '01-meeting-mixed')),
+        quiet: true,
+      });
+
+      const names = exporter.getFinishedSpans().map((s) => s.name);
+      expect(names.filter((n) => n.startsWith('pass ')).length).toBeGreaterThan(0);
+      expect(names).toContain('2a/item-01');
+      expect(names.filter((n) => n.includes('/item-')).length).toBe(run.result.inventory.length * 2);
+    } finally {
+      trace.disable();
+    }
+  });
+
+  it('emits nothing and stays offline when no provider is registered', async () => {
+    trace.disable();
+    const run = await runScenario(loadScenario('05-corrections'), {
+      model: cassetteClient(join(CASSETTE_DIR, '05-corrections')),
+      quiet: true,
+    });
+    expect(run.mismatches).toEqual([]);
   });
 
   // A missing cassette must be loud. Returning empty would look exactly like a pass that

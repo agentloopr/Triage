@@ -1,15 +1,13 @@
 {
-  "description": "Work that already exists on the board under different wording. One is caught outright; on the other the two reads disagree across the new-vs-existing boundary, so it goes to a human.",
-  "note": "This is the headline path: Pass 2b re-derives the categorization blind and disagrees with 2a, and the disagreement becomes a question rather than a write. Both cassettes are real recordings — no reply was hand-authored to produce it.",
+  "description": "Both deliverables are already on the board under different wording. Both are caught and skipped — the run ends having written nothing at all.",
+  "note": "Writing nothing is the correct outcome and the hardest one to be confident about, since a pipeline that silently does nothing looks identical to a broken one. The audit pass is what tells them apart. This scenario used to assert a category-dispute hold on item 2 as well, and that expectation was removed: 2b's blind read of it landed on NEW_TASK twice and UPDATE once across three identical recordings, so the hold depended on which reply happened to be frozen into the cassette. The item's source line was rewritten to be unambiguous, and the dispute demonstration lives in 01-meeting-mixed, where it survives re-recording. All cassettes are real recordings; no reply was hand-authored.",
   "inventoryCount": 2,
   "categories": {
     "DUPLICATE": 2
   },
-  "cleanCount": 1,
-  "heldCount": 1,
+  "cleanCount": 2,
+  "heldCount": 0,
   "skippedNotTaskCount": 0,
   "createdCount": 0,
-  "heldGates": [
-    "category dispute"
-  ]
+  "heldGates": []
 }

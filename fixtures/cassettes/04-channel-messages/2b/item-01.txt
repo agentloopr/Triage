@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The board snapshot only contains t800 (search relevance tuning), which is unrelated. No existing card covers the connection pool fix. The source confirms a concrete deliverable (raise pool size, add alert) — a PM would track this infrastructure change.
+RATIONALE: The board snapshot contains only t800 (Search relevance tuning), which is unrelated to connection pool issues. No existing card covers the 502 fix or pool size increase, so this is a genuinely new, concrete configuration change that merits a trackable card.

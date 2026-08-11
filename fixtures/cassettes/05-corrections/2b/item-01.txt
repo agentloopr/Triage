@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The board snapshot contains only t900 (billing webhook retry), a separate workstream per the participants note. The source identifies a specific deliverable (fixing the invoice API endpoint returning wrong totals) with an owner (Rowan Diaz). No existing card matches this deliverable, so it is genuinely new. The task is concrete and trackable. All details in the item trace directly to the source. Routing to the backend list is appropriate as both the domain and Rowan's indicated area align.
+RATIONALE: The board snapshot contains only t900 (billing webhook retry), which is explicitly noted as a separate workstream from invoice rendering. No other card matches the invoice API endpoint fix. The source confirms a concrete deliverable (fix the endpoint returning totals in the wrong field), with a clear owner (Rowan Diaz), making it a trackable task.

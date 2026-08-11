@@ -2,5 +2,5 @@ VERDICT_CATEGORY: SUBTASK
 MATCH_TASK_ID: t100
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: [Tier-2: task-comments on t100 — no comments] In the source, Rowan says the welcome email copy “sits inside the onboarding revamp, it ships when that ships” and Jules says “keep it under that card.” This deliverable is contained by t100 and would close with it, so it is a subtask, not a new standalone card.
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t100 — no comments] In the source, Rowan explicitly states the welcome email copy "sits inside the onboarding revamp, it ships when that ships." That makes it a contained deliverable under the broader t100 (Redesign the onboarding flow). It is a concrete, trackable piece of work that closes when the parent closes, fitting SUBTASK.

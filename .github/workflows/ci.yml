@@ -54,3 +54,25 @@ jobs:
 
       - name: no internal debug routes
         run: '! grep -rn "debug/clarify-test" --include="*.ts" --include="*.md" . || exit 1'
+
+      # gitleaks finds credentials. This finds IDENTIFIERS — internal product, person and tracker ids,
+      # which leak where the code came from without being secret. gitleaks has no rule for any of them,
+      # and that is not an oversight in gitleaks: a task id authenticates nothing. It is how a real
+      # ClickUp id survived four commits inside a worked example, wearing a fixture-shaped prefix.
+      # Patterns live in this file, which the --include flags deliberately exclude from the scan.
+      - name: no internal identifiers
+        run: |
+          set -u
+          fail=0
+          scan() {
+            if grep -rniE --exclude-dir=node_modules --exclude-dir=.git \
+                 --include='*.ts' --include='*.md' --include='*.json' --include='*.txt' "$1" .; then
+              echo "::error::found $2 — see the matches above"
+              fail=1
+            fi
+          }
+          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal system or product name'
+          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal person name'
+          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'a real tracker id shape'
+          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal doc reference'
+          exit $fail

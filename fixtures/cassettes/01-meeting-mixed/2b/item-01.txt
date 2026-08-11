@@ -3,4 +3,4 @@ MATCH_TASK_ID: t200
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t200 — no comments] The item reports progress directly from Avery's standup statement that rate limiting is done and in review, token bucket finished, waiting for Sky's sign-off, shipping Friday. This is a status update on the existing t200 "Public API rate limiting" card, not a new deliverable.
+RATIONALE: [Tier-2: task-comments on t200 — no comments present] The item is a status report on the existing card t200 (Public API rate limiting). Avery reports the token bucket is complete, the work is in review, and it's waiting for Sky's sign-off with a Friday ship target. This is genuine new progress on that card, not yet reflected in its activity log, so it fits UPDATE.

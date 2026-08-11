@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type OpsRegistry, setOpsRegistryPath } from '../../registry/opsRegistry';
@@ -74,9 +74,35 @@ describe.each(PROMPTS)('%s prompt scaffolding', (_name, build) => {
     expect(build().trimEnd().split('\n').slice(-8).join('\n')).toMatch(/POSSIBLE_MATCH_HINT:|TIER-2 EVIDENCE/);
   });
 
-  it('carries the sentinel rule pair the anchor-based de-tuning depends on', () => {
-    // Phase 3 locates every de-tuning target by grepping these, never by line number.
+  it('carries the sentinel rule pair that makes the examples locatable', () => {
+    // Anything that edits an examples block finds it by grepping this, never by line number — line
+    // citations in a prompt file go stale within a commit or two and then point at the wrong text.
     expect(build()).toContain('══════════════════════════════════════════════════════════════════════');
+  });
+});
+
+/**
+ * Every card id in a worked example must be one we invented.
+ *
+ * This is not the same check CI's identifier scan performs, and it exists because that scan missed
+ * the one real leak in this repo. A worked example carried `t-e1yj` — the middle of a production
+ * ClickUp id, truncated to four characters and given the same `t-` prefix as the fixtures. By shape
+ * it is indistinguishable from `t-abc1`; no pattern can tell them apart. Only an allowlist can.
+ *
+ * Adding an id here should feel deliberate. That is the entire mechanism.
+ */
+describe('worked examples use only invented card ids', () => {
+  const ALLOWED = new Set(['t-abc1', 't-abc2', 't-def4', 't-c3n8', 't100', 't200']);
+  const FILES = ['categorization.ts', 'contractCheck.ts', 'inventory.ts'];
+
+  // `t-` + exactly four alphanumerics, or `t` + three digits. The hyphen or the all-digit tail is
+  // what separates an id from a hyphenated phrase like "t-history", which has no digits at all.
+  const ID_SHAPES = [/\bt-[a-z0-9]{4}\b/g, /\bt\d{3}\b/g];
+
+  it.each(FILES)('%s', (file) => {
+    const src = readFileSync(join(__dirname, file), 'utf8');
+    const found = ID_SHAPES.flatMap((re) => [...src.matchAll(re)].map((m) => m[0]));
+    expect([...new Set(found)].filter((id) => !ALLOWED.has(id))).toEqual([]);
   });
 });
 

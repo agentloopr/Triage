@@ -16,6 +16,7 @@
  */
 import { type IdempotencyStore, contentKey } from '../idempotency';
 import type { IngestedSource } from '../ingest';
+import type { PendingHumanStore } from '../state/pendingHuman';
 import type { BoardTask, TrackerAdapter } from '../trackers';
 import { renderBoardSnapshot, renderCompactSnapshot } from '../trackers/renderSnapshot';
 import { PipelineEvents } from './events';
@@ -34,6 +35,15 @@ export type PipelineDeps = {
   tracker: TrackerAdapter;
   idempotency: IdempotencyStore;
   events?: PipelineEvents;
+  /**
+   * Where held items go so a human can answer them later, via `resumeHold`.
+   *
+   * Optional, and leaving it out is a real decision rather than a default. Without a store, a hold
+   * exists only in the returned result and in whatever the caller does with the `items:held` event —
+   * fine for a dry run, and in a long-lived service it means every open question dies with the
+   * process that asked it.
+   */
+  pendingHuman?: PendingHumanStore;
   /** Passes 0 → 1.7. */
   runPass: PassRunner;
   /** Pass 2a. */
@@ -196,6 +206,15 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
   );
 
   if (checked.held.length) {
+    // Persist BEFORE announcing. If the process dies between the two, a lost notification is
+    // recoverable — the hold is still on disk and can be re-announced. The other order loses the
+    // question itself while having already told someone it was coming.
+    try {
+      deps.pendingHuman?.register(source.sourceId, checked.held);
+    } catch (err) {
+      emit({ type: 'alert', detail: `could not persist ${checked.held.length} hold(s): ${err instanceof Error ? err.message : String(err)}` });
+    }
+
     emit({
       type: 'items:held',
       items: checked.held.map((h) => ({

@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing board card covers a request-size cap on the upload endpoint. The closest card, t200 "Public API rate limiting", is a different deliverable (throttling) and does not contain this task. Source commits to a concrete, trackable fix after a recent outage. The task clearly belongs to the backend list where Avery Chen's API work resides.
+RATIONALE: Board scan shows no card for a request-size cap; t200 covers rate limiting, not payload limits. The source has Avery committing to "add a hard limit," a concrete, trackable fix. It's a new, standalone deliverable. Backend routing is clear.

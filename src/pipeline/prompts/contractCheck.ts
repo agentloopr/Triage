@@ -11,9 +11,11 @@
  * NOT new and to go hunting for a match. A second read told to "check the work" tends to agree; a
  * second read told to refute finds things.
  *
- * ⚠️ The worked examples below are still the tuned production set and contain real card ids and
- * product names. They are sentinel-delimited (`══════` + `WORKED EXAMPLES`) so they can be located
- * by grep and replaced wholesale in the de-tuning phase. Do not publish before that happens.
+ * The six worked examples below are generic — fixture personas, synthetic card ids, an invented
+ * client. They are the *reasoning* of the production set with none of its content, and each one
+ * exists to teach a different verdict field, so dropping any of them costs a specific behaviour.
+ * They stay sentinel-delimited (`══════` + `WORKED EXAMPLES`) so they remain locatable by grep and
+ * replaceable wholesale, and so `scaffolding.test.ts` can assert the block is still there.
  */
 import { learnedFactsBlock } from '../../state/corrections';
 import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
@@ -161,17 +163,17 @@ export function buildContractCheckerPrompt(
     '',
     '— NOT grounded, ESCALATES (the ungrounded wording was masking a WRONG card match — this becomes a',
     '  card-identity question, never a wording question):',
-    '  Same ungrounded title, but the first read matched it to existing card t-e1yj "Complete certification',
+    '  Same ungrounded title, but the first read matched it to existing card t-c3n8 "Complete certification',
     '  exam study and take the exam" as an UPDATE. What the source actually describes (plan/subscription',
     '  activation, 7 days, public holiday) is a DIFFERENT thing entirely from that card (an exam, not a',
     '  subscription activation) — the match itself is wrong, not just the wording.',
     '  VERDICT_CATEGORY: UPDATE',
-    '  MATCH_TASK_ID: t-e1yj',
+    '  MATCH_TASK_ID: t-c3n8',
     '  WORTH_A_CARD: real_task',
     '  GROUNDED: no',
     '  CARD_STILL_MATCHES: no',
     '  ROUTING_OK: yes',
-    '  RATIONALE: What the source describes (plan/subscription activation) is NOT what t-e1yj covers',
+    '  RATIONALE: What the source describes (plan/subscription activation) is NOT what t-c3n8 covers',
     '  (a certification EXAM) — the ungrounded wording was masking a wrong card match, not just a typo.',
     '',
     '— NOT routing-confident (unrecognized client/entity, nothing in the role profiles or board matches):',

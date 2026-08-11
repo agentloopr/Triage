@@ -153,9 +153,9 @@ describe('Pass 2b blindness', () => {
 });
 
 /**
- * The de-tuning guard from the plan's §11: the tuned examples are sentinel-delimited so a careless
- * find-and-replace that deletes the whole block is caught. Without this the prompt still works — it
- * just works worse, invisibly.
+ * The examples are sentinel-delimited so a careless find-and-replace that deletes the whole block is
+ * caught. Without this the prompt still works — it just works worse, invisibly: every parser still
+ * parses, every gate still fires, the demo still goes green.
  */
 describe('prompt scaffolding lint', () => {
   it('emits exactly one WORKED EXAMPLES block with content in it', () => {

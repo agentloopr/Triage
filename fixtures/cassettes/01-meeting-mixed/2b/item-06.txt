@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The source explicitly has Wren requesting a spec and Jules committing to write it. No existing card covers a usage-based billing spec; t300 (Q3 pricing page refresh) is about updating copy on the existing pricing page, a different deliverable. Writing a spec is a concrete trackable artifact, so worth a card. The task maps to a product/growth concern, and the growth list (which already houses pricing tasks) is a plausible routing — no ambiguous client or competing lists.
+RATIONALE: No existing board card covers writing a spec for usage‑based billing — the snapshot lists only onboarding, rate limiting, pricing page refresh, and build monitoring, none of which reference billing or a new spec deliverable. The source records Jules committing to write it, which is a concrete, trackable task a PM would board.

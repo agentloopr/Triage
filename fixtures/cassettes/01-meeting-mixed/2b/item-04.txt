@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
+VERDICT_CATEGORY: DUPLICATE
 MATCH_TASK_ID: t300
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t300 — no prior comments] t300 "Q3 pricing page refresh" is explicitly about updating the pricing copy after a tier change. Noor's statement that she'll refresh the copy this week (because it's stale) is a genuine status change — moving it from not-started into active commitment — so it updates the existing card, not a new one.
+RATIONALE: [Tier-2: task-comments on t300 — no comments.] The existing card t300 covers the same "refresh pricing page copy" deliverable that Noor commits to in the source. No new progress is reported beyond the already-tracked plan, so this item is a duplicate of that card.

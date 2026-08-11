@@ -1,8 +1,10 @@
 # ops-agent-reference
 
-> **Status: in construction (Phase 1 of 5 complete).** The full pipeline runs end to end offline.
-> Still to come: the test wall (Phase 2), de-tuning (3), roles and adapters (4), docs and publish (5).
-> This README is a placeholder; the real one is written in Phase 5.
+> **Status: in construction (Phases 1–3 of 5 complete).** The full pipeline runs end to end offline,
+> the test wall is up, and the prompts carry no internal content — [EXTRACTION.md](EXTRACTION.md)
+> records what was checked and what could not be. Still to come: roles, tracker adapters and the
+> second provider (4), then docs and publish (5). This README is a placeholder; the real one is
+> written in Phase 5.
 
 A production ops-agent pipeline: meeting transcripts and channel logs in, governed tracker writes
 out, with human-in-the-loop gates on everything it is not sure about.
@@ -39,15 +41,14 @@ npm run demo -- --twice   # proves a redelivery costs zero tokens
 ```
 
 ```
-▶ 01-meeting-mixed — A normal standup exercising all five categories, plus two holds and a duplicate skip.
+▶ 01-meeting-mixed — A normal standup exercising all five categories, plus a held disagreement between the two reads.
   ✓ 0-cleanup  ✓ 1-inventory  ✓ 1.5-critic  ✓ 1.7-consolidator  ✓ evidence
   ✓ 2a-categorization  ✓ 2b-contract-check
-  ⏸ 2 held for a human:
-      #6 [uncertain field(s)] Investigate whether flaky auth test is causing noisy build alerts
-      #7 [uncertain field(s)] Write spec for usage-based billing idea
-  → 2 created · 2 commented · 1 skipped · 0 failed
+  ⏸ 1 held for a human:
+      #5 [category dispute] Investigate noisy nightly build alerts and report back Wednesday
+  → 3 created · 1 commented · 1 skipped · 0 failed
   ✓ audit: 5 passed, 0 mismatched
-  ✓ 7 items · 2 created · 2 held · 0 skipped — matches expected.json
+  ✓ 6 items · 3 created · 1 held · 0 skipped — matches expected.json
   ✓ re-run: skipped at layer 'source' — 0 model calls, $0.00
 ```
 

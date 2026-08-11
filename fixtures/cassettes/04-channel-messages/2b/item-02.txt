@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing board card covers adding a monitoring alert for connection pool exhaustion. The only open card is t800 (Search relevance tuning), which is unrelated. Avery's direct statement "I'll raise the pool size and add an alert" makes this a concrete, trackable deliverable, so WORTH_A_CARD is real_task.
+RATIONALE: The board snapshot contains only t800 (Search relevance tuning), which is unrelated. The alert task is a concrete, trackable deliverable from Avery's 09:31 message; no existing card covers it. Routing is straightforward, no ambiguous client or list conflict.

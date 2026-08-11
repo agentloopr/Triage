@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The board contains only t800 (search relevance tuning), which is unrelated to the connection pool. No existing card covers pool exhaustion fixes; Avery's commitment to raise pool size and add an alert is a distinct, trackable deliverable. Grounded directly in Avery's 09:31 message. Routing to a backend/infrastructure list is clear.

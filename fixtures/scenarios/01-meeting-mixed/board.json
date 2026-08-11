@@ -1,0 +1,42 @@
+[
+  {
+    "id": "t100",
+    "title": "Redesign the onboarding flow",
+    "listKey": "design",
+    "assignees": [
+      "Rowan Diaz"
+    ],
+    "status": "in progress",
+    "description": "Rework the first-run experience end to end."
+  },
+  {
+    "id": "t200",
+    "title": "Public API rate limiting",
+    "listKey": "backend",
+    "assignees": [
+      "Avery Chen"
+    ],
+    "status": "in progress",
+    "description": "Add throttling to the public endpoints."
+  },
+  {
+    "id": "t300",
+    "title": "Q3 pricing page refresh",
+    "listKey": "growth",
+    "assignees": [
+      "Noor Haddad"
+    ],
+    "status": "not started",
+    "description": "Update pricing copy after the tier change."
+  },
+  {
+    "id": "t400",
+    "title": "Nightly build monitoring",
+    "listKey": "platform",
+    "assignees": [
+      "Sky Patel"
+    ],
+    "status": "in progress",
+    "description": "Alerting for failed nightly builds."
+  }
+]

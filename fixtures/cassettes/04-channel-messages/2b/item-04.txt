@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: not_a_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The item is a pure status report — Sky Patel's initial notification that staging is returning 502s — with no named deliverable or owner for the report itself. The actual work (connection pool fix, alert, runbook) is being handled elsewhere; tracking the notification as a card would be noise. No existing board card matches this.

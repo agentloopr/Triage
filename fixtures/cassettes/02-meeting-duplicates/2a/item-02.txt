@@ -1,0 +1,10 @@
+ITEM: 2
+TITLE: Check for an existing card covering the deploy partial-failure issue
+CATEGORY: NEW_TASK
+LIST: platform
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Sky Patel will check whether a card already tracks the issue of deploys failing halfway and leaving the cluster in an inconsistent state, and identify it if it exists.
+CONFIDENCE: high
+RATIONALE: No open card covers the meta-task of verifying card existence. The board has t600 (Deploy pipeline hardening), but the action of checking is a distinct step not yet done; it is a new deliverable.

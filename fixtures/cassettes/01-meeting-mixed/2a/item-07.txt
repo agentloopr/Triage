@@ -1,0 +1,10 @@
+ITEM: 7
+TITLE: Write spec for usage-based billing idea
+CATEGORY: NEW_TASK
+LIST: product
+ASSIGNEE: Jules Kim
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Produce a written specification for the usage-based billing concept, as requested by Sky and committed to by Jules in the standup.
+CONFIDENCE: high
+RATIONALE: No open board card addresses a billing spec; it is a net-new deliverable. No evidence reading needed for NEW_TASK.

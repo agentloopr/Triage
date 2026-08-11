@@ -1,0 +1,11 @@
+{
+  "description": "A recorded human correction changes this run: no duplicate hold on work a human already said is separate, and an assignee the base registry alone would have rejected.",
+  "inventoryCount": 1,
+  "categories": {
+    "NEW_TASK": 1
+  },
+  "cleanCount": 1,
+  "heldCount": 0,
+  "skippedNotTaskCount": 0,
+  "createdCount": 1
+}

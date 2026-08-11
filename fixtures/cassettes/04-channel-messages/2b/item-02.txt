@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The only existing board card, t800 "Search relevance tuning", is unrelated to documenting a 502/pool exhaustion runbook. No match found. The source confirms Jules requested the documentation and Sky committed to writing it; it's a concrete, trackable deliverable.

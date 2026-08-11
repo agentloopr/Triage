@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": true,
+    // The internal repo lacked this and it hid real bugs behind `arr[i]` typed as T rather than
+    // T | undefined. Every parser here indexes into split() output, so it earns its keep.
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noEmit": true
+  },
+  // Tests are INCLUDED in typecheck, unlike the internal repo — a test that no longer compiles is
+  // a test that is no longer testing what it claims.
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

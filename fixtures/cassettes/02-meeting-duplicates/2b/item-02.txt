@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: not_a_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The item asks Sky to check whether a card exists for the partial‑failure pipeline issue — a 30‑second board lookup, not a trackable deliverable with a completion state. The real work is already on the board as t600; this check is a personal reminder, not something a PM would open a separate card for. [Tier‑2: task‑comments on t600 — no comments, and the item is not progress on that card, just a meta‑check.]

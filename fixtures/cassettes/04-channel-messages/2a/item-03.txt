@@ -1,0 +1,8 @@
+ITEM: 3
+TITLE: Search relevance tuning is now in review
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t800
+STATUS: in review
+FINAL_DESC: Avery Chen reported that the search relevance tuning work has moved to the review stage and is ready for review.
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t800 — no comments on this card; the card's current status is "in progress". Avery's message that it is now in review is genuinely new information, not previously logged.]

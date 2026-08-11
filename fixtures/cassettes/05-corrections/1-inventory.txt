@@ -1,0 +1,6 @@
+--- ACTION INVENTORY ---
+1. Fix invoice PDF layout so totals column no longer overlaps notes | quote: "I can take that — I did the original template."
+   DESC: Invoice PDFs are rendering with the totals column overlapping the notes. Rowan Diaz committed to correcting the layout issue, citing that he built the original template.
+   TIMESTAMP: [00:00:46-00:01:10]
+   POSSIBLE_MATCH_HINT: (none)
+--- END ACTION INVENTORY ---

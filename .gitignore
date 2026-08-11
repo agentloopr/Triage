@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage/
+.state/
+
+# Scratch the demo/recorder write inside a scenario dir while running.
+fixtures/scenarios/*/.corrections.json
+fixtures/scenarios/*/.demo-idempotency.json

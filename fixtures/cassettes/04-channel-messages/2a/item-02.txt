@@ -1,0 +1,13 @@
+ITEM: 2
+TITLE: Document runbook for 502 / pool exhaustion
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+DUE_DATE: none
+STATUS: not started
+FINAL_DESC: Write documentation for the runbook to handle staging 502 errors caused by connection pool exhaustion, as requested by Jules Kim and committed by Sky Patel.
+UNCERTAIN_FIELDS:
+- DUE_DATE: no due date given (suggested: none)
+CONFIDENCE: high
+RATIONALE: No existing open card on the board covers a runbook documentation deliverable. Net-new request, no evidence read needed for NEW.

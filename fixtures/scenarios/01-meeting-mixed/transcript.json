@@ -1,0 +1,120 @@
+{
+  "meetingId": "meeting-2026-08-11-standup",
+  "deliveryId": "delivery-01",
+  "summary": "Weekly product standup: API stability, onboarding, pricing, and release readiness.",
+  "recordedAtIso": "2026-08-11T10:00:00Z",
+  "participants": [
+    "Avery Chen",
+    "Rowan Diaz",
+    "Jules Kim",
+    "Sky Patel",
+    "Noor Haddad"
+  ],
+  "lines": [
+    {
+      "start": 0,
+      "end": 12,
+      "speaker": "Jules Kim",
+      "text": "Morning everyone. Let's go round — Avery, API first.",
+      "confidence": 0.96
+    },
+    {
+      "start": 12,
+      "end": 48,
+      "speaker": "Avery Chen",
+      "text": "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday.",
+      "confidence": 0.96
+    },
+    {
+      "start": 48,
+      "end": 70,
+      "speaker": "Jules Kim",
+      "text": "Good. Anything blocking?",
+      "confidence": 0.96
+    },
+    {
+      "start": 70,
+      "end": 96,
+      "speaker": "Avery Chen",
+      "text": "No. Separately though — we have no request-size cap on the upload endpoint. Someone posted a 400 meg payload last week and it took the workers down. I'll add a hard limit.",
+      "confidence": 0.96
+    },
+    {
+      "start": 96,
+      "end": 118,
+      "speaker": "Jules Kim",
+      "text": "Yes please, that one bit us. Rowan, onboarding?",
+      "confidence": 0.96
+    },
+    {
+      "start": 118,
+      "end": 150,
+      "speaker": "Rowan Diaz",
+      "text": "Main flow is drafted. I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships.",
+      "confidence": 0.96
+    },
+    {
+      "start": 150,
+      "end": 172,
+      "speaker": "Jules Kim",
+      "text": "Good, keep it under that card. Noor, pricing?",
+      "confidence": 0.96
+    },
+    {
+      "start": 172,
+      "end": 214,
+      "speaker": "Noor Haddad",
+      "text": "I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers.",
+      "confidence": 0.96
+    },
+    {
+      "start": 214,
+      "end": 236,
+      "speaker": "Jules Kim",
+      "text": "Sounds right, go ahead.",
+      "confidence": 0.96
+    },
+    {
+      "start": 236,
+      "end": 278,
+      "speaker": "Sky Patel",
+      "text": "Quick one — the nightly build alerts have been noisy. I'll check whether it's the flaky auth test and report back Wednesday.",
+      "confidence": 0.96
+    },
+    {
+      "start": 278,
+      "end": 300,
+      "speaker": "Jules Kim",
+      "text": "Sure, let us know.",
+      "confidence": 0.96
+    },
+    {
+      "start": 300,
+      "end": 338,
+      "speaker": "Sky Patel",
+      "text": "Also, going forward we should always run the full suite before a release, not just the smoke tests.",
+      "confidence": 0.96
+    },
+    {
+      "start": 338,
+      "end": 358,
+      "speaker": "Jules Kim",
+      "text": "Noted, that's a process thing — let's discuss separately.",
+      "confidence": 0.96
+    },
+    {
+      "start": 358,
+      "end": 382,
+      "speaker": "Wren Alvarez",
+      "text": "One more — I'd like a written spec for the usage-based billing idea before we commit to anything.",
+      "confidence": 0.96
+    },
+    {
+      "start": 382,
+      "end": 398,
+      "speaker": "Jules Kim",
+      "text": "I'll write that up. Anything else? No? Thanks all.",
+      "confidence": 0.96
+    }
+  ]
+}

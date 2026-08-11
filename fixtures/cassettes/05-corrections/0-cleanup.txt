@@ -1,0 +1,3 @@
+[00:00:00-00:00:46] Jules Kim: The invoice PDFs are coming out with the totals column overlapping the notes. Can we fix the invoice PDF layout?
+[00:00:46-00:01:10] Rowan Diaz: I can take that — I did the original template.
+[00:01:10-00:01:32] Jules Kim: Great, it is yours.

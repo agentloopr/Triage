@@ -1,0 +1,130 @@
+/**
+ * Shared scenario runner for the demo and the recorder.
+ *
+ * The two CLIs differ in exactly one thing — which `ModelClient` they hand over — so everything else
+ * lives here. That is also what makes the demo trustworthy: it is not a special "demo mode" through
+ * a simplified path, it is the real pipeline with a different provider behind the same seam.
+ */
+import { jsonFileStore } from '../idempotency/jsonFile';
+import { memoryStore } from '../idempotency/memory';
+import { type Scenario, diffExpected } from '../fixtures';
+import { PipelineEvents, type PipelineEvent } from '../pipeline/events';
+import { setTaskUrlBuilder } from '../pipeline/gates/clarify';
+import { type PipelineResult, runPipeline } from '../pipeline/run';
+import type { ModelClient } from '../providers';
+import { setOpsRegistryPath } from '../registry/opsRegistry';
+import { setCorrectionsPath } from '../state/corrections';
+import { memoryTracker } from '../trackers/memory';
+import { categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
+
+export type RunScenarioOptions = {
+  model: ModelClient;
+  /** Persisted across runs when set — this is how `--twice` proves idempotency. */
+  idempotencyPath?: string;
+  quiet?: boolean;
+};
+
+export type ScenarioRun = {
+  result: PipelineResult;
+  events: PipelineEvent[];
+  mismatches: string[];
+  modelCalls: number;
+};
+
+export async function runScenario(scenario: Scenario, opts: RunScenarioOptions): Promise<ScenarioRun> {
+  setOpsRegistryPath(scenario.registryPath);
+  setCorrectionsPath(scenario.correctionsPath ?? `${scenario.dir}/.corrections.json`);
+  setTaskUrlBuilder((id) => `card ${id}`);
+
+  const events: PipelineEvent[] = [];
+  const emitter = new PipelineEvents();
+  emitter.on((e) => {
+    events.push(e);
+    if (!opts.quiet) print(e);
+  });
+
+  let modelCalls = 0;
+  const complete = async (key: string, prompt: string): Promise<string> => {
+    modelCalls++;
+    const r = await opts.model.complete({ key, messages: [{ role: 'user', content: prompt }], determinism: 'strict' });
+    if (r.truncated) throw new Error(`[${key}] reply was truncated`);
+    return r.text;
+  };
+
+  const tracker = memoryTracker({ tasks: scenario.board });
+
+  const result = await runPipeline(scenario.source, {
+    tracker,
+    idempotency: opts.idempotencyPath ? jsonFileStore(opts.idempotencyPath) : memoryStore(),
+    events: emitter,
+    runPass: async ({ prompt, label }) => ({ text: await complete(passKey(label), prompt) }),
+    runCategorization: (prompt, label) => complete(`2a/${itemKey(label)}`, prompt),
+    runContractCheck: (prompt, label) => complete(`2b/${itemKey(label)}`, prompt),
+    warmDelayMs: 0,
+  });
+
+  const mismatches =
+    result.status === 'skipped'
+      ? []
+      : diffExpected(scenario.expected, {
+          inventoryCount: result.inventory.length,
+          categories: categoryBreakdown(result.manifest),
+          cleanCount: result.clean.length,
+          heldCount: result.held.length,
+          skippedNotTaskCount: result.skippedNotTask.length,
+          createdCount: result.exec?.created ?? 0,
+          heldGates: result.held.map((h) => h.gate),
+        });
+
+  setOpsRegistryPath(null);
+  setCorrectionsPath(null);
+  setTaskUrlBuilder(null);
+
+  return { result, events, mismatches, modelCalls };
+}
+
+/** `pass1.5:critic` → `1.5-critic`, so a cassette file is named after the pass a reader recognises. */
+function passKey(label: string): string {
+  const [pass, name] = label.split(':');
+  return `${pass?.replace(/^pass/, '') ?? '?'}-${name ?? 'main'}`;
+}
+
+/** `pass2a:item7` → `item-07`. Zero-padded so the files sort in item order. */
+function itemKey(label: string): string {
+  const n = label.match(/item(\d+)/)?.[1];
+  return n ? `item-${n.padStart(2, '0')}` : label.replace(/[^a-z0-9-]/gi, '-');
+}
+
+function print(e: PipelineEvent): void {
+  switch (e.type) {
+    case 'pass:done':
+      console.log(`  ✓ ${e.pass.padEnd(20)} ${e.ms}ms`);
+      break;
+    case 'skipped':
+      console.log(`  ⏭ skipped at layer '${e.layer}' — ${e.reason}`);
+      break;
+    case 'items:uncategorized':
+      console.log(`  ⚠ ${e.items.length} item(s) could not be categorized: ${e.items.map((i) => `#${i.number}`).join(', ')}`);
+      break;
+    case 'items:held':
+      console.log(`  ⏸ ${e.items.length} held for a human:`);
+      for (const i of e.items) console.log(`      #${i.item} [${i.gate}] ${i.title}`);
+      break;
+    case 'items:skipped-not-task':
+      for (const i of e.items) console.log(`  ⏭ #${i.item} skipped — not a task: ${i.title}`);
+      break;
+    case 'flags':
+      for (const f of e.flags) console.log(`  ⚑ ${f.kind}: ${f.note}`);
+      break;
+    case 'executed':
+      console.log(`  → ${e.created} created · ${e.commented} commented · ${e.skipped} skipped · ${e.failed} failed`);
+      break;
+    case 'audit':
+      console.log(`  ✓ audit: ${e.passed} passed, ${e.mismatched} mismatched`);
+      if (e.report) console.log(e.report);
+      break;
+    case 'alert':
+      console.log(`  ⚠ ${e.detail}`);
+      break;
+  }
+}

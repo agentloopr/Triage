@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: no
+RATIONALE: No existing board card covers a product-spec deliverable for usage-based billing; neither duplicate, subtask, nor update to any of the four open tasks applies. The item is a concrete, trackable commitment by Jules to produce a written spec, which a competent PM would open a card for. However, the board’s lists (design, backend, growth, platform) do not obviously fit a general product spec, and the source gives no routing guidance, so routing to a specific list would be a guess.

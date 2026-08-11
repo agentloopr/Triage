@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "members": [
+    {
+      "name": "Avery Chen",
+      "externalIds": { "clickup": "10000001", "linear": "usr_avery" },
+      "channelIds": { "slack": "U0000AVERY" },
+      "email": "avery@example.com",
+      "role": "engineer",
+      "defaultProjects": ["backend", "platform"],
+      "githubUsername": "averychen"
+    },
+    {
+      "name": "Rowan Diaz",
+      "externalIds": { "clickup": "10000002", "linear": "usr_rowan" },
+      "channelIds": { "slack": "U0000ROWAN" },
+      "email": "rowan@example.com",
+      "role": "designer",
+      "defaultProjects": ["design"]
+    },
+    {
+      "name": "Jules Kim",
+      "externalIds": { "clickup": "10000003", "linear": "usr_jules" },
+      "channelIds": { "slack": "U0000JULES" },
+      "email": "jules@example.com",
+      "role": "product-manager",
+      "defaultProjects": ["product", "backend"]
+    },
+    {
+      "name": "Sky Patel",
+      "externalIds": { "clickup": "10000004", "linear": "usr_sky" },
+      "channelIds": { "slack": "U0000SKY" },
+      "email": "sky@example.com",
+      "role": "qa",
+      "defaultProjects": ["platform"]
+    },
+    {
+      "name": "Noor Haddad",
+      "externalIds": { "clickup": "10000005", "linear": "usr_noor" },
+      "channelIds": { "slack": "U0000NOOR" },
+      "email": "noor@example.com",
+      "role": "marketer",
+      "defaultProjects": ["growth"]
+    },
+    {
+      "name": "Emerson Blake",
+      "externalIds": { "clickup": "10000006", "linear": "usr_emerson" },
+      "channelIds": { "slack": "U0000EMER" },
+      "email": "emerson@example.com",
+      "role": "sales-gtm",
+      "defaultProjects": ["growth"]
+    },
+    {
+      "name": "Tam Osei",
+      "externalIds": { "clickup": "10000007", "linear": "usr_tam" },
+      "channelIds": { "slack": "U0000TAM" },
+      "email": "tam@example.com",
+      "role": "delivery-lead",
+      "defaultProjects": ["product", "platform"]
+    },
+    {
+      "name": "Wren Alvarez",
+      "externalIds": { "clickup": "10000008", "linear": "usr_wren" },
+      "channelIds": { "slack": "U0000WREN" },
+      "email": "wren@example.com",
+      "role": "founder-exec",
+      "defaultProjects": []
+    }
+  ],
+  "routes": [
+    {
+      "key": "backend",
+      "externalIds": { "clickupList": "900000001", "linearTeam": "BE" },
+      "pattern": "backend|api|server|database|endpoint",
+      "defaultAssignee": "Avery Chen",
+      "technicalAssignee": "Avery Chen",
+      "validAssignees": ["Avery Chen", "Jules Kim", "Sky Patel"],
+      "validStatuses": ["to do", "in progress", "in review", "complete"],
+      "preferredRoles": ["engineer"],
+      "status": "active"
+    },
+    {
+      "key": "design",
+      "externalIds": { "clickupList": "900000002", "linearTeam": "DES" },
+      "pattern": "design|figma|mockup|visual|brand",
+      "defaultAssignee": "Rowan Diaz",
+      "validAssignees": ["Rowan Diaz", "Jules Kim"],
+      "validStatuses": ["to do", "in progress", "in review", "complete"],
+      "preferredRoles": ["designer"],
+      "status": "active"
+    },
+    {
+      "key": "product",
+      "externalIds": { "clickupList": "900000003", "linearTeam": "PRD" },
+      "pattern": "product|roadmap|spec|requirement|discovery",
+      "defaultAssignee": "Jules Kim",
+      "validAssignees": ["Jules Kim", "Tam Osei", "Wren Alvarez"],
+      "validStatuses": ["to do", "in progress", "complete"],
+      "preferredRoles": ["product-manager", "delivery-lead"],
+      "status": "active"
+    },
+    {
+      "key": "platform",
+      "externalIds": { "clickupList": "900000004", "linearTeam": "PLT" },
+      "pattern": "platform|infra|deploy|ci|pipeline|release",
+      "defaultAssignee": "Sky Patel",
+      "technicalAssignee": "Avery Chen",
+      "validAssignees": ["Sky Patel", "Avery Chen", "Tam Osei"],
+      "validStatuses": ["to do", "in progress", "blocked", "complete"],
+      "preferredRoles": ["qa", "engineer"],
+      "status": "active"
+    },
+    {
+      "key": "growth",
+      "externalIds": { "clickupList": "900000005", "linearTeam": "GTM" },
+      "pattern": "growth|campaign|outbound|marketing|launch|pricing",
+      "defaultAssignee": "Noor Haddad",
+      "validAssignees": ["Noor Haddad", "Emerson Blake", "Wren Alvarez"],
+      "validStatuses": ["to do", "in progress", "complete"],
+      "preferredRoles": ["marketer", "sales-gtm"],
+      "status": "active"
+    }
+  ],
+  "log": []
+}

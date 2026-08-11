@@ -1,0 +1,4 @@
+4. Staging 502 incident reported | quote: "Heads up — staging has been returning 502s since about 8am."
+   DESC: Sky Patel reported that staging has been returning 502 errors since around 8am.
+   TIMESTAMP: [09:02]
+   POSSIBLE_MATCH_HINT: (none)

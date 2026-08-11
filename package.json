@@ -1,0 +1,33 @@
+{
+  "name": "ops-agent-reference",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A production ops agent pipeline: meeting/channel input to governed tracker writes, with human-in-the-loop gates.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "demo": "tsx src/cli/demo.ts",
+    "record": "tsx src/cli/record.ts",
+    "eval": "tsx src/cli/eval.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.39.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.66.0",
+    "vitest": "^2.1.9"
+  }
+}

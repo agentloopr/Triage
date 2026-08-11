@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: DUPLICATE
+MATCH_TASK_ID: t500
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: t500 captures the same deliverable — building the onboarding revamp for new signups — and already lists Rowan Diaz as assignee. The item merely records Rowan verbally agreeing to own it, with no new progress or distinct sub-task. [Tier-2: task-comments on t500] No comments exist, so there is no prior activity to conflict; the card fully covers this commitment.

@@ -1,0 +1,10 @@
+ITEM: 4
+TITLE: Staging 502 incident reported
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: urgent
+STATUS: in progress
+FINAL_DESC: Staging started returning 502s at ~8am. Root cause is connection pool exhaustion. Raise the pool size, add an alert to catch this before users notice, and document the runbook so it doesn't knock us over again.
+CONFIDENCE: high
+RATIONALE: No open board task covers the staging incident. Sky's report is a new incident that Avery is already investigating and fixing, with a documentation follow-on. No evidence read needed for NEW_TASK.

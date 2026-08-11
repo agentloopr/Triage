@@ -1,0 +1,38 @@
+{
+  "channelId": "C-ENGINEERING",
+  "channelName": "engineering",
+  "deliveryId": "delivery-04",
+  "dateIso": "2026-08-14",
+  "messages": [
+    {
+      "author": "Sky Patel",
+      "at": "2026-08-14T09:02:00Z",
+      "text": "Heads up — staging has been returning 502s since about 8am."
+    },
+    {
+      "author": "Avery Chen",
+      "at": "2026-08-14T09:05:00Z",
+      "text": "Looking. Probably the connection pool again."
+    },
+    {
+      "author": "Avery Chen",
+      "at": "2026-08-14T09:31:00Z",
+      "text": "Confirmed, pool exhaustion. I'll raise the pool size and add an alert so we catch it before users do."
+    },
+    {
+      "author": "Jules Kim",
+      "at": "2026-08-14T09:40:00Z",
+      "text": "Thanks. Also can someone document the runbook for this? It has bitten us twice now."
+    },
+    {
+      "author": "Sky Patel",
+      "at": "2026-08-14T09:42:00Z",
+      "text": "I'll write it up."
+    },
+    {
+      "author": "Avery Chen",
+      "at": "2026-08-14T11:15:00Z",
+      "text": "Search relevance work is now in review by the way, ready for a look."
+    }
+  ]
+}

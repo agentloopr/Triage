@@ -1,0 +1,7 @@
+[00:00:00-00:00:40] Jules Kim: We keep hearing that new signups don't know what to do first. I think we should ship an onboarding revamp.
+[00:00:40-00:01:18] Rowan Diaz: Agreed. Walk them through the first meaningful action rather than dumping them on an empty dashboard.
+[00:01:18-00:01:40] Jules Kim: Right. Rowan, can you own that?
+[00:01:40-00:01:56] Rowan Diaz: Yes, I can take it.
+[00:01:56-00:02:38] Sky Patel: Separate thing — deploys are still failing halfway and leaving the cluster in a weird state. We need to make the pipeline handle partial failure properly.
+[00:02:38-00:02:56] Jules Kim: Isn't there a card for that?
+[00:02:56-00:03:16] Sky Patel: Maybe? I'll double check. Either way it needs doing.

@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "validAssigneeAdditions": {
+    "backend": [
+      "Rowan Diaz"
+    ]
+  },
+  "listAliases": {},
+  "nameAliases": {},
+  "notDuplicatePairs": [
+    {
+      "proposedTitle": "Fix the invoice PDF layout",
+      "existingId": "t900",
+      "by": "Jules Kim",
+      "at": "2026-08-01T00:00:00Z"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Invoice rendering and billing webhooks are separate workstreams.",
+      "scope": "backend",
+      "by": "Jules Kim",
+      "at": "2026-08-01T00:00:00Z"
+    }
+  ]
+}

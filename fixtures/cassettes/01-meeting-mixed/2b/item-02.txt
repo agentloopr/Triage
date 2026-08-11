@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The source explicitly has Avery committing to add a hard limit on the upload endpoint following a 400 MB payload incident. t200 covers rate limiting (throttling), not payload size limits — distinct deliverable, no containment. A concrete, trackable fix.

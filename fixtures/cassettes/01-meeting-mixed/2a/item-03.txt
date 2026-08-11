@@ -1,0 +1,8 @@
+ITEM: 3
+TITLE: Onboarding main flow drafted
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t100
+FINAL_DESC: Rowan reported that the main onboarding flow design has been drafted. He is also writing the welcome email copy within the same revamp, which ships when the onboarding revamp ships.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t100 — no prior comments, so the "drafted" progress is genuinely new. The existing t100 card covers the onboarding redesign; this is a status update, not a separate deliverable.]

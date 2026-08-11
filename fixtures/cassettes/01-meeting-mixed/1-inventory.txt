@@ -1,0 +1,36 @@
+--- ACTION INVENTORY ---
+1. Rate limiting implementation is done and in review | quote: "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday."
+   DESC: Avery reported that the token‑bucket rate limiting is complete, is in review, and is waiting for Sky Patel’s sign‑off before a planned Friday shipment.
+   TIMESTAMP: 00:00:12-00:00:48
+   POSSIBLE_MATCH_HINT: id:t200
+
+2. Add hard request-size limit on upload endpoint | quote: "I'll add a hard limit."
+   DESC: In response to a 400 MB payload that took workers down last week, Avery committed to adding a hard limit on the upload endpoint. Jules agreed.
+   TIMESTAMP: 00:01:10-00:01:36
+   POSSIBLE_MATCH_HINT: (none)
+
+3. Onboarding main flow drafted | quote: "Main flow is drafted."
+   DESC: Rowan reported that the main onboarding flow design has been drafted.
+   TIMESTAMP: 00:01:58-00:02:30
+   POSSIBLE_MATCH_HINT: id:t100
+
+4. Write welcome email copy | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
+   DESC: Rowan committed to writing the welcome email copy as part of the onboarding revamp; it will ship together with the revamp. Jules confirmed.
+   TIMESTAMP: 00:01:58-00:02:30
+   POSSIBLE_MATCH_HINT: id:t100
+
+5. Refresh pricing page copy | quote: "I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers."
+   DESC: Noor committed to updating the pricing page copy this week because it still shows the old three-tier structure.
+   TIMESTAMP: 00:02:52-00:03:34
+   POSSIBLE_MATCH_HINT: id:t300
+
+6. Investigate whether flaky auth test is causing noisy build alerts | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
+   DESC: Sky noted that nightly build alerts have been noisy and committed to checking if a flaky auth test is the cause, with a report due on Wednesday.
+   TIMESTAMP: 00:03:56-00:04:38
+   POSSIBLE_MATCH_HINT: id:t400
+
+7. Write spec for usage-based billing idea | quote: "I'll write that up."
+   DESC: In response to Sky’s request for a written spec on usage‑based billing, Jules committed to producing the spec.
+   TIMESTAMP: 00:06:22-00:06:38
+   POSSIBLE_MATCH_HINT: (none)
+--- END ACTION INVENTORY ---

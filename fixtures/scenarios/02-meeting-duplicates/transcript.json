@@ -1,0 +1,62 @@
+{
+  "meetingId": "meeting-2026-08-12-planning",
+  "deliveryId": "delivery-02",
+  "summary": "Planning session on onboarding and deploys.",
+  "recordedAtIso": "2026-08-12T14:00:00Z",
+  "participants": [
+    "Rowan Diaz",
+    "Jules Kim",
+    "Sky Patel"
+  ],
+  "lines": [
+    {
+      "start": 0,
+      "end": 40,
+      "speaker": "Jules Kim",
+      "text": "We keep hearing that new signups don't know what to do first. I think we should ship an onboarding revamp.",
+      "confidence": 0.96
+    },
+    {
+      "start": 40,
+      "end": 78,
+      "speaker": "Rowan Diaz",
+      "text": "Agreed. Walk them through the first meaningful action rather than dumping them on an empty dashboard.",
+      "confidence": 0.96
+    },
+    {
+      "start": 78,
+      "end": 100,
+      "speaker": "Jules Kim",
+      "text": "Right. Rowan, can you own that?",
+      "confidence": 0.96
+    },
+    {
+      "start": 100,
+      "end": 116,
+      "speaker": "Rowan Diaz",
+      "text": "Yes, I can take it.",
+      "confidence": 0.96
+    },
+    {
+      "start": 116,
+      "end": 158,
+      "speaker": "Sky Patel",
+      "text": "Separate thing — deploys are still failing halfway and leaving the cluster in a weird state. We need to make the pipeline handle partial failure properly.",
+      "confidence": 0.96
+    },
+    {
+      "start": 158,
+      "end": 176,
+      "speaker": "Jules Kim",
+      "text": "Isn't there a card for that?",
+      "confidence": 0.96
+    },
+    {
+      "start": 176,
+      "end": 196,
+      "speaker": "Sky Patel",
+      "text": "Maybe? I'll double check. Either way it needs doing.",
+      "confidence": 0.96
+    }
+  ]
+}

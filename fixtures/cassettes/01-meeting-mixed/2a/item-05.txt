@@ -1,0 +1,6 @@
+ITEM: 5
+TITLE: Refresh pricing page copy
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t300
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t300 — no activity] The board already contains t300 "Q3 pricing page refresh" assigned to Noor Haddad with the same scope (update stale pricing copy showing old tiers). The source merely re-states the deliverable without adding any new status, due date, or assignee information; it is the same work already tracked, therefore a duplicate.

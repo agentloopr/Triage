@@ -1,0 +1,22 @@
+[
+  {
+    "id": "t500",
+    "title": "New-user first-run flow",
+    "listKey": "design",
+    "assignees": [
+      "Rowan Diaz"
+    ],
+    "status": "in progress",
+    "description": "Build the first-run experience for new signups: welcome, setup, first action."
+  },
+  {
+    "id": "t600",
+    "title": "Deploy pipeline hardening",
+    "listKey": "platform",
+    "assignees": [
+      "Sky Patel"
+    ],
+    "status": "in progress",
+    "description": "Make the deploy pipeline resilient to partial failures."
+  }
+]

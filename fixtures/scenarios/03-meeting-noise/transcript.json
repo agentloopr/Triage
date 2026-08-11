@@ -1,0 +1,62 @@
+{
+  "meetingId": "meeting-2026-08-13-retro",
+  "deliveryId": "delivery-03",
+  "summary": "An informal retro. Discussion only.",
+  "recordedAtIso": "2026-08-13T16:00:00Z",
+  "participants": [
+    "Jules Kim",
+    "Tam Osei",
+    "Wren Alvarez"
+  ],
+  "lines": [
+    {
+      "start": 0,
+      "end": 44,
+      "speaker": "Jules Kim",
+      "text": "I thought last sprint went well. The estimates were closer than usual, which was nice.",
+      "confidence": 0.96
+    },
+    {
+      "start": 44,
+      "end": 88,
+      "speaker": "Tam Osei",
+      "text": "Agreed. I think the difference was breaking things down before planning rather than during.",
+      "confidence": 0.96
+    },
+    {
+      "start": 88,
+      "end": 130,
+      "speaker": "Wren Alvarez",
+      "text": "That matches what I've seen elsewhere. Teams that estimate stories they've already discussed tend to be more accurate.",
+      "confidence": 0.96
+    },
+    {
+      "start": 130,
+      "end": 170,
+      "speaker": "Jules Kim",
+      "text": "There were a couple of small things that annoyed me but honestly they're not worth raising, I'll just handle them.",
+      "confidence": 0.96
+    },
+    {
+      "start": 170,
+      "end": 210,
+      "speaker": "Tam Osei",
+      "text": "Fair. How do people feel about the meeting length? Should we keep it at thirty minutes?",
+      "confidence": 0.96
+    },
+    {
+      "start": 210,
+      "end": 240,
+      "speaker": "Wren Alvarez",
+      "text": "Thirty feels right to me.",
+      "confidence": 0.96
+    },
+    {
+      "start": 240,
+      "end": 262,
+      "speaker": "Jules Kim",
+      "text": "Same. Alright, that's it — nothing to action, thanks everyone.",
+      "confidence": 0.96
+    }
+  ]
+}

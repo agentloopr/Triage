@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Board has only t900 (billing webhook retry), explicitly confirmed separate from invoice layout work. No existing card covers fixing invoice PDF rendering, and the source describes a concrete deliverable with an owner (Rowan Diaz).

@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t300
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: Noor's statement in the standup (00:02:52) directly updates t300 ("Q3 pricing page refresh" — update copy after tier change). The item captures her new commitment to refresh the copy this week because the page still shows old tiers. [Tier-2: task-comments on t300 — no prior comments] This is genuine new progress on the existing card, not already logged.

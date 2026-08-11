@@ -1,0 +1,13 @@
+{
+  "description": "Work that already exists on the board under different wording, plus a bare status-check that is correctly not turned into a card.",
+  "note": "The CROSS-BOUNDARY dispute hold (2a says new, 2b says existing) is covered by unit tests rather than a cassette: forcing two independent reads to disagree would mean fabricating a model reply, which defeats the point of recording. Here the first read caught the duplicate on its own, which is the healthy outcome.",
+  "inventoryCount": 2,
+  "categories": {
+    "DUPLICATE": 1,
+    "NEW_TASK": 1
+  },
+  "cleanCount": 1,
+  "heldCount": 0,
+  "skippedNotTaskCount": 1,
+  "createdCount": 0
+}

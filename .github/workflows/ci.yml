@@ -1,0 +1,42 @@
+name: CI
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '${{ matrix.node }}'
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit        # tests INCLUDED
+      - run: npm run lint
+      - run: npm test
+      # No secrets in this job's env — that is the point. This step passing in public is what proves
+      # the "runs with no API key" claim, rather than the README asserting it.
+      - run: npm run demo -- --twice
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: no internal debug routes
+        run: '! grep -rn "debug/clarify-test" --include="*.ts" --include="*.md" . || exit 1'

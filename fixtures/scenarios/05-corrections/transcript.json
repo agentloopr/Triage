@@ -1,0 +1,34 @@
+{
+  "meetingId": "meeting-2026-08-15-billing",
+  "deliveryId": "delivery-05",
+  "summary": "Billing catch-up.",
+  "recordedAtIso": "2026-08-15T11:00:00Z",
+  "participants": [
+    "Avery Chen",
+    "Rowan Diaz",
+    "Jules Kim"
+  ],
+  "lines": [
+    {
+      "start": 0,
+      "end": 46,
+      "speaker": "Jules Kim",
+      "text": "The invoice PDFs are coming out with the totals column overlapping the notes. Can we fix the invoice PDF layout?",
+      "confidence": 0.96
+    },
+    {
+      "start": 46,
+      "end": 70,
+      "speaker": "Rowan Diaz",
+      "text": "I can take that — I did the original template.",
+      "confidence": 0.96
+    },
+    {
+      "start": 70,
+      "end": 92,
+      "speaker": "Jules Kim",
+      "text": "Great, it is yours.",
+      "confidence": 0.96
+    }
+  ]
+}

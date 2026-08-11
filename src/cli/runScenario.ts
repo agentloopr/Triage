@@ -8,6 +8,7 @@
 import { jsonFileStore } from '../idempotency/jsonFile';
 import { memoryStore } from '../idempotency/memory';
 import { type Scenario, diffExpected } from '../fixtures';
+import { traceEvents, traceModelClient } from '../observability/otel';
 import { PipelineEvents, type PipelineEvent } from '../pipeline/events';
 import { setTaskUrlBuilder } from '../pipeline/gates/clarify';
 import { type PipelineResult, runPipeline } from '../pipeline/run';
@@ -43,10 +44,18 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
     if (!opts.quiet) print(e);
   });
 
+  // Wired unconditionally, with no flag and no endpoint check. `@opentelemetry/api` hands back
+  // non-recording spans until the host application registers a provider, so this costs an allocation
+  // per call and emits nothing — which is why the demo still runs offline with no configuration.
+  // The alternative, gating it on an env var, means the instrumentation is only ever exercised by
+  // people who already turned it on, and the first person to do that discovers whether it works.
+  const untrace = traceEvents(emitter);
+  const model = traceModelClient(opts.model);
+
   let modelCalls = 0;
   const complete = async (key: string, prompt: string): Promise<string> => {
     modelCalls++;
-    const r = await opts.model.complete({ key, messages: [{ role: 'user', content: prompt }], determinism: 'strict' });
+    const r = await model.complete({ key, messages: [{ role: 'user', content: prompt }], determinism: 'strict' });
     if (r.truncated) throw new Error(`[${key}] reply was truncated`);
     return r.text;
   };
@@ -76,6 +85,7 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
           heldGates: result.held.map((h) => h.gate),
         });
 
+  untrace();
   setOpsRegistryPath(null);
   setCorrectionsPath(null);
   setTaskUrlBuilder(null);

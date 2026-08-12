@@ -16,7 +16,9 @@
  */
 import { type IdempotencyStore, contentKey } from '../idempotency';
 import type { IngestedSource } from '../ingest';
+import { type RoleArchetype, getMembers } from '../registry/opsRegistry';
 import type { PendingHumanStore } from '../state/pendingHuman';
+import type { RoleOpenItem, RoleStateStore } from '../state/roleState';
 import type { BoardTask, TrackerAdapter } from '../trackers';
 import { renderBoardSnapshot, renderCompactSnapshot } from '../trackers/renderSnapshot';
 import { PipelineEvents } from './events';
@@ -44,6 +46,14 @@ export type PipelineDeps = {
    * process that asked it.
    */
   pendingHuman?: PendingHumanStore;
+  /**
+   * Where per-role memory goes — what each role now has open, read back into the next run's prompt.
+   *
+   * Optional, and omitting it means the run keeps no per-role state rather than writing to a default
+   * path you did not choose. A pipeline that touches disk without being asked is a surprise, and the
+   * write path is the wrong place for surprises.
+   */
+  roleState?: RoleStateStore;
   /** Passes 0 → 1.7. */
   runPass: PassRunner;
   /** Pass 2a. */
@@ -245,6 +255,13 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
   );
   emit({ type: 'executed', ...exec });
 
+  // Per-role memory, written from what actually landed rather than from what was planned — a plan
+  // that failed at the tracker must not leave the next run believing the work is underway. Opt-in:
+  // no store, no writes.
+  if (deps.roleState) {
+    recordExecutedWorkByRole(deps.roleState, checked.clean, exec, (detail) => emit({ type: 'alert', detail }));
+  }
+
   // ── Pass 2d — audit against a FRESH read ─────────────────────────────────
   // Re-read rather than reusing `tasks`: auditing against the pre-write snapshot would just re-read
   // our own assumptions and pass every time.
@@ -254,6 +271,51 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
   emit({ type: 'audit', passed: audit.passed, mismatched: audit.mismatched, report: audit.report });
 
   return { ...base, exec, audit };
+}
+
+/**
+ * Fold what a run actually wrote into each role's state file.
+ *
+ * Keyed off the **executed** actions, not the plan: an item whose write failed or was refused is not
+ * "already open for" anyone, and recording it would teach the next run to treat undone work as done.
+ *
+ * Entirely fail-open. This is a memo written after the writes have already succeeded; losing it costs
+ * the next run some context and must never turn a successful run into a failed one.
+ */
+function recordExecutedWorkByRole(
+  store: RoleStateStore,
+  clean: CategorizationItem[],
+  exec: ExecuteResult,
+  alert: (detail: string) => void
+): void {
+  try {
+    const roleOf = new Map(getMembers().map((m) => [m.name.toLowerCase(), m.role]));
+    const at = new Date().toISOString();
+    const byRole = new Map<RoleArchetype, RoleOpenItem[]>();
+
+    for (const action of exec.actions) {
+      if (!action.ok || action.outcome !== 'planned') continue;
+
+      const item = clean.find((c) => c.item === action.item);
+      const owner = item?.assignee ?? item?.notifyAssignee;
+      const role = owner ? roleOf.get(owner.toLowerCase()) : undefined;
+      if (!role) continue;
+
+      const created = action.results.find((r) => r.op.kind === 'createTask' && r.outcome.status === 'applied');
+      const taskId =
+        (created?.outcome.status === 'applied' ? created.outcome.resultId : undefined) ??
+        item?.existingTaskId ??
+        item?.parentTaskId;
+
+      const bucket = byRole.get(role) ?? [];
+      bucket.push({ ...(taskId ? { taskId } : {}), title: action.title, at });
+      byRole.set(role, bucket);
+    }
+
+    for (const [role, items] of byRole) store.record(role, items);
+  } catch (err) {
+    alert(`could not update role state: ${(err as Error)?.message ?? err}`);
+  }
 }
 
 /** The manifest as text — for traces, and for a human reading what the run decided. */

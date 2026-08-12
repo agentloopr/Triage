@@ -11,9 +11,11 @@
  * phases while two prompts already referred to "the role profiles", and a promise in a prompt with
  * nothing behind it is worse than no promise, because the model acts on it.
  *
- * What is deliberately NOT here: per-role state files. State per role only means something when each
- * role is a live agent with its own memory, and this repo ships profiles, not agents. An empty state
- * file per archetype would be exactly the kind of decorative structure this module exists to avoid.
+ * A profile is the **static** half — what this kind of person owns, and how they phrase an update.
+ * The changing half lives in `state/roleState.ts`: what they currently have open, plus whatever
+ * context a human wants attached to them. Both halves land in the same roster block, because from
+ * the prompt's point of view "Avery is an engineer" and "Avery already picked up the rate limiting"
+ * are the same kind of fact.
  *
  * Missing or malformed profiles **fail open**: the prompt loses context and says so in a warning,
  * rather than a run dying because a markdown file was edited badly. Nothing here can produce a wrong
@@ -22,6 +24,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROLE_ARCHETYPES, type RoleArchetype, getMembers } from './opsRegistry';
+import { roleStateLines } from '../state/roleState';
 import { ROLES_DIR } from '../config';
 
 export interface RoleProfile {
@@ -118,10 +121,14 @@ export function invalidateRoleProfileCache(): void {
 /**
  * The roster block the categorization and verification prompts inject.
  *
- * One line per person: name, archetype, and what that archetype owns. Deliberately compact — the
- * production system splices roughly ten kilobytes of persona prose per agent into its prompts, and
- * the taxonomy above it is the text that actually decides the answer. A roster that outweighs the
- * rules it sits next to is how a prompt stops working without anyone editing the rules.
+ * One line per person: name, archetype, and what that archetype owns, followed by that role's state
+ * — the human-maintained context and what the pipeline already put on their plate. Deliberately
+ * compact — the production system splices roughly ten kilobytes of persona prose per agent into its
+ * prompts, and the taxonomy above it is the text that actually decides the answer. A roster that
+ * outweighs the rules it sits next to is how a prompt stops working without anyone editing the rules.
+ *
+ * The state lines are what make a second meeting about the same work legible: without them every run
+ * starts from an empty memory of who is already doing what.
  *
  * Returns `[]` when nothing can be loaded, so callers emit no header rather than an empty one.
  */
@@ -130,9 +137,10 @@ export function roleRosterBlock(): string[] {
   if (members.length === 0) return [];
 
   const profiles = loadRoleProfiles();
-  const lines = members.map((m) => {
+  const lines = members.flatMap((m) => {
     const p = profiles.get(m.role);
-    return p ? `  ${m.name} — ${p.title}: ${firstSentence(p.owns)}` : `  ${m.name} — ${m.role}`;
+    const head = p ? `  ${m.name} — ${p.title}: ${firstSentence(p.owns)}` : `  ${m.name} — ${m.role}`;
+    return [head, ...roleStateLines(m.role, m.name)];
   });
 
   return ['ROSTER (canonical names, with what each person\'s role owns):', ...lines];

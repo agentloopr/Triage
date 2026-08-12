@@ -76,6 +76,9 @@ jobs:
             fi
           }
           scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal system or product name'
+          # FILE CONTENT ONLY, deliberately — not git history. Commit authorship is attribution and
+          # is meant to be public; --exclude-dir=.git is a decision, not an oversight. Do not read a
+          # green run here as "the history was scrubbed", because it was not.
           scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal person name'
           scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'a real tracker id shape'
           scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal doc reference'

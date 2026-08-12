@@ -17,7 +17,7 @@ this line is how you work out whether the other already has it.
 | Read-only enforcement | Structural, via a wrapper script that refuses write subcommands | Enforced at the adapter | Same guarantee, fewer moving parts. |
 | Ingestion | 8 webhooks, 14 cron routes, an Express app | Out of scope entirely | Ingestion is your problem; this repo starts at `runPipeline(source, boardSnapshot)`. |
 | Per-person agents | 12 live agent runtimes with their own state and tool access | Role *profiles* that shape routing and prompt context | Shipping "8 role agents" would be the one claim a technical reader could puncture. |
-| Per-role state | A `STATE.md` and journal per agent, rewritten on a schedule | Nothing | State per role only means something when the role is a live agent with its own memory. An empty state file per archetype would be decoration. |
+| Per-role state | A `STATE.md` and journal per agent, rewritten on a schedule | One JSON file per archetype: what that role currently has open, plus human-maintained context | Same idea, scoped to what a pipeline can honestly maintain. Production's version is an agent's working memory; here it is a memo the pipeline writes after each run and reads back into the next one's prompt. No journal — nothing here would read one. |
 | Read-only enforcement in agent passes | An environment variable read by a shell script | A wrapper around the adapter whose `apply()` refuses | Same intent, fewer moving parts, and the guarantee sits next to the thing it guards. |
 | Tracker client | A 2,034-line bash script shelling out from TypeScript | Typed HTTP adapters for ClickUp and Linear | Most of that script was `jq` shaping. Three pieces were real logic and were carried across; see below. |
 | Retrieval | A live vector substrate | A null retrieval interface | Retrieval quality has never been measured, so no claim about it would be falsifiable. |
@@ -61,7 +61,9 @@ baseline in this repo, and there has never been one. What exists instead: the fr
 the fail-loud eval, the locked regression cases, the scaffolding lint, and every scenario golden
 re-verified against a fresh live recording. Those cover the deterministic layers. **None of them can
 tell you whether a generic example makes the model reason worse than a tuned one.** That limit is
-stated here so it does not have to be discovered, and it belongs in LIMITATIONS.md when it is written.
+stated here so it does not have to be discovered, and is carried in
+[LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers) alongside every other thing this repo
+cannot measure.
 
 **Re-recording found something no test could have.** One scenario's expectation turned out to rest on
 a coin toss: Pass 2b's blind read of a marginal item landed on NEW_TASK twice and UPDATE once across

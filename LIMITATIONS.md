@@ -1,0 +1,109 @@
+# Limitations
+
+What this repo cannot tell you, and what you should not infer from a green test run.
+
+These limits are real and none of them is a bug. They are collected here because otherwise you meet
+them by accident, scattered across four other documents — and a limit you discover late is worth
+much less than one you were handed up front.
+
+> **This page is *what you cannot rely on*.** For *why it is that way and what happened*, see
+> [EXTRACTION.md](EXTRACTION.md), which carries the narrative.
+
+## Measurement
+
+**No precision or recall figures, anywhere.** Scoring accuracy needs a hand-labelled corpus — a
+human deciding, independently and unseen, what each item *should* have been. There isn't one. The
+only alternative is a model grading a model, which is a system agreeing with itself; the number
+would look authoritative and carry no information.
+
+What ships instead is hand-verified `expected.json` goldens — dispositions checked item by item.
+That is enough to pin behaviour and **not** enough to claim accuracy. Volume, disposition and hold
+rate are honest here; accuracy is not reported. See [EVAL.md](EVAL.md).
+
+**`miss_rate` reports *not scored*, never a pass.** A dropped item leaves no event, so there is
+nothing in the trace to score — scoring it from the trace would be measuring a blind spot with the
+blind spot. It appears as *not scored* deliberately, rather than as a silent zero that reads like
+success.
+
+## What the test suite covers
+
+523 tests, and they cover the **deterministic layers**: prompt construction, parsers, gates, the
+plan, the writes, the audit, the idempotency layers. Cassettes freeze the model's replies, which is
+what makes CI free and reproducible — and is exactly why:
+
+**A prompt edit that makes the model itself reason worse will not fail this suite.** Every test will
+stay green while the model quietly gets worse at the judgement the prompt asks for. Detecting that
+needs a re-record and an eval diff, which is the workflow [EVAL.md](EVAL.md) prescribes. Do not read
+a green run as "that prompt change was safe."
+
+**No scenario asserts a human hold.** Whether two independent reads disagree about one genuinely
+ambiguous item varies run to run — three consecutive re-recordings of one identical fixture gave
+three different answers. That variance is *why* the disagreement is worth surfacing to a human in
+the first place, and it means no cassette can pin it. The gates that produce holds are proven
+separately and deterministically, with scripted replies, in `contractGates.test.ts` and
+`run.test.ts`.
+
+**The de-tuning A/B never ran, and never can.** The strongest available guard on replacing tuned
+prompts with generic ones is to record each prompt before and after and diff the eval dimensions.
+That needs a tuned baseline *in this repo*, and there has never been one — the public prompts were
+authored generic from the start. So nothing here can tell you whether a generic worked example makes
+the model reason worse than a tuned one. It is the single largest unmeasured risk in the extraction.
+
+## Integrations
+
+**Neither tracker adapter has made a live call.** ClickUp and Linear pass the shared contract suite
+against hand-written fakes that speak each vendor's documented wire format. That proves the
+adapters' own logic — replace-versus-append, the protected-status refusal, vocabulary resolution,
+pagination, capability mapping, error handling.
+
+It cannot prove **an endpoint path, a field name, or an auth header**, because the fake was written
+from the same reading of the docs as the adapter it tests. A shared misreading passes both. Only a
+live call settles those. Treat both adapters as unverified against the real API until you have run
+one. See [ADAPTERS.md](ADAPTERS.md).
+
+**Ingestion is out of scope entirely.** No webhooks, no polling, no auth, no retry logic. The
+pipeline starts at `runPipeline(source, deps)` with a normalized source. Getting a meeting into that
+shape is your problem.
+
+**Retrieval is a null interface.** There is a seam and nothing behind it. The production system runs
+a live vector substrate, but its retrieval quality has never been measured, so any claim made here
+would be unfalsifiable. Better an obvious hole than a number nobody checked.
+
+## Model behaviour
+
+**Prompt caching does not fire.** The Anthropic adapter sets a cache breakpoint on the last system
+block; the pipeline sends everything as a single user message and no system prompt. Measured
+cache-hit rate across 46 calls: **zero**. The board snapshot, taxonomy and worked examples are
+re-sent at full price on every call. The caching code is decorative until the stable prefix moves
+into `system`.
+
+**Token counts are not comparable between providers.** Claude reports **1.7×** the input tokens for
+byte-identical prompts — a tokenizer difference, not a bigger prompt. Any per-token cost comparison
+across vendors that skips this step is wrong by whatever the tokenizer ratio happens to be.
+
+**The two providers disagree about what counts as an action item**, on two of five scenarios. Every
+downstream layer behaves identically given each provider's own replies — the pipeline is portable.
+Extraction is not, and this repo has no ground truth to say which model is right. See
+[PROVIDERS.md](PROVIDERS.md).
+
+**No agent runtime.** Passes 2a and 2b are plain completions with evidence pre-fetched host-side,
+where production uses tool-using agents that fetch extra card history on demand. The cost is real:
+worse duplicate recall on semantically-worded matches, where the phrasing differs enough that the
+candidate selector never surfaces the card. The whole-board Jaccard backstop and the
+evidence-citation gate catch the fallout — but as **human holds**, not as silent correct answers.
+
+A read-only tool loop ships (`src/pipeline/toolLoop.ts`, DeepSeek only, off by default) and recovers
+some of that. It is not the default path and is not what the shipped recordings exercise.
+
+## Scale
+
+Nothing here has been run against a large board. Two things scale with board size and neither has a
+measured ceiling:
+
+- The whole-board duplicate backstop is a Jaccard scan of **every open card for every `NEW_TASK`** —
+  O(items × cards) per run.
+- The board snapshot puts **every card** in the prompt. Descriptions are capped (500 chars by
+  default, `DEFAULT_DESC_MAX_CHARS`); the number of cards is not capped at all.
+
+Both are fine at fixture scale. Neither has been profiled, so the honest statement is that no ceiling
+is documented — not that none exists.

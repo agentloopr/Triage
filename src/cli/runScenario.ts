@@ -5,6 +5,9 @@
  * lives here. That is also what makes the demo trustworthy: it is not a special "demo mode" through
  * a simplified path, it is the real pipeline with a different provider behind the same seam.
  */
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { jsonFileStore } from '../idempotency/jsonFile';
 import { memoryStore } from '../idempotency/memory';
 import { type Scenario, diffExpected } from '../fixtures';
@@ -15,6 +18,7 @@ import { type PipelineResult, runPipeline } from '../pipeline/run';
 import type { ModelClient } from '../providers';
 import { setOpsRegistryPath } from '../registry/opsRegistry';
 import { setCorrectionsPath } from '../state/corrections';
+import { fileRoleStateStore, setRoleStateDir } from '../state/roleState';
 import { memoryTracker } from '../trackers/memory';
 import { categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
 
@@ -35,6 +39,19 @@ export type ScenarioRun = {
 export async function runScenario(scenario: Scenario, opts: RunScenarioOptions): Promise<ScenarioRun> {
   setOpsRegistryPath(scenario.registryPath);
   setCorrectionsPath(scenario.correctionsPath ?? `${scenario.dir}/.corrections.json`);
+
+  // Role state gets a FRESH directory per invocation, not a fixed one under the scenario.
+  //
+  // Two reasons, and the second is the one that bites. First: the pipeline writes role state after
+  // every execute and that state enters the next run's prompt, so a fixture whose prompt depends on
+  // how many times you have run it is not a fixture. Second: a path derived from the scenario is
+  // shared mutable state between every runner using that scenario, and the test files run
+  // concurrently — one resetting the directory while another builds a prompt from it produces a
+  // prompt that differs run to run, which surfaces as cassette-drift warnings on recordings nobody
+  // has touched. A unique directory has no such race by construction.
+  const roleStateDir = mkdtempSync(join(tmpdir(), 'scenario-role-state-'));
+  setRoleStateDir(roleStateDir);
+
   setTaskUrlBuilder((id) => `card ${id}`);
 
   const events: PipelineEvent[] = [];
@@ -65,6 +82,7 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
   const result = await runPipeline(scenario.source, {
     tracker,
     idempotency: opts.idempotencyPath ? jsonFileStore(opts.idempotencyPath) : memoryStore(),
+    roleState: fileRoleStateStore(roleStateDir),
     events: emitter,
     runPass: async ({ prompt, label }) => ({ text: await complete(passKey(label), prompt) }),
     runCategorization: (prompt, label) => complete(`2a/${itemKey(label)}`, prompt),
@@ -88,6 +106,8 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
   untrace();
   setOpsRegistryPath(null);
   setCorrectionsPath(null);
+  setRoleStateDir(null);
+  rmSync(roleStateDir, { recursive: true, force: true });
   setTaskUrlBuilder(null);
 
   return { result, events, mismatches, modelCalls };

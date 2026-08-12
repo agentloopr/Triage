@@ -11,6 +11,7 @@ import {
   rosterRoutingKeywords,
   setRolesDir,
 } from './roleProfiles';
+import { recordRoleWork, setRoleStateDir } from '../state/roleState';
 
 /**
  * Role profiles are the PRD's headline design change, and the thing most likely to quietly become
@@ -92,6 +93,26 @@ describe('the roster block the prompts inject', () => {
     writeFileSync(join(DIR, 'r.json'), JSON.stringify({ ...REGISTRY, members: [] }), 'utf8');
     setOpsRegistryPath(join(DIR, 'r.json'));
     expect(roleRosterBlock()).toEqual([]);
+  });
+
+  /**
+   * The wiring test for per-role state. Without it, `roleState.ts` could pass every one of its own
+   * tests while reaching no prompt at all — which is exactly how `config/roles/` sat empty for three
+   * phases behind two prompts that already referred to it.
+   */
+  it("carries a role's state into the block, under the person who holds that role", () => {
+    const stateDir = join(DIR, 'state');
+    mkdirSync(stateDir, { recursive: true });
+    setRoleStateDir(stateDir);
+    recordRoleWork('engineer', [{ taskId: 't200', title: 'Public API rate limiting', at: '2026-08-12T10:00:00.000Z' }]);
+
+    const block = roleRosterBlock().join('\n');
+    expect(block).toContain('already open for Avery Chen');
+    expect(block).toContain('Public API rate limiting (t200)');
+    // Rowan holds a different archetype and has no state, so no line is invented for them.
+    expect(block).not.toContain('already open for Rowan Diaz');
+
+    setRoleStateDir(null);
   });
 
   it('collects routing keywords for the archetypes actually on the roster', () => {

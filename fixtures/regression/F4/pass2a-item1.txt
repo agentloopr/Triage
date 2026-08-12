@@ -2,8 +2,9 @@ ITEM: 1
 TITLE: Wire theme colours and fonts into image generation
 CATEGORY: NEW_TASK
 LIST: design
+ASSIGNEE: Rowan Diaz
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Add custom theme support to the image-generation pipeline by allowing users to specify brand colours and fonts. The front end already holds the font data; wire it through so the image-gen prompt injects these custom themes instead of falling back to defaults.
+FINAL_DESC: Add custom theme support to the image-generation pipeline. Users can specify brand colours and fonts, which are injected into the prompt. The front end already has the font data; wire it through so generation picks up custom themes instead of defaults.
 CONFIDENCE: high
-RATIONALE: The only open card (t-abc2) covers testing and refinement of existing image generation prompting, not the implementation of a new theme-injection feature. Closing that test card would not automatically deliver this work, so containment fails and no duplicate exists. This is a net-new deliverable.
+RATIONALE: No open card covers this deliverable. The only board task (t-abc2) is about refinement and testing of existing image prompting, not about building a new theme‑injection feature. The item is net‑new work.

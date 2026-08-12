@@ -104,8 +104,12 @@ export function makeToolLoopRunner(opts: ToolLoopOptions): (prompt: string, labe
     const messages: ChatMessage[] = [{ role: 'user', content: prompt }];
 
     for (let i = 0; i < maxIterations; i++) {
+      // Keyed per TURN. Every turn used to share one key, so a recording kept only the last reply and
+      // a replay served that reply to every turn — a loop that could not be recorded. That, plus the
+      // cassette format dropping `toolCalls` entirely, is why this runner was never wired to anything
+      // that replays: it could not have worked offline if it had been.
       const res = await opts.model.complete({
-        key: label,
+        key: `${label}/turn-${i + 1}`,
         messages,
         determinism: 'strict',
         tools: READ_ONLY_TOOLS,
@@ -131,7 +135,7 @@ export function makeToolLoopRunner(opts: ToolLoopOptions): (prompt: string, labe
     // every parser downstream reads as "this pass found nothing" — indistinguishable from a real
     // empty result, and the reason the cap needs an exit that still produces output.
     const final = await opts.model.complete({
-      key: `${label}:final`,
+      key: `${label}/final`,
       messages: [...messages, { role: 'user', content: 'Stop using tools. Answer now, in the required output format, using what you already have.' }],
       determinism: 'strict',
     });

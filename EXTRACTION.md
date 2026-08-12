@@ -143,11 +143,17 @@ system block, and the pipeline sends no system block at all — so it never fire
 re-sends the whole board snapshot at full price. Cache-hit rate across 46 calls was zero. The caching
 code is decorative until the stable prefix moves into `system`.
 
-## What the adapters have NOT been proven against
+## What the adapters have been proven against
 
-The ClickUp and Linear adapters pass the shared contract suite against hand-written fakes that speak
-each vendor's documented wire format. **That is not recorded live traffic, and the distinction is
-real.** The fakes prove the adapter's own logic — replace-versus-append, the protected-status refusal,
-vocabulary resolution, pagination, capability mapping, error handling. They cannot prove an endpoint
-path, a field name or an auth header, because the fake was written from the same reading of the docs
-as the adapter it tests. Only a live call settles those, and no account exists for either tracker yet.
+Both pass the shared contract suite against hand-written fakes that speak each vendor's documented
+wire format. **A fake is not recorded live traffic, and the distinction is real.** The fakes prove an
+adapter's own logic — replace-versus-append, the protected-status refusal, vocabulary resolution,
+pagination, capability mapping, error handling. They cannot prove an endpoint path, a field name or an
+auth header, because the fake was written from the same reading of the docs as the adapter it tests.
+
+**Both have now made a live call, 2026-08-12** — a full smoke against a throwaway account each,
+through the ops registry and the real adapter code path, not a script standing in for it. ClickUp:
+18 checks, including the protected-status guard refusing a real card in a real status. Linear: 17
+checks, including two assignees on one issue correctly reporting `unsupported` rather than silently
+keeping the first — the exact failure `OpOutcome` exists to name. Both test objects deleted
+themselves; both accounts were confirmed back to their starting state afterward.

@@ -119,5 +119,19 @@ shared misreading passes both.
 
 So the suite proves an adapter's own logic — replace-versus-append, refusals, vocabulary resolution,
 pagination, capability mapping, error handling — and **cannot prove an endpoint path, a field name,
-or an auth header**. Only a live call settles those, and neither adapter has made one. Smoke both
-against a throwaway list and a throwaway team before trusting them with a real board.
+or an auth header**. Only a live call settles those.
+
+**Both have had one, 2026-08-12**, against real throwaway accounts.
+
+**ClickUp:** create, get, setStatus, an unknown status rejected by name, setAssignees, addComment,
+the protected-status refusal against a real card in a real status, `moveList` reporting `unsupported`
+rather than `failed`, and a snapshot carrying the member name with no raw ClickUp id. Eighteen
+checks, all passed, the test card deleted itself afterward.
+
+**Linear:** the same shape, plus the check that only Linear can make — **two assignees on one issue
+correctly report `unsupported` rather than silently keeping the first**, which is the exact failure
+this repo's `OpOutcome` design exists to name. Seventeen checks, all passed, the test issue deleted
+itself afterward.
+
+Both smokes ran through the ops registry and the adapter, the same code path the pipeline uses — not
+a curl script standing in for the adapter.

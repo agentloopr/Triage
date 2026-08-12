@@ -51,15 +51,27 @@ the model reason worse than a tuned one. It is the single largest unmeasured ris
 
 ## Integrations
 
-**Neither tracker adapter has made a live call.** ClickUp and Linear pass the shared contract suite
-against hand-written fakes that speak each vendor's documented wire format. That proves the
-adapters' own logic — replace-versus-append, the protected-status refusal, vocabulary resolution,
-pagination, capability mapping, error handling.
+Both adapters pass the shared contract suite against hand-written fakes that speak each vendor's
+documented wire format. That proves the adapters' own logic — replace-versus-append, the
+protected-status refusal, vocabulary resolution, pagination, capability mapping, error handling. It
+cannot prove **an endpoint path, a field name, or an auth header**, because the fake was written from
+the same reading of the docs as the adapter it tests — a shared misreading passes both. Only a live
+call settles those.
 
-It cannot prove **an endpoint path, a field name, or an auth header**, because the fake was written
-from the same reading of the docs as the adapter it tests. A shared misreading passes both. Only a
-live call settles those. Treat both adapters as unverified against the real API until you have run
-one. See [ADAPTERS.md](ADAPTERS.md).
+**ClickUp: live-verified, 2026-08-12.** A full smoke — create, get, setStatus, an unknown-status
+rejection, setAssignees, addComment, the protected-status refusal against a real card, `moveList`
+reporting `unsupported`, and the snapshot carrying the member name and never the raw ClickUp user id —
+ran against a real workspace and passed on every check, then deleted its own test card.
+
+**Linear: live-verified, 2026-08-12.** The same smoke, run against a real team — create, get,
+setStatus, an unknown-status rejection, a single assignee, **two assignees correctly reporting
+`unsupported` rather than silently keeping one**, addComment, the protected-status refusal against a
+real issue, and a snapshot carrying the member name and never the raw Linear user id. Seventeen
+checks, all passed, then deleted its own test issue.
+
+**Both adapters are now live-verified.** What remains unmeasured is everything a short smoke cannot
+reach: sustained load, rate-limit behaviour under real traffic, and every edge case the vendor's API
+has that a handful of manual calls does not exercise. See [ADAPTERS.md](ADAPTERS.md).
 
 **Ingestion is out of scope entirely.** No webhooks, no polling, no auth, no retry logic. The
 pipeline starts at `runPipeline(source, deps)` with a normalized source. Getting a meeting into that

@@ -1,0 +1,6 @@
+ITEM: 2
+TITLE: Handle deploy pipeline partial failure
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t600
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t600 — no comments]. The open card t600 already scopes making the deploy pipeline resilient to partial failures, and this item adds no new scope, status, or information beyond that same deliverable.

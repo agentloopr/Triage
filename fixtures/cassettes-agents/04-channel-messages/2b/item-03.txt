@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Scanned the full board snapshot; only t800 exists and it covers search relevance, not the staging 502 / pool-exhaustion runbook. The source shows Sky Patel explicitly committing to write the runbook after Jules Kim requested documentation, so this is a concrete new deliverable with no existing-card match.

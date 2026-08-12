@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: No existing card covers a runbook for pool exhaustion; t800 is unrelated (search relevance). This is a concrete deliverable (write documentation) with a named owner (Sky), distinct from the 502 incident fix itself. Worth tracking as a new task; nothing in the board snapshot matches or contains it.

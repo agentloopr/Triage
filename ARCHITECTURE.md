@@ -139,6 +139,7 @@ is **refused rather than invented**.
 
 ## What is deliberately not here
 
-Retrieval is a null interface, ingestion is out of scope, and there is no agent runtime — 2a and 2b
-are plain completions with evidence pre-fetched host-side. See [LIMITATIONS.md](LIMITATIONS.md) for
+Retrieval is a null interface and ingestion is out of scope. Passes 2a and 2b are plain completions
+with evidence pre-fetched host-side; an optional agent layer sits above them, off by default and
+unable to write — see [AGENTS.md](AGENTS.md). See [LIMITATIONS.md](LIMITATIONS.md) for
 what each of those costs, and [EXTRACTION.md](EXTRACTION.md) for how the production system differs.

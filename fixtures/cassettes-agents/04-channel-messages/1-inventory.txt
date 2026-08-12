@@ -1,0 +1,21 @@
+--- ACTION INVENTORY ---
+1. Raise staging connection pool size | quote: "I'll raise the pool size"
+   DESC: Avery Chen confirmed the staging 502s were caused by connection pool exhaustion and committed to raise the pool size.
+   TIMESTAMP: 09:31
+   POSSIBLE_MATCH_HINT: (none)
+
+2. Add alert for connection pool exhaustion | quote: "add an alert so we catch it before users do"
+   DESC: Avery Chen committed to add an alert so the team catches pool exhaustion before users do.
+   TIMESTAMP: 09:31
+   POSSIBLE_MATCH_HINT: (none)
+
+3. Write runbook for staging 502 / pool exhaustion | quote: "I'll write it up."
+   DESC: Jules Kim asked someone to document the runbook after noting the issue has bitten the team twice; Sky Patel committed to write it up.
+   TIMESTAMP: 09:42
+   POSSIBLE_MATCH_HINT: (none)
+
+4. Review search relevance work | quote: "Search relevance work is now in review by the way, ready for a look."
+   DESC: Avery Chen reported the search relevance work is now in review and ready for a look; no specific reviewer was named in the log.
+   TIMESTAMP: 11:15
+   POSSIBLE_MATCH_HINT: Search relevance tuning | id:t800
+--- END ACTION INVENTORY ---

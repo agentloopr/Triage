@@ -1,0 +1,31 @@
+--- ACTION INVENTORY ---
+1. Rate limiting awaiting sign-off | quote: "it's waiting on Sky to sign off. Should ship Friday."
+   DESC: Token bucket work for rate limiting is finished and in review, pending Sky's sign-off before shipping Friday.
+   TIMESTAMP: [00:00:12-00:00:48]
+   POSSIBLE_MATCH_HINT: Public API rate limiting | id:t200
+
+2. Add request-size cap on upload endpoint | quote: "I'll add a hard limit."
+   DESC: There is no request-size cap on the upload endpoint; a 400 meg payload previously took the workers down. Avery will add a hard limit.
+   TIMESTAMP: [00:01:10-00:01:36]
+   POSSIBLE_MATCH_HINT: Public API rate limiting | id:t200
+
+3. Write welcome email copy for onboarding | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
+   DESC: Rowan will write welcome email copy as part of the onboarding flow redesign, tied to that release.
+   TIMESTAMP: [00:01:58-00:02:30]
+   POSSIBLE_MATCH_HINT: Redesign the onboarding flow | id:t100
+
+4. Refresh pricing page copy | quote: "I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers."
+   DESC: Noor will update the pricing page copy this week, replacing the outdated three-tier display.
+   TIMESTAMP: [00:02:52-00:03:34]
+   POSSIBLE_MATCH_HINT: Q3 pricing page refresh | id:t300
+
+5. Investigate noisy nightly build alerts | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
+   DESC: Sky will investigate whether noisy nightly build alerts are caused by a flaky auth test and report findings Wednesday.
+   TIMESTAMP: [00:03:56-00:04:38]
+   POSSIBLE_MATCH_HINT: Nightly build monitoring | id:t400
+
+6. Write spec for usage-based billing idea | quote: "I'd like a written spec for the usage-based billing idea before we commit to anything." ... "I'll write that up."
+   DESC: Jules committed to writing a spec for the usage-based billing idea before any commitment is made.
+   TIMESTAMP: [00:05:58-00:06:38]
+   POSSIBLE_MATCH_HINT: (none)
+--- END ACTION INVENTORY ---

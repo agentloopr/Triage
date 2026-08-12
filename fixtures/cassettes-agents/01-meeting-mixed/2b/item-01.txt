@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t200
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t200 — no comments] The item reports new progress on existing card t200 “Public API rate limiting”: Avery says the token bucket is finished and rate limiting is in review, waiting for Sky’s sign-off and shipping Friday. Same deliverable, genuinely new status not already in the card’s activity log.

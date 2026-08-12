@@ -1,0 +1,3 @@
+NOTE: Checked for existing/duplicate cards on usage-based billing, billing spec, and Jules — none found; the item is clear and belongs to Jules as described.
+DESC: Draft a written spec for the usage-based billing idea — scope, requirements, acceptance criteria, and what is explicitly not being built — before committing to any implementation. Jules has committed to writing it up.
+OWNERSHIP: OK

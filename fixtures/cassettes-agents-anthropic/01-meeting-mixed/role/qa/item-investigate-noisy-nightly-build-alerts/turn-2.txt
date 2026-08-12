@@ -1,0 +1,3 @@
+NOTE: Checked t400 — it covers general nightly build alerting, not this specific flaky-auth-test investigation; description is thin but assignee matches, so kept as an update to the investigation task.
+DESC: Sky is investigating whether noisy nightly build alerts are caused by a flaky auth test. Status: root cause not yet confirmed — flaky auth test suspected but not verified against alert logs. Findings and evidence (pass/fail history, correlation with alert timestamps) due Wednesday.
+OWNERSHIP: OK

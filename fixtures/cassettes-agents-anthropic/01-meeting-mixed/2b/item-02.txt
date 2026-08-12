@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: [Tier-2: task-comments on t200 — no comments] t200 is specifically about rate limiting/throttling via token bucket, a distinct deliverable already done and in review; the request-size cap is a separate fix Avery explicitly calls out as "separately though," addressing a different failure mode (payload size crashing workers), so it wouldn't close when t200 closes — containment fails. No other card covers upload payload limits. This is a concrete, owned deliverable (Avery adding a hard limit), so it's a real_task and clearly belongs to backend/Avery's domain.

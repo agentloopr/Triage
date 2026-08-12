@@ -1,0 +1,7 @@
+ITEM: 5
+TITLE: Refresh pricing page copy
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t300
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t300 — no comments on this card] The board already has t300 "Q3 pricing page refresh" scoped as updating pricing copy after the tier change. Noor's standup note describes the same deliverable and adds no new scope, status, or field direction beyond what is already tracked.

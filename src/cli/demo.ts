@@ -15,7 +15,7 @@
  */
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { CASSETTE_DIR, CASSETTE_DIR_ANTHROPIC } from '../config';
+import { CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
 import { listScenarios, loadScenario } from '../fixtures';
 import { cassetteClient } from '../providers/cassette';
 import { runScenario } from './runScenario';
@@ -23,6 +23,7 @@ import { runScenario } from './runScenario';
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const twice = args.includes('--twice');
+  const agents = args.includes('--agents');
   const providerIdx = args.indexOf('--provider');
   const provider = providerIdx !== -1 ? args[providerIdx + 1] : 'deepseek';
   const only = args.filter((a) => !a.startsWith('--')).find((a) => a !== provider);
@@ -32,7 +33,19 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const comparing = provider === 'anthropic';
-  const cassettes = comparing ? CASSETTE_DIR_ANTHROPIC : CASSETTE_DIR;
+  // The agent path has its OWN recording. Replaying it from the deterministic cassettes would miss
+  // every tool turn and quietly look like a pipeline run that happened to mention agents.
+  const cassettes = agents
+    ? (comparing ? CASSETTE_DIR_AGENTS_ANTHROPIC : CASSETTE_DIR_AGENTS)
+    : (comparing ? CASSETTE_DIR_ANTHROPIC : CASSETTE_DIR);
+
+  if (agents) {
+    console.log(
+      '\nAgent layer ON (PRD §5). A board agent delegates to role agents, which have READ-ONLY tools —\n' +
+        'Pass 2c is still the only writer. This is the one part of the repo built rather than extracted;\n' +
+        'see AGENTS.md and LIMITATIONS.md.'
+    );
+  }
 
   if (comparing) {
     console.log(
@@ -57,14 +70,21 @@ async function main(): Promise<void> {
     console.log(`\n▶ ${name} — ${scenario.expected.description}`);
 
     const model = cassetteClient(join(cassettes, name));
-    const run = await runScenario(scenario, { model, idempotencyPath: statePath });
+    const run = await runScenario(scenario, { model, idempotencyPath: statePath, agents });
 
-    if (run.mismatches.length && comparing) {
-      // Not counted as a failure: a different model reading the same meeting is allowed to reach a
-      // different inventory. What would be a failure is the deterministic layers behaving
+    if (run.mismatches.length && (comparing || agents)) {
+      // Not counted as a failure, for the same reason in both cases: the goldens describe ONE
+      // recording of a model reading a meeting, and any other recording is allowed to extract a
+      // different number of items. What would be a failure is the deterministic layers behaving
       // differently on identical replies, and that has its own test.
+      //
+      // For --agents specifically: the agent layer runs AFTER every gate, so it cannot change an
+      // inventory count, a category or a hold. Both divergences in the shipped agent recording were
+      // traced to earlier passes — scenario 01's Pass 1 extracted 7 items where the deterministic
+      // recording got 6, and scenario 04's Pass 1.5 critic raised an item it had previously passed
+      // on. Re-recording moves those; agents cannot.
       const r = run.result;
-      console.log(`  ≠ ${r.inventory.length} items · ${r.exec?.created ?? 0} created · ${r.held.length} held — differs from the DeepSeek golden:`);
+      console.log(`  ≠ ${r.inventory.length} items · ${r.exec?.created ?? 0} created · ${r.held.length} held — differs from the golden:`);
       for (const m of run.mismatches) console.log(`      ${m}`);
     } else if (run.mismatches.length) {
       failures++;

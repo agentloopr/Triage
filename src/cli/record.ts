@@ -12,7 +12,7 @@
  */
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { CASSETTE_DIR } from '../config';
+import { CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
 import { listScenarios, loadScenario } from '../fixtures';
 import { cassetteClient } from '../providers/cassette';
 import { makeModelClient, type ProviderName } from '../providers/factory';
@@ -26,6 +26,7 @@ function arg(name: string): string | undefined {
 async function main(): Promise<void> {
   const provider = (arg('provider') ?? 'deepseek') as ProviderName;
   const fresh = process.argv.includes('--fresh');
+  const agents = process.argv.includes('--agents');
   const scenarios = process.argv.includes('--all') ? listScenarios() : [arg('scenario') ?? ''].filter(Boolean);
 
   if (scenarios.length === 0) {
@@ -35,15 +36,19 @@ async function main(): Promise<void> {
 
   for (const name of scenarios) {
     const scenario = loadScenario(name);
-    const dir = join(CASSETTE_DIR, name);
+    // The agent path records into its own set — see CASSETTE_DIR_AGENTS for why they are not mixed.
+    const root = agents
+      ? (provider === 'anthropic' ? CASSETTE_DIR_AGENTS_ANTHROPIC : CASSETTE_DIR_AGENTS)
+      : (provider === 'anthropic' ? CASSETTE_DIR_ANTHROPIC : CASSETTE_DIR);
+    const dir = join(root, name);
     if (fresh) rmSync(dir, { recursive: true, force: true });
 
-    console.log(`\n▶ recording ${name} against ${provider}`);
+    console.log(`\n▶ recording ${name} against ${provider}${agents ? ' (agent layer ON)' : ''}`);
 
     // A miss records through the live provider; a hit replays. That makes re-running cheap and makes
     // a partially-recorded scenario finishable rather than all-or-nothing.
     const model = cassetteClient(dir, { record: makeModelClient({ provider }) });
-    const run = await runScenario(scenario, { model });
+    const run = await runScenario(scenario, { model, agents });
 
     console.log(`  ${run.modelCalls} model call(s)`);
     if (run.mismatches.length) {

@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: DUPLICATE
+MATCH_TASK_ID: t600
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: The item describes the same deliverable already tracked by t600 “Deploy pipeline hardening” — making the deploy pipeline handle partial failure without leaving the cluster in a weird state. [Tier-2: task-comments on t600 — no comments; no evidence of separate or additional progress] The source even has Sky unsure whether a card exists, but the board already contains that card in progress.

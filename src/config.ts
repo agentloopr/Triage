@@ -81,6 +81,23 @@ export const REGISTRY_FAIL_CLOSED = bool('REGISTRY_FAIL_CLOSED', true);
  */
 export const TOOL_LOOP_MAX_ITERATIONS = int('TOOL_LOOP_MAX_ITERATIONS', 6);
 
+// ── Agent layer (optional; PRD §5) ──────────────────────────────────────────
+/**
+ * A board agent above per-archetype role agents.
+ *
+ * **Off by default**, and that is a claim about maturity rather than taste. Everything else here was
+ * extracted from a system that has governed a real board for months; this layer was written *for*
+ * this repo and has no such history. Defaulting it on would put the single unproven component in
+ * front of every reader.
+ *
+ * On, it costs one model call per delegated item and reads card history the deterministic path never
+ * fetches. It cannot write: role agents get `readOnlyTracker`, and Pass 2c remains the only writer.
+ */
+export const AGENTS_ENABLED = bool('AGENTS_ENABLED', false);
+
+/** Items handed to a role agent in one run. Each is a model call, so a bad batch cannot run away. */
+export const AGENT_MAX_DELEGATIONS = int('AGENT_MAX_DELEGATIONS', 8);
+
 // ── Observability ───────────────────────────────────────────────────────────
 /**
  * Attach prompts and replies to spans.
@@ -107,3 +124,16 @@ export const CASSETTE_DIR = resolve(str('CASSETTE_DIR', './fixtures/cassettes'))
  * goldens describe the DeepSeek run, so this set is replayed for what it *differs* on, not to pass.
  */
 export const CASSETTE_DIR_ANTHROPIC = resolve(str('CASSETTE_DIR_ANTHROPIC', './fixtures/cassettes-anthropic'));
+
+/**
+ * The agent path's own recordings, one per provider.
+ *
+ * Separate sets rather than extra files in the existing ones, because an agent run makes strictly
+ * more calls — the same passes plus per-item role-agent turns. Mixing them would make the
+ * deterministic recording look as though it had tool turns it never took, and `--twice`'s
+ * zero-model-calls claim would become impossible to check by eye.
+ */
+export const CASSETTE_DIR_AGENTS = resolve(str('CASSETTE_DIR_AGENTS', './fixtures/cassettes-agents'));
+export const CASSETTE_DIR_AGENTS_ANTHROPIC = resolve(
+  str('CASSETTE_DIR_AGENTS_ANTHROPIC', './fixtures/cassettes-agents-anthropic')
+);

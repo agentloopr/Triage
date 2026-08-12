@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t200
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t200 — no comments recorded] This item reports genuine new progress (token bucket finished, in review, awaiting Sky's sign-off, targeting Friday ship) on the existing "Public API rate limiting" card, matching by deliverable. No prior comment history exists to already capture this status, so it is a legitimate UPDATE.

@@ -1,0 +1,19 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_4NrufrYF9IltKakTncGh3175",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "connection pool"
+      }
+    },
+    {
+      "id": "call_01_kg4sjkxVp6ki24JwsDwR5916",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "staging 502"
+      }
+    }
+  ]
+}

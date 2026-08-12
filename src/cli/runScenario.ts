@@ -19,6 +19,8 @@ import type { ModelClient } from '../providers';
 import { setOpsRegistryPath } from '../registry/opsRegistry';
 import { setCorrectionsPath } from '../state/corrections';
 import { fileRoleStateStore, setRoleStateDir } from '../state/roleState';
+import { delegateToRoleAgents } from '../agents/boardAgent';
+import { AGENT_MAX_DELEGATIONS } from '../config';
 import { memoryTracker } from '../trackers/memory';
 import { categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
 
@@ -27,6 +29,8 @@ export type RunScenarioOptions = {
   /** Persisted across runs when set — this is how `--twice` proves idempotency. */
   idempotencyPath?: string;
   quiet?: boolean;
+  /** Run the agent layer (PRD §5). Off by default — see AGENTS_ENABLED in config. */
+  agents?: boolean;
 };
 
 export type ScenarioRun = {
@@ -83,6 +87,25 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
     tracker,
     idempotency: opts.idempotencyPath ? jsonFileStore(opts.idempotencyPath) : memoryStore(),
     roleState: fileRoleStateStore(roleStateDir),
+    // Same `model` and `tracker` the pipeline uses, so the agent path is the real thing behind the
+    // same seams rather than a parallel implementation that could drift from it.
+    ...(opts.agents
+      ? {
+          agents: {
+            delegate: (items) =>
+              delegateToRoleAgents(items, {
+                model,
+                tracker,
+                maxDelegations: AGENT_MAX_DELEGATIONS,
+                onDelegate: (d) => emitter.emit({ type: 'agent:delegate', ...d }),
+                onEvent: (e) => {
+                  if (e.kind === 'tool') emitter.emit({ type: 'agent:tool', name: e.name, args: e.args });
+                  else emitter.emit({ type: 'alert', detail: `role agent hit its ${e.iterations}-turn cap` });
+                },
+              }),
+          },
+        }
+      : {}),
     events: emitter,
     runPass: async ({ prompt, label }) => ({ text: await complete(passKey(label), prompt) }),
     runCategorization: (prompt, label) => complete(`2a/${itemKey(label)}`, prompt),
@@ -152,6 +175,15 @@ function print(e: PipelineEvent): void {
     case 'audit':
       console.log(`  ✓ audit: ${e.passed} passed, ${e.mismatched} mismatched`);
       if (e.report) console.log(e.report);
+      break;
+    case 'agent:delegate':
+      console.log(`  🤖 #${e.item} → ${e.role} agent (${e.owner})`);
+      break;
+    case 'agent:tool':
+      console.log(`     ↳ ${e.name}(${JSON.stringify(e.args)})`);
+      break;
+    case 'agent:summary':
+      for (const line of e.summary.split('\n')) console.log(`  ▪ ${line}`);
       break;
     case 'alert':
       console.log(`  ⚠ ${e.detail}`);

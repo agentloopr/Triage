@@ -66,13 +66,39 @@ full price on all 46 calls. The caching code is currently decorative. Moving the
 `system` is the single largest cost lever available here and has not been done, because it changes
 the prompt and therefore needs a re-record.
 
+## What the agent layer costs
+
+Turning agents on adds calls; it does not change what the gates decide. Measured over the same five
+scenarios:
+
+| | calls, agents off | calls, agents on | of those, tool turns |
+|---|---|---|---|
+| DeepSeek | 44 | **71** (+61%) | 13 |
+| Claude | 46 | **51** (+11%) | 4 |
+
+**The two models delegate very differently**, and that gap is the interesting number. Both were
+offered the same items and the same read-only tools; DeepSeek went and looked far more often. Neither
+is wrong — a model that reads more card history is buying recall with tokens — but it means an agent
+budget is not portable between providers even when the prompts are byte-identical.
+
+Agent cost is bounded by two caps rather than by hope: `AGENT_MAX_DELEGATIONS` (default 8) and
+`TOOL_LOOP_MAX_ITERATIONS` (default 6).
+
+**The dispositions did not move.** Claude's agent run matches four of five goldens exactly, and its
+one divergence — `04-channel-messages`, 3 items where the golden has 4 — is the *same* Pass 1
+divergence this document already records for Claude with agents off. DeepSeek's agent run diverges on
+two scenarios, both traced to earlier passes: scenario 01's Pass 1 extracted 7 items rather than 6,
+and scenario 04's Pass 1.5 critic raised an item it had previously passed on. **The agent layer runs
+after every gate, so it cannot change an inventory count** — those are re-record variance, the same
+phenomenon `EXTRACTION.md` documents.
+
 ## Provider differences worth knowing
 
 | | DeepSeek | Anthropic |
 |---|---|---|
 | Determinism | `temperature` (0 for `strict`) | `output_config.effort` — the SDK rejects `temperature` outright |
 | Thinking | none | adaptive by default; thinking tokens bill as output |
-| Tool use | OpenAI-shaped `tools` / `tool_calls` | not implemented — the tool loop runs on DeepSeek |
+| Tool use | OpenAI-shaped `tools` / `tool_calls` | `tool_use` content blocks, no `tool` role — results go in a user turn |
 | Truncation | `finish_reason: "length"` | `stop_reason: "max_tokens"` (streaming and non-streaming) |
 | Streaming | not used | automatic above 16K max output tokens |
 

@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: No existing board card covers a staging 502/pool-exhaustion incident; t800 is unrelated search relevance work. The source confirms the report and shows concrete follow-up work (raise pool size, add alert, document runbook), so this is trackable incident work, not mere chatter.

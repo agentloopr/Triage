@@ -14,8 +14,10 @@
  *
  * Everything is injected. No provider, tracker, clock or notification channel is imported here.
  */
+import { type DelegationResult, summariseRun } from '../agents/boardAgent';
 import { type IdempotencyStore, contentKey } from '../idempotency';
 import type { IngestedSource } from '../ingest';
+import { errText } from '../providers';
 import { type RoleArchetype, getMembers } from '../registry/opsRegistry';
 import type { PendingHumanStore } from '../state/pendingHuman';
 import type { RoleOpenItem, RoleStateStore } from '../state/roleState';
@@ -54,6 +56,14 @@ export type PipelineDeps = {
    * write path is the wrong place for surprises.
    */
   roleState?: RoleStateStore;
+  /**
+   * The optional agent layer (PRD §5). Omit and the pipeline runs exactly as it always has.
+   *
+   * It runs **after every gate and before the writer**, and it may only improve how an item reads —
+   * `delegateToRoleAgents` merges field by field for that reason. An agent that could change a
+   * category would be able to walk past every gate in this repo by talking.
+   */
+  agents?: { delegate(items: CategorizationItem[]): Promise<DelegationResult[]> };
   /** Passes 0 → 1.7. */
   runPass: PassRunner;
   /** Pass 2a. */
@@ -249,11 +259,29 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
 
   if (deps.execute === false) return base;
 
+  // ── Agent layer (optional) — decides, does not write ─────────────────────
+  // Sits between the gates and the writer on purpose: after every gate has had its say, so an agent
+  // cannot talk its way past one, and before 2c, so anything it improves is what actually lands.
+  // Fails open as a whole — the pipeline's own answer stands if the agent layer errors.
+  const delegations = deps.agents
+    ? await timed('agents', async () => {
+        try {
+          return await deps.agents!.delegate(checked.clean);
+        } catch (err) {
+          emit({ type: 'alert', detail: `agent layer failed, keeping the pipeline's answer: ${errText(err)}` });
+          return [];
+        }
+      })
+    : [];
+
   // ── Pass 2c — the only writer ────────────────────────────────────────────
   const exec = await timed('2c-execute', () =>
     executeOperations(planOperations(checked.clean, { ...(source.todayIso ? { todayIso: source.todayIso } : {}) }), deps.tracker)
   );
   emit({ type: 'executed', ...exec });
+
+  // Derived from the executor's results, never from the model. See `summariseRun`.
+  if (deps.agents) emit({ type: 'agent:summary', summary: summariseRun(exec, checked.held, delegations) });
 
   // Per-role memory, written from what actually landed rather than from what was planned — a plan
   // that failed at the tracker must not leave the next run believing the work is underway. Opt-in:

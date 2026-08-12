@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t800
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: The source line reports progress on existing card t800 "Search relevance tuning" — the work is now in review and ready for a look. [Tier-2: task-comments on t800 — no comments] The activity history does not already contain this progress, so it is a genuine update to that card, not a new task.

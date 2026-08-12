@@ -48,6 +48,7 @@ npm ci
 npm run demo                           # all five scenarios, offline, ~30ms
 npm run demo -- --twice                # proves a redelivery costs zero tokens
 npm run demo -- --provider anthropic   # the same scenarios, replayed from a Claude recording
+npm run demo -- --agents               # with the agent layer on (PRD §5), also offline
 ```
 
 ```
@@ -103,6 +104,10 @@ Everything is injected. Each seam exists because there was a real second impleme
 | `IdempotencyStore` | `memory` · `jsonFile` | three layers: event, source, content |
 | `IngestedSource` | `transcript` · `channel` | ingestion itself is out of scope |
 
+**An optional agent layer** (PRD §5) sits between the gates and the writer: a board agent that
+delegates to eight role agents with **read-only** tools. It is off by default, it cannot write, and
+it cannot change what an item is — only how it reads. See [AGENTS.md](AGENTS.md).
+
 **The rule that makes the tracker seam real:** the pipeline speaks canonical member names and list
 keys; only an adapter ever sees a tracker id. Every gate, prompt, parser and the whole categorization
 taxonomy is tracker-blind because of it.
@@ -117,12 +122,13 @@ taxonomy is tracker-blind because of it.
 | [ADAPTERS.md](ADAPTERS.md) | The tracker contract, the capability matrix, writing a fourth |
 | [PROVIDERS.md](PROVIDERS.md) | Measured cost, and where DeepSeek and Claude disagree |
 | [ROLES.md](ROLES.md) | The eight role archetypes and how they reach the prompt |
+| [AGENTS.md](AGENTS.md) | The optional agent layer — what it may touch, and the two structural guarantees |
 | [EVAL.md](EVAL.md) | Six dimensions, and why no accuracy figures are published |
 
 ## Development
 
 ```bash
-npm test              # 523 tests
+npm test              # 637 tests
 npx tsc --noEmit      # tests included in typecheck
 npm run lint
 npm run eval          # score the shipped runs on six dimensions, offline

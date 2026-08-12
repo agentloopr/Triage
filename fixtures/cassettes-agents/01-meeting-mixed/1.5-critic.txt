@@ -1,0 +1,4 @@
+8. Discuss full-suite-before-release process separately | quote: "Noted, that's a process thing — let's discuss separately."
+   DESC: Sky proposed that going forward the team should always run the full suite before a release, not just smoke tests. Jules noted it as a process topic and committed to discuss it separately.
+   TIMESTAMP: [00:05:00-00:05:58]
+   POSSIBLE_MATCH_HINT: (none)

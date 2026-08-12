@@ -20,6 +20,12 @@ export type PipelineEvent =
   | { type: 'flags'; flags: Array<{ kind: string; items: number[]; note: string }> }
   | { type: 'executed'; created: number; commented: number; skipped: number; failed: number; refused: number; unsupported: number }
   | { type: 'audit'; passed: number; mismatched: number; report: string }
+  /** A role agent was handed an item to look at — emitted per delegation, so the fan-out is visible. */
+  | { type: 'agent:delegate'; item: number; role: string; owner: string }
+  /** A tool a role agent actually called. Agents may only read, so this is the whole read trail. */
+  | { type: 'agent:tool'; name: string; args: Record<string, unknown> }
+  /** Derived from the executor's results, never from the model — see `summariseRun`. */
+  | { type: 'agent:summary'; summary: string }
   /** Something is wrong with the machinery itself, not with the content. */
   | { type: 'alert'; detail: string };
 

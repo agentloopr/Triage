@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: DUPLICATE
+VERDICT_CATEGORY: UPDATE
 MATCH_TASK_ID: t300
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t300 — no comments.] The existing card t300 covers the same "refresh pricing page copy" deliverable that Noor commits to in the source. No new progress is reported beyond the already-tracked plan, so this item is a duplicate of that card.
+RATIONALE: [Tier-2: task-comments on t300 — no comments] The item captures Noor's standup update on the pricing page refresh (same deliverable as t300). Noor's commitment to start this week and the "stale three tiers" detail constitute genuine new progress not already recorded in the card's empty activity log — thus an UPDATE, not a duplicate.

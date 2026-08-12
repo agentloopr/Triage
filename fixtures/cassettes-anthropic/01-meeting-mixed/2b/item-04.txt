@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: SUBTASK
+MATCH_TASK_ID: t100
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: Rowan explicitly states the welcome email copy "sits inside the onboarding revamp, it ships when that ships" — a direct containment statement, confirmed by Jules ("keep it under that card"). [Tier-2: task-comments on t100 — no comments, but no conflicting evidence and the source itself establishes containment]. This is genuine containment, not just keyword overlap, so SUBTASK of t100.

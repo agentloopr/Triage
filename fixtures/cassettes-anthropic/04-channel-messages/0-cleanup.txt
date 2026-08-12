@@ -1,0 +1,6 @@
+[09:02] Sky Patel: Heads up — staging has been returning 502s since about 8am.
+[09:05] Avery Chen: Looking. Probably the connection pool again.
+[09:31] Avery Chen: Confirmed, pool exhaustion. I'll raise the pool size and add an alert so we catch it before users do.
+[09:40] Jules Kim: Thanks. Also can someone document the runbook for this? It has bitten us twice now.
+[09:42] Sky Patel: I'll write it up.
+[11:15] Avery Chen: Search relevance work is now in review by the way, ready for a look.

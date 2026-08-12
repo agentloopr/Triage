@@ -5,6 +5,6 @@ LIST: backend
 ASSIGNEE: Avery Chen
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Create a monitoring alert that triggers when the connection pool approaches exhaustion so the team gets notified before users experience 502s.
+FINAL_DESC: Create a monitoring alert that triggers on connection pool exhaustion so the team gets notified before users experience 502 errors.
 CONFIDENCE: high
-RATIONALE: The board snapshot contains only one unrelated task (t800, search relevance); no open card covers the alert deliverable. Net-new work, no evidence read needed.
+RATIONALE: No card in the snapshot covers connection pool monitoring or alerting. Net-new deliverable; no evidence read needed for NEW.

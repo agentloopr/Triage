@@ -1,0 +1,6 @@
+ITEM: 2
+TITLE: Handle partial deploy failures
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t600
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t600 — no comments] The card t600 description already covers making the deploy pipeline resilient to partial failures, which is exactly what Sky Patel described. No comments exist but the deliverable is identical and Sky's statement adds no new scope or status info beyond the card's existing spec.

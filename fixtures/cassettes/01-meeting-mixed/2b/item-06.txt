@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing board card covers writing a spec for usage‑based billing — the snapshot lists only onboarding, rate limiting, pricing page refresh, and build monitoring, none of which reference billing or a new spec deliverable. The source records Jules committing to write it, which is a concrete, trackable task a PM would board.
+RATIONALE: No existing board card covers a usage‑based billing spec — the closest is the pricing page refresh (t300), which is copy, not a billing spec. Jules committed to writing the spec, making it a concrete, trackable deliverable. The task is clearly internal product work for the PM, with no unrecognized entity.

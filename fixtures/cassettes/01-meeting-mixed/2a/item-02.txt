@@ -3,8 +3,8 @@ TITLE: Add hard request-size cap on upload endpoint
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
-PRIORITY: high
+PRIORITY: urgent
 STATUS: not started
-FINAL_DESC: Implement a hard request-size limit on the upload endpoint after a 400 MB payload caused a worker outage.
+FINAL_DESC: Add a hard limit on request size for the upload endpoint to prevent oversized payloads like the recent 400 MB request that caused worker outages.
 CONFIDENCE: high
-RATIONALE: No board card addresses upload size limits; t200 covers rate limiting, not request-size caps. This is a net-new deliverable.
+RATIONALE: No board card covers upload endpoint size limiting. This is a net-new backend deliverable, so no evidence read needed.

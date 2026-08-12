@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Explicit note confirms "Fix the invoice API endpoint" is NOT the same work as t900 (billing webhook retry), and invoice rendering vs billing webhooks are stated as separate workstreams. No other card matches. Rowan Diaz volunteered and Jules Kim assigned it — concrete deliverable with an owner, so it's a real trackable task and new to the board.

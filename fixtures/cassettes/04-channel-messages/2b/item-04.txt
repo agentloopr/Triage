@@ -3,4 +3,4 @@ MATCH_TASK_ID: t800
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t800 — no comments] Source at 11:15 shows Avery stating the search relevance work moved to review, which is a status change from t800's current in-progress state. No prior activity log reflects this, so it is a genuine progress update on the existing card, not a new task.
+RATIONALE: [Tier-2: task-comments on t800 — no existing comments] Avery's message reports a status change from in-progress to in-review for the existing search relevance card; this is new progress not yet logged, making it an UPDATE.

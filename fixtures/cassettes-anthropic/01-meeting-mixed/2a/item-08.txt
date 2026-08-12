@@ -1,0 +1,11 @@
+ITEM: 8
+TITLE: Run full test suite before release, not just smoke tests
+CATEGORY: NEW_TASK
+LIST: platform
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Adopt a process change requiring the full test suite to be run before every release, replacing reliance on smoke tests alone, to improve release verification quality.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: med
+RATIONALE: No existing card covers release test-process policy; t400 (nightly build monitoring) is a different deliverable (alert noise investigation), and Jules explicitly deferred this to a separate discussion, confirming it's not folded into an existing card. Net-new process task, owned by QA per role fit.

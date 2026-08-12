@@ -59,6 +59,13 @@ export function anthropicClient(opts?: { model?: string; apiKey?: string }): Mod
     async complete(req: CompletionRequest): Promise<CompletionResult> {
       if (!apiKey) throw new ModelError('ANTHROPIC_API_KEY is not set', null);
 
+      // Anthropic expresses tool use as content blocks rather than an OpenAI-shaped `tool` role, so
+      // it is a genuinely different mapping. Declining loudly beats shipping an untested translation
+      // for a provider that has never made a live call — the tool loop runs on DeepSeek today.
+      if (req.tools?.length || req.messages.some((m) => m.role === 'tool')) {
+        throw new ModelError('tool use is not implemented for the Anthropic provider — use deepseek for the tool loop', null);
+      }
+
       const client = new Anthropic({ apiKey, maxRetries: 0 }); // retries are ours — see withRetryBudget
       const maxTokens = req.maxOutputTokens ?? ANTHROPIC_MAX_OUTPUT_TOKENS;
 
@@ -71,7 +78,8 @@ export function anthropicClient(opts?: { model?: string; apiKey?: string }): Mod
         ...(req.system
           ? { system: [{ type: 'text' as const, text: req.system, cache_control: { type: 'ephemeral' as const } }] }
           : {}),
-        messages: req.messages.map((m) => ({ role: m.role, content: m.content })),
+        // The `tool` role is refused above, so what is left maps one-to-one.
+        messages: req.messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       };
 
       return withRetryBudget(

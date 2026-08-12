@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The board snapshot contains only t800 (Search relevance tuning), which is unrelated to documenting a runbook for connection pool exhaustion. The source shows Sky Patel volunteering to write the runbook — a concrete, trackable deliverable with a clear owner and completion state. No existing card covers this, so it is genuinely new.
+RATIONALE: Board snapshot contains only t800 (search relevance tuning), which is unrelated. No existing card covers runbook documentation for connection pool exhaustion; this is a new, concrete deliverable Sky Patel committed to produce. A competent PM would track a recurring-issue runbook as a card, and the assignee is clear (Sky/QA), so routing is straightforward.

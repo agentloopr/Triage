@@ -5,6 +5,6 @@ LIST: product
 ASSIGNEE: Jules Kim
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Jules Kim will write a written spec for the usage-based billing proposal so the team can review before committing. The spec should cover the proposed billing model, logic, and implications.
+FINAL_DESC: Jules will produce a written specification for the usage-based billing model, as requested by Wren, covering the approach and key trade-offs to inform a commitment decision.
 CONFIDENCE: high
-RATIONALE: No open card on the board covers a usage-based billing spec; a scan of t100–t400 confirms zero overlap. The request came from Wren and Jules explicitly committed to the work, making this a fresh deliverable. No evidence read needed for NEW_TASK.
+RATIONALE: No existing card in the snapshot covers a billing spec; this is a net-new deliverable, so no evidence read is needed.

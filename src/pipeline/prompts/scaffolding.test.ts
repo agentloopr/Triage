@@ -117,7 +117,13 @@ describe('2a categorization prompt keeps the load-bearing taxonomy', () => {
     ['the NEW_TASK vs SUBTASK tie-breaker', /TIE-BREAKER[\s\S]{0,120}choose NEW_TASK/],
     ['same assignee is not containment', /Same ASSIGNEE alone is NOT containment/],
     ['the evidence-citation requirement the gate enforces', /does not cite evidence will be HELD/],
+    // The gate matches the literal string "task-comments". The prompt used to show that only inside
+    // an "e.g.", so a reworded-but-correct rationale was held for not citing evidence it had read.
+    ['the citation form the parser actually checks for', /literally contain "task-comments"/],
     ['ask-dont-guess for uncertain fields', /UNCERTAIN_FIELDS/],
+    // Without this, the model flags an absent due date as uncertain, which HOLDS the card to ask a
+    // human a question nobody can answer. Found by re-recording after the roster block landed.
+    ['an unstated due date is omitted, not flagged', /unstated deadline is absent, not uncertain/],
   ])('keeps %s', (_label, re) => {
     expect(p()).toMatch(re);
   });
@@ -129,5 +135,16 @@ describe('2a categorization prompt keeps the load-bearing taxonomy', () => {
   it('lists the real routes and members rather than hardcoding names', () => {
     expect(p()).toContain('backend');
     expect(p()).toContain('Avery Chen');
+  });
+
+  /**
+   * The roster block has to carry what each role OWNS, not just who exists.
+   *
+   * A bare list of names gives the model nothing to route an unnamed deliverable on, which is the
+   * whole reason role profiles are loaded rather than being documentation.
+   */
+  it('carries role ownership, and says it never overrides a name the source gave', () => {
+    expect(p()).toMatch(/Avery Chen — Engineer:/);
+    expect(p()).toMatch(/never overrides a person the source named/);
   });
 });

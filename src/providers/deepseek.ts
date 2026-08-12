@@ -28,9 +28,52 @@ const TEMPERATURE: Record<Determinism, number> = {
 };
 
 interface ChatCompletionResponse {
-  choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+  choices?: Array<{
+    message?: {
+      content?: string;
+      tool_calls?: Array<{ id?: string; function?: { name?: string; arguments?: string } }>;
+    };
+    finish_reason?: string;
+  }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number; prompt_cache_hit_tokens?: number };
   error?: { message?: string };
+}
+
+/**
+ * Tool arguments arrive as a JSON *string*, and a model that emits malformed JSON is a normal
+ * Tuesday. An empty object lets the tool report a useful error; throwing here kills the whole run
+ * over one bad call.
+ */
+function parseArgs(raw: string | undefined): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return v && typeof v === 'object' ? (v as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** OpenAI wire shape for messages, including the `tool` role the tool loop needs. */
+function toWireMessages(req: CompletionRequest): Array<Record<string, unknown>> {
+  return [
+    ...(req.system ? [{ role: 'system', content: req.system }] : []),
+    ...req.messages.map((m) => {
+      if (m.role === 'tool') return { role: 'tool', tool_call_id: m.toolCallId, content: m.content };
+      if (m.toolCalls?.length) {
+        return {
+          role: 'assistant',
+          content: m.content || null,
+          tool_calls: m.toolCalls.map((c) => ({
+            id: c.id,
+            type: 'function',
+            function: { name: c.name, arguments: JSON.stringify(c.arguments) },
+          })),
+        };
+      }
+      return { role: m.role, content: m.content };
+    }),
+  ];
 }
 
 export function deepseekClient(opts?: { model?: string; apiKey?: string }): ModelClient {
@@ -43,16 +86,20 @@ export function deepseekClient(opts?: { model?: string; apiKey?: string }): Mode
     async complete(req: CompletionRequest): Promise<CompletionResult> {
       if (!apiKey) throw new ModelError('DEEPSEEK_API_KEY is not set', null);
 
-      const messages = [
-        ...(req.system ? [{ role: 'system' as const, content: req.system }] : []),
-        ...req.messages,
-      ];
       const body = JSON.stringify({
         model,
-        messages,
+        messages: toWireMessages(req),
         temperature: TEMPERATURE[req.determinism ?? 'strict'],
         max_tokens: req.maxOutputTokens ?? DEEPSEEK_MAX_OUTPUT_TOKENS,
         stream: false,
+        ...(req.tools?.length
+          ? {
+              tools: req.tools.map((t) => ({
+                type: 'function',
+                function: { name: t.name, description: t.description, parameters: t.parameters },
+              })),
+            }
+          : {}),
       });
 
       return withRetryBudget(
@@ -88,10 +135,20 @@ export function deepseekClient(opts?: { model?: string; apiKey?: string }): Mode
 
           const choice = data.choices?.[0];
           const text = choice?.message?.content ?? '';
-          if (!text.trim()) throw new ModelError('empty reply');
+
+          const toolCalls = (choice?.message?.tool_calls ?? []).map((c, i) => ({
+            id: c.id ?? `call_${i}`,
+            name: c.function?.name ?? '',
+            arguments: parseArgs(c.function?.arguments),
+          }));
+
+          // A reply that asks to call a tool has no text, and that is not an empty reply. Treating it
+          // as one is how a tool loop hangs at the first turn with an error about nothing.
+          if (!text.trim() && toolCalls.length === 0) throw new ModelError('empty reply');
 
           return {
             text,
+            ...(toolCalls.length ? { toolCalls } : {}),
             model,
             provider: 'deepseek',
             // R4: finish_reason=length means the ceiling was hit and this reply is a fragment.

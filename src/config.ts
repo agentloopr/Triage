@@ -49,6 +49,13 @@ export const CLICKUP_API_TOKEN = str('CLICKUP_API_TOKEN', '');
 export const CLICKUP_TEAM_ID = str('CLICKUP_TEAM_ID', '');
 export const LINEAR_API_KEY = str('LINEAR_API_KEY', '');
 
+/**
+ * Total wall-clock budget for one tracker call INCLUDING retries — the same meaning `timeoutMs` has
+ * on the model seam, and for the same reason. Shorter than the model default because a tracker that
+ * has not answered in a minute is down, not thinking.
+ */
+export const TRACKER_TIMEOUT_MS = int('TRACKER_TIMEOUT_MS', 60_000);
+
 // ── Routing ─────────────────────────────────────────────────────────────────
 /**
  * The list work lands on when nothing else matches. Optional and **empty by default**: when set, an
@@ -65,6 +72,15 @@ export const ASR_PROVENANCE_FLOOR = num('ASR_PROVENANCE_FLOOR', 0.5);
 /** When the registry is degraded, hold the entire batch rather than writing against an empty roster. */
 export const REGISTRY_FAIL_CLOSED = bool('REGISTRY_FAIL_CLOSED', true);
 
+// ── Tool loop (optional; the default path pre-fetches evidence host-side) ────
+/**
+ * Hard ceiling on model turns in the read-only tool loop.
+ *
+ * Without one, a model that keeps calling tools burns the whole budget and the run looks like a hang
+ * rather than a failure. Reached by well-behaved models only when something is genuinely ambiguous.
+ */
+export const TOOL_LOOP_MAX_ITERATIONS = int('TOOL_LOOP_MAX_ITERATIONS', 6);
+
 // ── Observability ───────────────────────────────────────────────────────────
 /**
  * Attach prompts and replies to spans.
@@ -79,6 +95,15 @@ export const OTEL_CAPTURE_IO_MAX_CHARS = int('OTEL_CAPTURE_IO_MAX_CHARS', 8_000)
 
 // ── Paths ───────────────────────────────────────────────────────────────────
 export const OPS_REGISTRY_PATH = resolve(str('OPS_REGISTRY_PATH', './config/ops-registry.json'));
+/** One `<archetype>.md` per entry in ROLE_ARCHETYPES. Rename them to your team; keep the filenames. */
+export const ROLES_DIR = resolve(str('ROLES_DIR', './config/roles'));
 export const STATE_DIR = resolve(str('STATE_DIR', './.state'));
 export const CORRECTIONS_PATH = resolve(str('CORRECTIONS_PATH', `${STATE_DIR}/corrections.json`));
 export const CASSETTE_DIR = resolve(str('CASSETTE_DIR', './fixtures/cassettes'));
+/**
+ * A second, parallel recording of the same scenarios from a different provider.
+ *
+ * Kept beside the primary set rather than replacing it: the point is the comparison. The scenario
+ * goldens describe the DeepSeek run, so this set is replayed for what it *differs* on, not to pass.
+ */
+export const CASSETTE_DIR_ANTHROPIC = resolve(str('CASSETTE_DIR_ANTHROPIC', './fixtures/cassettes-anthropic'));

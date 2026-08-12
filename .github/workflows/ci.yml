@@ -28,6 +28,10 @@ jobs:
       # No secrets in this job's env — that is the point. This step passing in public is what proves
       # the "runs with no API key" claim, rather than the README asserting it.
       - run: npm run demo -- --twice
+      # The second provider's recording, replayed offline. It does not gate — the goldens describe
+      # the DeepSeek run and the two models disagree about what counts as an action item — but it
+      # must still REPLAY, or 46 committed cassettes quietly rot behind a doc that cites them.
+      - run: npm run demo -- --provider anthropic
       # Never --labels here: that path calls a judge model, and this job has no secrets.
       - run: npm run eval
 

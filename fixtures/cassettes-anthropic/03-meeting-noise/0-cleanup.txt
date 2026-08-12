@@ -1,0 +1,7 @@
+[00:00:00-00:00:44] Jules Kim: I thought last sprint went well. The estimates were closer than usual, which was nice.
+[00:00:44-00:01:28] Tam Osei: Agreed. I think the difference was breaking things down before planning rather than during.
+[00:01:28-00:02:10] Wren Alvarez: That matches what I've seen elsewhere. Teams that estimate stories they've already discussed tend to be more accurate.
+[00:02:10-00:02:50] Jules Kim: There were a couple of small things that annoyed me but honestly they're not worth raising, I'll just handle them.
+[00:02:50-00:03:30] Tam Osei: Fair. How do people feel about the meeting length? Should we keep it at thirty minutes?
+[00:03:30-00:04:00] Wren Alvarez: Thirty feels right to me.
+[00:04:00-00:04:22] Jules Kim: Same. Alright, that's it — nothing to action, thanks everyone.

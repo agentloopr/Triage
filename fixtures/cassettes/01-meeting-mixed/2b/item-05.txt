@@ -3,4 +3,4 @@ MATCH_TASK_ID: t400
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t400 — no prior comments] Sky's standup statement reports new, specific progress on the existing monitoring task (diagnosing noisy alerts and committing to a Wednesday report). This is a genuine update, not a bare status-check — the investigation has a defined scope and outcome, and resolving it may lead to a fix. No separate card is needed; logging it against t400 is appropriate.
+RATIONALE: [Tier-2: task-comments on t400 — no comments] Sky's commitment to investigate whether the flaky auth test is causing noisy alerts is new progress on the existing "Nightly build monitoring" card; the card itself has no recorded activity for this, so the item is a genuine update.

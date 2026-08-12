@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: DUPLICATE
+VERDICT_CATEGORY: UPDATE
 MATCH_TASK_ID: t500
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: The item describes the same deliverable as t500 (New-user first-run flow) — an onboarding revamp guiding new signups to a first meaningful action. The source shows Rowan Diaz committing to own it, and the board already assigns t500 to Rowan Diaz with the same scope. No new progress beyond the assignment is reported, making this a duplicate of the existing card. [Tier-2: task-comments on t500 — no comments to suggest distinct status change.]
+RATIONALE: The item reports Rowan's commitment to own the onboarding revamp, which directly corresponds to existing card t500 ("New-user first-run flow") — the same deliverable. [Tier-2: task-comments on t500 — no comments exist, so this assignment commitment is genuinely new progress not yet logged on the card.] Since this maps to an existing card, it is real_task by definition.

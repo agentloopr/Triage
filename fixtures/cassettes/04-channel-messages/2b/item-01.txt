@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The board snapshot contains only t800 (Search relevance tuning), which is unrelated to connection pool issues. No existing card covers the 502 fix or pool size increase, so this is a genuinely new, concrete configuration change that merits a trackable card.
+RATIONALE: The only open card is Search relevance tuning (t800), which is a different deliverable and does not contain pool configuration work. No other board card matches. The item captures a concrete, trackable config change (raising pool size) that Avery explicitly committed to do; a team would track it.

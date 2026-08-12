@@ -18,6 +18,7 @@
  * replaceable wholesale, and so `scaffolding.test.ts` can assert the block is still there.
  */
 import { learnedFactsBlock } from '../../state/corrections';
+import { roleRosterBlock } from '../../registry/roleProfiles';
 import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
 import type { EnrichedInventoryItem } from '../types';
 import { WORTH_A_CARD_RUBRIC } from '../worthACardRubric';
@@ -39,6 +40,7 @@ export function buildContractCheckerPrompt(
   opts: ContractCheckPromptOptions = {}
 ): string {
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
+  const roster = roleRosterBlock();
 
   const provNote =
     typeof opts.provenance === 'number' && opts.provenance < LOW_PROVENANCE_NOTE
@@ -106,7 +108,7 @@ export function buildContractCheckerPrompt(
     'client/entity or a genuine tie between lists):',
     '  • ROUTING_OK: yes — the deliverable clearly belongs to a known/recognizable client, product or',
     '    internal concern.',
-    '  • ROUTING_OK: no — the item names a client/product/entity you cannot place from the role profiles or',
+    '  • ROUTING_OK: no — the item names a client/product/entity you cannot place from the roster below or',
     '    the board (never referenced before, no clarifying context), OR 2+ specific lists are each plausible',
     '    with nothing in the source deciding between them. Name the unclear entity / competing lists',
     '    in RATIONALE. For DUPLICATE/UPDATE/RELATE (identity already resolved to an existing card) or when',
@@ -201,6 +203,9 @@ export function buildContractCheckerPrompt(
     '  not_a_task/unsure/GROUNDED:no/ROUTING_OK:no, say briefly why>',
     'FORBIDDEN: any text outside the block; tool-call narration.',
     '',
+    // The ROUTING_OK check above asks whether an entity can be placed "from the roster below". Until
+    // Phase 4 that sentence pointed at nothing — the prompt promised context it never supplied.
+    ...(roster.length ? [...roster, ''] : []),
     ...(opts.participantLine ? [`PARTICIPANTS (speaker mapping only): ${opts.participantLine}`, ''] : []),
     // Placed immediately BEFORE the board snapshot. This pass's whole job is "assume this is NOT new,
     // hunt the board", so it must know the team's taught facts BEFORE it scans — otherwise it hunts

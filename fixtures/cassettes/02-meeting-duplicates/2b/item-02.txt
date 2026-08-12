@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: DUPLICATE
+VERDICT_CATEGORY: UPDATE
 MATCH_TASK_ID: t600
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t600 — no comments] Board card t600 "Deploy pipeline hardening" with description "Make the deploy pipeline resilient to partial failures" covers exactly the same deliverable Sky describes. The item restates that the work still needs doing; no new progress beyond the card's current in-progress state. Duplicate.
+RATIONALE: The item describes work that is exactly the scope of t600 (“Deploy pipeline hardening” / “make the deploy pipeline resilient to partial failures”) and reports it still needs doing. The source explicitly says “partial-failure handling still needs doing.” This is a genuine progress/status update on an existing card, not a new task. [Tier-2: task-comments on t600 — no comments recorded, so this is newly reported status.]

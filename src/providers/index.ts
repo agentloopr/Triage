@@ -15,15 +15,46 @@
 
 export type Determinism = 'strict' | 'balanced' | 'exploratory';
 
+/**
+ * A tool the model may call.
+ *
+ * Read-only by construction here: the loop only ever offers reads, and the adapter behind it refuses
+ * writes regardless of what the model asks for. Tool definitions are a request, not a guarantee —
+ * the guarantee lives at the adapter.
+ */
+export interface ToolSpec {
+  name: string;
+  description: string;
+  /** JSON Schema for the arguments object. */
+  parameters: Record<string, unknown>;
+}
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'tool';
+  content: string;
+  /** On a `tool` message: which call this answers. */
+  toolCallId?: string;
+  /** On an `assistant` message that requested calls, so the provider can echo them back. */
+  toolCalls?: ToolCall[];
+}
+
 export interface CompletionRequest {
   /** e.g. "2a/item-07" — both the cassette lookup key and the trace label. */
   key: string;
   system?: string;
-  messages: { role: 'user' | 'assistant'; content: string }[];
+  messages: ChatMessage[];
   maxOutputTokens?: number;
   /** TOTAL wall-clock budget across all retries. Default DEFAULT_TIMEOUT_MS. */
   timeoutMs?: number;
   determinism?: Determinism;
+  /** Offering tools does not oblige the model to use them; absent or empty disables tool use. */
+  tools?: ToolSpec[];
 }
 
 export interface CompletionUsage {
@@ -46,6 +77,8 @@ export interface CompletionResult {
    * rather than accepting the partial.
    */
   truncated?: boolean;
+  /** Present when the model asked to call tools instead of answering. */
+  toolCalls?: ToolCall[];
 }
 
 export interface ModelClient {

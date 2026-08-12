@@ -17,6 +17,7 @@
  */
 import { learnedFactsBlock } from '../../state/corrections';
 import { getMembers, getRoutes } from '../../registry/opsRegistry';
+import { roleRosterBlock } from '../../registry/roleProfiles';
 import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
 import type { EnrichedInventoryItem } from '../types';
 
@@ -38,6 +39,7 @@ export function buildCategorizationPrompt(
   const routes = getRoutes();
   const listKeys = routes.map((r) => r.key);
   const memberNames = getMembers().map((m) => m.name);
+  const roster = roleRosterBlock();
 
   const itemBlock = [
     `ITEM: ${item.number}`,
@@ -111,7 +113,10 @@ export function buildCategorizationPrompt(
     '       • SUBTASK: history + parent scope confirm CONTAINMENT (closes with the parent).',
     "       • UPDATE: history tells you whether the source's point is genuinely NEW or ALREADY logged.",
     '         If it is already in the activity log → it is not an UPDATE (likely DUPLICATE, or drop to NEW).',
-    '  3. CITE the evidence in RATIONALE, e.g. "[Tier-2: task-comments on t-abc1 — …]".',
+    '  3. CITE the evidence in RATIONALE. The citation is CHECKED mechanically: your RATIONALE must',
+    '     literally contain "task-comments" (or "comment history") together with the card you read —',
+    '     e.g. "[Tier-2: task-comments on t-abc1 — still blocked on review]".',
+    '     Writing "Tier-2 evidence shows no conflicting history" does NOT count. Name the read.',
     'A DUPLICATE / SUBTASK / UPDATE whose RATIONALE does not cite evidence will be HELD for a human.',
     "The snapshot description alone is the card's SPEC, not its PROGRESS — you need the history.",
     '',
@@ -135,8 +140,14 @@ export function buildCategorizationPrompt(
     `- ASSIGNEE: the person's standard full name from the roster: ${memberNames.join(' | ')}`,
     '  Use who the source actually names. If nobody is named, leave it out — it will be filled from the',
     "  list's default owner and flagged for confirmation.",
+    // What each person's role OWNS, so an unnamed deliverable has something to route on other than
+    // the list's default owner. Never a licence to override a name the source actually said.
+    ...(roster.length ? ['', ...roster, '  Role ownership is context for an UNNAMED deliverable — it never overrides a person the source named.'] : []),
     '- PRIORITY: urgent | high | normal | low. Default normal unless the source says otherwise.',
     `- DUE_DATE: YYYY-MM-DD. Use what the source states${opts.todayIso ? `; today is ${opts.todayIso}` : ''}.`,
+    '  If no date was stated, OMIT the line entirely. Never emit an empty DUE_DATE, and never list it',
+    '  under UNCERTAIN_FIELDS — an unstated deadline is absent, not uncertain, and asking a human',
+    '  "what is the due date?" for work nobody dated is a question they cannot answer.',
     '- STATUS: only when the source explicitly directs a status.',
     '- FINAL_DESC: a few factual sentences describing the deliverable, grounded ONLY in the source.',
     '  The board is for MATCHING, never a source of content — never copy wording from a board card.',

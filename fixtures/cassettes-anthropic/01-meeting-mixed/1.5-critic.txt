@@ -1,0 +1,4 @@
+8. Run full test suite before release, not just smoke tests | quote: "we should always run the full suite before a release, not just the smoke tests."
+   DESC: Sky proposed a process change to always run the full test suite before releases instead of only smoke tests.
+   TIMESTAMP: [00:05:00-00:05:38]
+   POSSIBLE_MATCH_HINT: (none)

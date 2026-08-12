@@ -3,7 +3,7 @@ TITLE: Report rate limiting status
 CATEGORY: UPDATE
 EXISTING_TASK_ID: t200
 STATUS: in review
-DUE_DATE: 2026-08-14
-FINAL_DESC: Avery reported that the rate limiting work is complete, token bucket implementation finished, and it is now in review, pending Sky's sign-off, with expected ship on Friday.
+DUE_DATE: 2026-08-15
+FINAL_DESC: Rate limiting implementation is complete; the token bucket is finished and the card is now in review. Awaiting sign-off from Sky Patel, and expected to ship on Friday.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t200 — no comments exist, so the newly reported status "in review" and Friday ship date are genuine updates not already logged in the card's activity history.]
+RATIONALE: [Tier-2: task-comments on t200 — no comments, board status in progress] The source reports the work has moved to review and gives a ship target, which is genuinely new information not already in the card.

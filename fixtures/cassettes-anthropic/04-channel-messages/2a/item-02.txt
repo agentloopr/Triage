@@ -1,0 +1,11 @@
+ITEM: 2
+TITLE: Write runbook documentation
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Document a runbook for the recurring staging 502/connection-pool-exhaustion issue, which has now occurred twice, so the team can respond quickly next time.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No existing card covers documentation of this runbook; the only related card (t800, search relevance) is unrelated in scope. This is a net-new deliverable explicitly committed to by Sky Patel.

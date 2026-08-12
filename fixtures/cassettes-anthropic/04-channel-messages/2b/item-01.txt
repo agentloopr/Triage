@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: This is a distinct incident (staging 502s from pool exhaustion) with a concrete fix (raise pool size, add alert) owned by Avery Chen. The only board card, t800, covers search relevance tuning — an unrelated deliverable, so no match/containment applies. No existing card to update or subtask under; this is a fresh trackable fix.

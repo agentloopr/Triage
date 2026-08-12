@@ -5,7 +5,6 @@ LIST: backend
 ASSIGNEE: Avery Chen
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Increase the connection pool size on the staging service to resolve the 502 errors caused by pool exhaustion. This is the direct configuration change Avery committed to.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Avery diagnosed the staging 502 errors as connection pool exhaustion. He plans to increase the pool size and add an alert to catch the problem before users see it.
 CONFIDENCE: high
-RATIONALE: No open card in the snapshot covers staging 502s or connection pool tuning; the only card (t800) is for search relevance. This is a new deliverable, so NEW_TASK.
+RATIONALE: The board snapshot contains only one task (t800, search relevance). No open card covers the staging connection pool fix; this is a net-new deliverable requiring no evidence read.

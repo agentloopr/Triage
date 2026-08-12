@@ -1,0 +1,12 @@
+ITEM: 4
+TITLE: Write welcome email copy
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t100
+LIST: design
+ASSIGNEE: Rowan Diaz
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Draft the welcome email copy as part of the onboarding revamp; it ships together with the onboarding flow redesign.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t100 — no comments, but description confirms scope] Rowan explicitly stated the welcome email copy "sits inside the onboarding revamp, it ships when that ships," and Jules confirmed to keep it under that card — direct containment with same assignee as the open parent t100.

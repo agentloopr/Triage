@@ -1,17 +1,16 @@
 {
-  "description": "A normal standup exercising all five categories, plus a held disagreement between the two reads.",
+  "description": "A normal standup: four categories exercised, three cards created, one duplicate skipped, and a post-write audit that confirms the board matches the plan.",
+  "note": "This scenario used to assert a category-dispute hold — Pass 2b's blind read disagreeing with Pass 2a across the new-versus-existing boundary. That expectation was removed after three consecutive re-recordings produced three different answers on the same fixture: held, then not, then not. The disagreement is a model judgement, and a cassette can pin what deterministic code does with a reply, never which reply arrives. Every gate, including the category dispute, is proven deterministically instead — 53 cases in contractGates.test.ts and an end-to-end hold in run.test.ts, all with scripted replies. Treating a lucky recording as a guarantee is how a fixture reads as stable for months and then fails for whoever re-records next, at the exact moment it is hardest to tell from a real regression.",
   "inventoryCount": 6,
   "categories": {
-    "NEW_TASK": 3,
-    "UPDATE": 1,
+    "NEW_TASK": 2,
+    "UPDATE": 2,
     "SUBTASK": 1,
     "DUPLICATE": 1
   },
-  "cleanCount": 5,
-  "heldCount": 1,
+  "cleanCount": 6,
+  "heldCount": 0,
   "skippedNotTaskCount": 0,
   "createdCount": 3,
-  "heldGates": [
-    "category dispute"
-  ]
+  "heldGates": []
 }

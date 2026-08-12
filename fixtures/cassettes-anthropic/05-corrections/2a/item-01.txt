@@ -1,0 +1,11 @@
+ITEM: 1
+TITLE: Fix billing invoice API endpoint field mapping
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Rowan Diaz
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: The billing invoice API endpoint returns totals in the wrong field, causing PDF columns to render overlapping. Fix the field mapping so invoice PDFs render correctly.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: Explicitly noted as a separate workstream from t900 (billing webhook retry) per learned facts, and a human confirmed this endpoint fix is not the same as t900. No other card covers the invoice API; this is net-new work explicitly assigned to Rowan Diaz.

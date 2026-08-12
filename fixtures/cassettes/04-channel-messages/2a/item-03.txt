@@ -1,10 +1,11 @@
 ITEM: 3
 TITLE: Document the runbook for connection pool exhaustion
 CATEGORY: NEW_TASK
-LIST: backend
+LIST: platform
 ASSIGNEE: Sky Patel
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Write up the runbook for handling connection pool exhaustion in staging, covering diagnosis and recovery steps, as this has recurred twice.
+FINAL_DESC: Sky Patel committed to writing the runbook for connection pool exhaustion, which has recurred on staging, after Jules Kim noted it had happened twice.
+UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: The board snapshot contains only t800 (search relevance tuning), which is unrelated. No open card tracks this documentation deliverable, so it is a net-new task.
+RATIONALE: No card in the snapshot covers runbook documentation for connection pool exhaustion; t800 tracks search relevance tuning, unrelated. Net-new deliverable.

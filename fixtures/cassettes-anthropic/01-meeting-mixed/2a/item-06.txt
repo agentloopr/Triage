@@ -1,0 +1,8 @@
+ITEM: 6
+TITLE: Investigate noisy nightly build alerts
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t400
+FINAL_DESC: Sky will investigate whether the noisy nightly build alerts are caused by the flaky auth test and report back Wednesday.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t400 — no comments on this card] The card covers nightly build monitoring broadly; this is new status/progress info (investigating noisiness, tied to flaky auth test, reporting Wednesday) not previously logged, so it's an UPDATE rather than a new deliverable.

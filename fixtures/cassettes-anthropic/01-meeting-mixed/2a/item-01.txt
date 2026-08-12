@@ -1,0 +1,9 @@
+ITEM: 1
+TITLE: Rate limiting shipping pending sign-off
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t200
+STATUS: in review
+FINAL_DESC: Token bucket implementation for API rate limiting is complete and in review, pending Sky's sign-off; targeted to ship Friday.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t200 — no comments on this card] The card shows no history of this status, so "done, in review, pending sign-off, ship Friday" is genuinely new progress information on the same deliverable, not a new task.

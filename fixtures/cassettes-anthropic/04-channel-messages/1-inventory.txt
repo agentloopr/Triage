@@ -1,0 +1,16 @@
+--- ACTION INVENTORY ---
+1. Raise connection pool size and add alert | quote: "I'll raise the pool size and add an alert so we catch it before users do."
+   DESC: Staging 502s traced to connection pool exhaustion; Avery will increase pool size and add monitoring alert to catch it earlier.
+   TIMESTAMP: [09:31]
+   POSSIBLE_MATCH_HINT: (none)
+
+2. Write runbook documentation | quote: "I'll write it up."
+   DESC: Jules requested documentation of the runbook for the recurring 502/pool exhaustion issue, noting it has happened twice; Sky committed to writing it.
+   TIMESTAMP: [09:40]-[09:42]
+   POSSIBLE_MATCH_HINT: (none)
+
+3. Search relevance work ready for review | quote: "Search relevance work is now in review by the way, ready for a look."
+   DESC: Avery reported that the search relevance tuning work has progressed to review stage and is ready for someone to look at.
+   TIMESTAMP: [11:15]
+   POSSIBLE_MATCH_HINT: Search relevance tuning | id:t800
+--- END ACTION INVENTORY ---

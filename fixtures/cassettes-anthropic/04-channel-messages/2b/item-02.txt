@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: No existing card covers documentation of the staging 502/pool exhaustion runbook; t800 is unrelated (search relevance). Sky has a concrete, owned deliverable (write the runbook) distinct from Avery's fix work, so this is a new trackable task.

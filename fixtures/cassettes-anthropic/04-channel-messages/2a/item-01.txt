@@ -1,0 +1,10 @@
+ITEM: 1
+TITLE: Raise connection pool size and add alert
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: high
+STATUS: in progress
+FINAL_DESC: Staging has been returning 502s since ~8am, traced to connection pool exhaustion. Avery will raise the pool size and add an alert so this is caught before users are impacted.
+CONFIDENCE: high
+RATIONALE: No existing card in the snapshot covers staging 502s or connection pool sizing; only t800 (search relevance) is present and unrelated. This is a distinct new deliverable.

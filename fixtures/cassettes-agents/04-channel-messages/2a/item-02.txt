@@ -1,0 +1,11 @@
+ITEM: 2
+TITLE: Add alert for connection pool exhaustion
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Add an alert that triggers on connection pool exhaustion so the team is notified before users encounter 502s.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No open board card covers adding a connection pool exhaustion alert; the only open task, t800, is search relevance tuning and unrelated. Net-new deliverable, so no evidence read was required.

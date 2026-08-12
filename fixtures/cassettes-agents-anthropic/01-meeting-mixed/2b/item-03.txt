@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: SUBTASK
+MATCH_TASK_ID: t100
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Rowan explicitly states the welcome email copy "sits inside the onboarding revamp, it ships when that ships" — explicit containment, closing with the parent card t100. [Tier-2: task-comments on t100 — no comments, but source itself establishes the containment relationship directly]. This is a concrete deliverable (writing copy) with a named owner, so it is real_task, and clearly belongs to the existing onboarding redesign effort.

@@ -1,0 +1,3 @@
+NOTE: Checked t100 — Rowan owns the onboarding redesign ("first-run experience end to end") and no comments show the welcome email already tracked, so this reads as a concrete slice of that work.
+DESC: Draft the welcome email copy for the onboarding revamp and land it in the onboarding spec handed to engineering; copy ships with the revamp, not as a standalone send.
+OWNERSHIP: OK

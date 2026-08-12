@@ -1,0 +1,10 @@
+ITEM: 2
+TITLE: Add request-size cap on upload endpoint
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: high
+STATUS: not started
+FINAL_DESC: The upload endpoint currently has no request-size cap; a 400MB payload previously crashed the workers. Add a hard limit on request size to prevent this from recurring.
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t200 — no comments] t200 covers rate limiting/throttling specifically; closing t200 would not close this distinct upload size-cap fix. This is a separate deliverable Avery raised, not contained in the rate-limiting card, so NEW_TASK.

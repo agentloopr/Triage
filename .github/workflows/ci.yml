@@ -32,6 +32,11 @@ jobs:
       # the DeepSeek run and the two models disagree about what counts as an action item — but it
       # must still REPLAY, or 46 committed cassettes quietly rot behind a doc that cites them.
       - run: npm run demo -- --provider anthropic
+      # The agent layer, replayed offline on both providers. It is off by default in normal use, so
+      # without these steps its recordings rot exactly like the Anthropic set nearly did — and the
+      # read-only guarantee would be asserted only by unit tests, never by a whole run.
+      - run: npm run demo -- --agents
+      - run: npm run demo -- --agents --provider anthropic
       # Never --labels here: that path calls a judge model, and this job has no secrets.
       - run: npm run eval
 

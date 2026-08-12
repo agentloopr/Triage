@@ -1,0 +1,11 @@
+ITEM: 8
+TITLE: Discuss full-suite-before-release process separately
+CATEGORY: NEW_TASK
+LIST: product
+ASSIGNEE: Jules Kim
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Sky proposed always running the full suite before a release, not just smoke tests. Jules flagged it as a process topic and committed to discussing it separately.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No open board card covers this process-discussion deliverable; no evidence read needed for NEW_TASK.

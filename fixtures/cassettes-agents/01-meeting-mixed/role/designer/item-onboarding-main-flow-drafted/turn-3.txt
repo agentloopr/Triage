@@ -1,0 +1,3 @@
+NOTE: Checked t100 — owned by Rowan Diaz in design, no prior comments; this is a legitimate progress update on her onboarding redesign card.
+DESC: Drafted the main onboarding flow; the end-to-end onboarding revamp remains in progress.
+OWNERSHIP: OK

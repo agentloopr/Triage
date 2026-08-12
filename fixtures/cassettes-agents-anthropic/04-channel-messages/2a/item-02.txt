@@ -1,0 +1,10 @@
+ITEM: 2
+TITLE: Write runbook for pool exhaustion issue
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Document a runbook for diagnosing and resolving the connection pool exhaustion issue causing staging 502s, which has now recurred twice. Sky Patel volunteered to write it up.
+CONFIDENCE: high
+RATIONALE: No existing card covers documentation of the pool exhaustion runbook; the only related card, t800, is about search relevance and unrelated. This is a net-new deliverable, so no evidence citation is required.

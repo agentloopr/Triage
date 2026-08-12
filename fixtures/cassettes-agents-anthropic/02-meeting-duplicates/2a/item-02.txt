@@ -1,0 +1,6 @@
+ITEM: 2
+TITLE: Fix deploy pipeline partial-failure handling
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t600
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t600 — no comments] t600's description already covers making the deploy pipeline resilient to partial failures, which is exactly the same deliverable Sky described; no new scope or status was added beyond what the card already states.

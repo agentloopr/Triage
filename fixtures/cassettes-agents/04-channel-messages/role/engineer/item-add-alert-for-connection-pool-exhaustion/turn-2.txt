@@ -1,0 +1,3 @@
+NOTE: Checked for an existing open card mentioning connection pool; none found, and the item is clear enough to act on.
+DESC: Add an alert that fires when connection pool exhaustion is detected, so the team is paged before pool saturation produces user-facing 502s.
+OWNERSHIP: OK

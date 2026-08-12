@@ -1,0 +1,3 @@
+NOTE: Searched for existing "connection pool" and "staging 502" cards and found none; the item states the failure mode and the fix and is actionable as written.
+DESC: KEEP
+OWNERSHIP: OK

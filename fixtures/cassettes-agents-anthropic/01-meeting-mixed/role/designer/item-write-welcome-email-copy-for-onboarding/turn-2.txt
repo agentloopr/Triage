@@ -1,0 +1,3 @@
+NOTE: Checked parent card t100 (onboarding flow redesign); this item is copywriting for the welcome email, not an interface/visual design decision.
+DESC: Write the welcome email copy tied to the onboarding flow redesign (t100). No layout or interaction spec needed — copy only, to ship alongside the onboarding revamp.
+OWNERSHIP: This is content/copywriting work, not design-system or interface spec work — may belong with a content/copy owner rather than Design.

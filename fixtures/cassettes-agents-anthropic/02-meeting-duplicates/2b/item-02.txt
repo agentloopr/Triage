@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t600
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t600 — no comments present] t600 "Deploy pipeline hardening" is described as making the pipeline resilient to partial failures — same deliverable as Sky's report of deploys failing halfway and needing partial-failure handling. No prior comment logs this specific report, so it's genuinely new progress/detail on the existing card rather than a duplicate card or new deliverable.

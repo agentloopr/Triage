@@ -1,0 +1,3 @@
+[00:00:00-00:00:48] Jules Kim: The billing invoice API endpoint is returning totals in the wrong field, so the PDFs render with the columns overlapping. Can someone fix the invoice API endpoint?
+[00:00:48-00:01:12] Rowan Diaz: I can take that — I wrote the original endpoint.
+[00:01:12-00:01:32] Jules Kim: Great, it is yours.

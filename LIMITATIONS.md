@@ -86,14 +86,28 @@ downstream layer behaves identically given each provider's own replies — the p
 Extraction is not, and this repo has no ground truth to say which model is right. See
 [PROVIDERS.md](PROVIDERS.md).
 
-**No agent runtime.** Passes 2a and 2b are plain completions with evidence pre-fetched host-side,
-where production uses tool-using agents that fetch extra card history on demand. The cost is real:
-worse duplicate recall on semantically-worded matches, where the phrasing differs enough that the
-candidate selector never surfaces the card. The whole-board Jaccard backstop and the
-evidence-citation gate catch the fallout — but as **human holds**, not as silent correct answers.
+**Passes 2a and 2b are plain completions**, with evidence pre-fetched host-side, where production
+uses tool-using agents that fetch extra card history on demand. The cost is real: worse duplicate
+recall on semantically-worded matches, where the phrasing differs enough that the candidate selector
+never surfaces the card. The whole-board Jaccard backstop and the evidence-citation gate catch the
+fallout — but as **human holds**, not as silent correct answers.
 
-A read-only tool loop ships (`src/pipeline/toolLoop.ts`, DeepSeek only, off by default) and recovers
-some of that. It is not the default path and is not what the shipped recordings exercise.
+The agent layer (below) recovers some of that, and is off by default.
+
+### The agent layer has no production history
+
+**This is the one part of the repo that was built rather than extracted, and it is the caveat that
+matters most** — because everything else here rests on the opposite claim.
+
+Production's agent loop lives in a separate runtime that this repo does not ship and could not
+extract: the pipeline is a *client* of it, and its prompts are wired to internal workspace files. So
+the board agent and the eight role agents in `src/agents/` were written **for this repo**. They are
+tested — the read-only guarantee and the anti-fabrication rule both have tests — but tested is not
+the same as *has governed a real board for months*, which is what is true of everything around them.
+
+That is why `AGENTS_ENABLED` defaults to **false**. Turning it on changes no disposition: agents may
+improve how an item reads and may raise an ownership doubt, and they cannot change a category, a
+list, an assignee, or write anything at all. See [AGENTS.md](AGENTS.md).
 
 ## Scale
 

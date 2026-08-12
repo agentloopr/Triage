@@ -1,0 +1,7 @@
+ITEM: 1
+TITLE: Own the onboarding revamp
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t500
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t500 — no comments on this card] The existing card already tracks the new-user first-run onboarding revamp, is assigned to Rowan Diaz, and its description covers the same first-run experience. The source adds no new scope, status, or info beyond what is already on the card.

@@ -1,0 +1,36 @@
+--- ACTION INVENTORY ---
+1. Ship rate limiting after Sky’s sign-off | quote: "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday."
+   DESC: Avery reported the token bucket is finished and rate limiting is in review. It is waiting for Sky to sign off and is expected to ship Friday.
+   TIMESTAMP: [00:00:12-00:00:48]
+   POSSIBLE_MATCH_HINT: Public API rate limiting | id:t200
+
+2. Add a hard request-size limit to the upload endpoint | quote: "I'll add a hard limit."
+   DESC: Avery reported that a 400 meg payload hit the upload endpoint and took workers down. He committed to add a hard request-size limit.
+   TIMESTAMP: [00:01:10-00:01:36]
+   POSSIBLE_MATCH_HINT: (none)
+
+3. Onboarding main flow drafted | quote: "Main flow is drafted."
+   DESC: Rowan reported the main onboarding flow is drafted.
+   TIMESTAMP: [00:01:58-00:02:30]
+   POSSIBLE_MATCH_HINT: Redesign the onboarding flow | id:t100
+
+4. Write welcome email copy for onboarding revamp | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
+   DESC: Rowan committed to write welcome email copy. It is part of the onboarding revamp and will ship with that work.
+   TIMESTAMP: [00:01:58-00:02:30]
+   POSSIBLE_MATCH_HINT: Redesign the onboarding flow | id:t100
+
+5. Refresh pricing page copy | quote: "I'm going to refresh the pricing page copy this week."
+   DESC: Noor committed to refresh the stale pricing page copy this week; it still shows the old three tiers.
+   TIMESTAMP: [00:02:52-00:03:34]
+   POSSIBLE_MATCH_HINT: Q3 pricing page refresh | id:t300
+
+6. Investigate flaky auth test as cause of noisy nightly build alerts | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
+   DESC: Sky reported nightly build alerts have been noisy and committed to check whether the flaky auth test is the cause, reporting back Wednesday.
+   TIMESTAMP: [00:03:56-00:04:38]
+   POSSIBLE_MATCH_HINT: Nightly build monitoring | id:t400
+
+7. Write written spec for usage-based billing idea | quote: "I'll write that up."
+   DESC: Wren asked for a written spec for the usage-based billing idea before committing to anything. Jules committed to write it.
+   TIMESTAMP: [00:05:58-00:06:38]
+   POSSIBLE_MATCH_HINT: (none)
+--- END ACTION INVENTORY ---

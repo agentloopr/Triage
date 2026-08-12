@@ -1,0 +1,19 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_CKFynQrehC1qKL5S0zIN4530",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "Jules"
+      }
+    },
+    {
+      "id": "call_01_4v5wadWFabK4rEwe8lGP3530",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "billing spec"
+      }
+    }
+  ]
+}

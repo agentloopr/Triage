@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Scanned the full board; the closest existing card is t200 “Public API rate limiting,” but that card covers throttling/token bucket work, not a request-size cap on the upload endpoint. The source clearly states the upload endpoint has no size cap and Avery commits to adding a hard limit — a distinct, concrete deliverable.

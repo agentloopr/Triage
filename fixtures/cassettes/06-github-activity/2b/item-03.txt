@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t901
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: Existing card t901 ("Settings module cleanup", tidy-up only, no behaviour change) is the same deliverable as PR #419 "Refactor the settings module". [Tier-2: task-comments on t901 — no comments] The PR opening is genuinely new progress on that card not already recorded in its activity log, so this is an UPDATE rather than a new task or a plain duplicate.

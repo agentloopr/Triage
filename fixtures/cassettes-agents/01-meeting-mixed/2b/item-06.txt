@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Scanned the board; closest candidate t300 is Noor’s Q3 pricing copy refresh, not a written usage-based billing spec. The source has Wren requesting the spec and Jules committing to write it — a distinct, trackable PM deliverable not contained by or updating any existing board card.
+RATIONALE: Source contains Wren requesting a written spec for the usage-based billing idea and Jules committing to write it. Full board snapshot has no card for usage-based billing or a billing spec; closest cards (pricing page refresh, API rate limiting, onboarding, nightly builds) are distinct deliverables, so no duplicate/subtask/update match. This is a concrete, owner-assigned deliverable worth tracking.

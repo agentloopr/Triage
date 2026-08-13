@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "members": [
+    {
+      "name": "Avery Chen",
+      "externalIds": {
+        "clickup": "10000001",
+        "linear": "usr_avery"
+      },
+      "channelIds": {
+        "slack": "U00001"
+      },
+      "email": "avery@example.com",
+      "role": "engineer",
+      "defaultProjects": [
+        "backend",
+        "platform"
+      ]
+    },
+    {
+      "name": "Rowan Diaz",
+      "externalIds": {
+        "clickup": "10000002",
+        "linear": "usr_rowan"
+      },
+      "channelIds": {
+        "slack": "U00002"
+      },
+      "email": "rowan@example.com",
+      "role": "designer",
+      "defaultProjects": [
+        "design"
+      ]
+    },
+    {
+      "name": "Jules Kim",
+      "externalIds": {
+        "clickup": "10000003",
+        "linear": "usr_jules"
+      },
+      "channelIds": {
+        "slack": "U00003"
+      },
+      "email": "jules@example.com",
+      "role": "product-manager",
+      "defaultProjects": [
+        "product",
+        "backend"
+      ]
+    },
+    {
+      "name": "Sky Patel",
+      "externalIds": {
+        "clickup": "10000004",
+        "linear": "usr_sky"
+      },
+      "channelIds": {
+        "slack": "U00004"
+      },
+      "email": "sky@example.com",
+      "role": "qa",
+      "defaultProjects": [
+        "platform"
+      ]
+    },
+    {
+      "name": "Noor Haddad",
+      "externalIds": {
+        "clickup": "10000005",
+        "linear": "usr_noor"
+      },
+      "channelIds": {
+        "slack": "U00005"
+      },
+      "email": "noor@example.com",
+      "role": "marketer",
+      "defaultProjects": [
+        "growth"
+      ]
+    },
+    {
+      "name": "Emerson Blake",
+      "externalIds": {
+        "clickup": "10000006",
+        "linear": "usr_emerson"
+      },
+      "channelIds": {
+        "slack": "U00006"
+      },
+      "email": "emerson@example.com",
+      "role": "sales-gtm",
+      "defaultProjects": [
+        "growth"
+      ]
+    },
+    {
+      "name": "Tam Osei",
+      "externalIds": {
+        "clickup": "10000007",
+        "linear": "usr_tam"
+      },
+      "channelIds": {
+        "slack": "U00007"
+      },
+      "email": "tam@example.com",
+      "role": "delivery-lead",
+      "defaultProjects": [
+        "product",
+        "platform"
+      ]
+    },
+    {
+      "name": "Wren Alvarez",
+      "externalIds": {
+        "clickup": "10000008",
+        "linear": "usr_wren"
+      },
+      "channelIds": {
+        "slack": "U00008"
+      },
+      "email": "wren@example.com",
+      "role": "founder-exec",
+      "defaultProjects": []
+    }
+  ],
+  "routes": [
+    {
+      "key": "backend",
+      "externalIds": {
+        "clickupList": "900000001",
+        "linearTeam": "BAC"
+      },
+      "pattern": "backend|api|server|endpoint|rate limit|throttl",
+      "defaultAssignee": "Avery Chen",
+      "validAssignees": [
+        "Avery Chen",
+        "Jules Kim",
+        "Sky Patel"
+      ],
+      "validStatuses": [
+        "not started",
+        "in progress",
+        "in review",
+        "complete"
+      ],
+      "status": "active"
+    },
+    {
+      "key": "design",
+      "externalIds": {
+        "clickupList": "900000002",
+        "linearTeam": "DES"
+      },
+      "pattern": "design|figma|mockup|visual|onboarding|copy",
+      "defaultAssignee": "Rowan Diaz",
+      "validAssignees": [
+        "Rowan Diaz",
+        "Jules Kim"
+      ],
+      "validStatuses": [
+        "not started",
+        "in progress",
+        "in review",
+        "complete"
+      ],
+      "status": "active"
+    },
+    {
+      "key": "product",
+      "externalIds": {
+        "clickupList": "900000003",
+        "linearTeam": "PRO"
+      },
+      "pattern": "product|roadmap|spec|requirement|discovery",
+      "defaultAssignee": "Jules Kim",
+      "validAssignees": [
+        "Jules Kim",
+        "Tam Osei",
+        "Wren Alvarez"
+      ],
+      "validStatuses": [
+        "not started",
+        "in progress",
+        "in review",
+        "complete"
+      ],
+      "status": "active"
+    },
+    {
+      "key": "platform",
+      "externalIds": {
+        "clickupList": "900000004",
+        "linearTeam": "PLA"
+      },
+      "pattern": "platform|infra|deploy|ci|pipeline|release|monitor",
+      "defaultAssignee": "Sky Patel",
+      "validAssignees": [
+        "Sky Patel",
+        "Avery Chen",
+        "Tam Osei"
+      ],
+      "validStatuses": [
+        "not started",
+        "in progress",
+        "in review",
+        "complete"
+      ],
+      "status": "active"
+    },
+    {
+      "key": "growth",
+      "externalIds": {
+        "clickupList": "900000005",
+        "linearTeam": "GRO"
+      },
+      "pattern": "growth|campaign|outbound|marketing|launch|pricing",
+      "defaultAssignee": "Noor Haddad",
+      "validAssignees": [
+        "Noor Haddad",
+        "Emerson Blake",
+        "Wren Alvarez"
+      ],
+      "validStatuses": [
+        "not started",
+        "in progress",
+        "in review",
+        "complete"
+      ],
+      "status": "active"
+    }
+  ],
+  "log": []
+}

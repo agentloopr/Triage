@@ -1,0 +1,16 @@
+{
+  "description": "A GitHub activity feed through the identical 1 → 2d chain. Nobody commits to anything in a PR title, so this exercises the other half of Pass 1's definition — reported state change — and the gap a code feed always has: GitHub names who wrote a change, never who owns the follow-up work.",
+  "inventoryCount": 4,
+  "categories": {
+    "NEW_TASK": 3,
+    "UPDATE": 1
+  },
+  "cleanCount": 1,
+  "heldCount": 2,
+  "skippedNotTaskCount": 1,
+  "createdCount": 0,
+  "heldGates": [
+    "uncertain field(s)",
+    "uncertain field(s)"
+  ]
+}

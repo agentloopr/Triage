@@ -1,0 +1,48 @@
+{
+  "repo": "acme/platform-api",
+  "deliveryId": "delivery-06",
+  "dateIso": "2026-08-14",
+  "events": [
+    {
+      "kind": "pull_request",
+      "action": "merged",
+      "number": 412,
+      "title": "Add token-bucket rate limiting to public endpoints",
+      "author": "Avery Chen",
+      "at": "2026-08-14T09:12:00Z",
+      "branch": "feat/rate-limiting",
+      "body": "Applies a per-key token bucket to every public route. Ships the limiter itself; the dashboard for it is not in this change."
+    },
+    {
+      "kind": "commit",
+      "title": "Fix off-by-one in the retry backoff",
+      "author": "Avery Chen",
+      "at": "2026-08-14T09:40:00Z"
+    },
+    {
+      "kind": "issue",
+      "action": "opened",
+      "number": 418,
+      "title": "Export endpoint times out above 50k rows",
+      "author": "Sky Patel",
+      "at": "2026-08-14T10:05:00Z",
+      "body": "Reproduced on staging with a 60k-row account. The request hangs and eventually 504s. Needs pagination or a streaming response before the next client onboarding."
+    },
+    {
+      "kind": "pull_request",
+      "action": "opened",
+      "number": 419,
+      "title": "Refactor the settings module",
+      "author": "Avery Chen",
+      "at": "2026-08-14T11:20:00Z",
+      "branch": "chore/settings-tidy",
+      "body": "Renames a few things and splits one long file. No behaviour change."
+    },
+    {
+      "kind": "review_comment",
+      "title": "Nice, this reads much better than the old version",
+      "author": "Sky Patel",
+      "at": "2026-08-14T11:45:00Z"
+    }
+  ]
+}

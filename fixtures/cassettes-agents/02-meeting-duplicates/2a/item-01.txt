@@ -1,6 +1,7 @@
 ITEM: 1
-TITLE: Make the deploy pipeline handle partial failure
+TITLE: Own the onboarding revamp
 CATEGORY: DUPLICATE
-EXISTING_TASK_ID: t600
+EXISTING_TASK_ID: t500
+UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t600 — no comments] The existing open card t600 already scopes deploy pipeline hardening to be resilient to partial failures, which matches this deliverable exactly, and Sky added no new scope or status beyond that.
+RATIONALE: [Tier-2: task-comments on t500 — no comments on this card] t500 already covers the new-user first-run flow with the same scope: walk new signups through the first meaningful action. The source only assigns the work to Rowan, which t500 already reflects, so nothing new is added.

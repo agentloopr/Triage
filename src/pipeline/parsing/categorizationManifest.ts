@@ -76,6 +76,13 @@ export type CategorizationItem = {
 const CATEGORIES = new Set<MeetingCategory>(['NEW_TASK', 'DUPLICATE', 'SUBTASK', 'UPDATE', 'RELATE']);
 
 /**
+ * The closed set, for parsing a category out of text that did not come from Pass 2a — an agent's
+ * proposal, for instance. Exported so the grammar has exactly one definition; a second list
+ * somewhere else is a sixth category waiting to be invented.
+ */
+export const isMeetingCategory = (s: string): s is MeetingCategory => CATEGORIES.has(s as MeetingCategory);
+
+/**
  * Single-line scalar fields keyed by their manifest label.
  *
  * `TIMESTAMP` and `NOTIFY_ASSIGNEE` are here because the formatter emits them. In the system this

@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Scanned the board snapshot: t900 covers rate limiting on the public API and t901 covers settings module cleanup. Neither covers the export endpoint timeout / pagination or streaming work described in issue #418, so this is a distinct new backend deliverable rather than a duplicate or update.

@@ -1,0 +1,6 @@
+NOTE: Checked t200 — existing backend card owned by Avery for public API rate limiting; the item is a status update, not new work.
+DESC: Token bucket implementation for public API rate limiting is complete and in review. Waiting on Sky's signoff. Expected ship date Friday.
+CATEGORY: UPDATE
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

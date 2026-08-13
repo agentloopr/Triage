@@ -58,6 +58,13 @@ export const LINEAR_API_KEY = str('LINEAR_API_KEY', '');
  */
 export const TRACKER_TIMEOUT_MS = int('TRACKER_TIMEOUT_MS', 60_000);
 
+// ── Source reads (src/sources) ──────────────────────────────────────────────
+// Read-only credentials, and only the read scopes. Nothing in `src/sources/` can write, so a token
+// with write scope here buys nothing and widens the blast radius if it leaks.
+export const GITHUB_TOKEN = str('GITHUB_TOKEN', '');
+/** One Google OAuth access token, carrying `gmail.readonly` and `drive.readonly`. */
+export const GOOGLE_ACCESS_TOKEN = str('GOOGLE_ACCESS_TOKEN', '');
+
 // ── Routing ─────────────────────────────────────────────────────────────────
 /**
  * The list work lands on when nothing else matches. Optional and **empty by default**: when set, an

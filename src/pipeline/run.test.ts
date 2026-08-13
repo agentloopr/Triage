@@ -10,6 +10,9 @@ import { pendingHumanStore } from '../state/pendingHuman';
 import { resumeHold } from './resume';
 import type { BoardTask } from '../trackers';
 import { memoryTracker } from '../trackers/memory';
+import type { DelegationResult } from '../agents/boardAgent';
+import type { CategorizationItem } from './parsing/categorizationManifest';
+import type { RoleEnrichment } from '../agents/roleAgent';
 import { PipelineEvents, type PipelineEvent } from './events';
 import { INVENTORY_END, INVENTORY_START } from './parsing/inventory';
 import { type PipelineDeps, runPipeline } from './run';
@@ -332,5 +335,90 @@ describe('degraded paths', () => {
     const { deps, events } = makeDeps();
     await runPipeline(SOURCE, deps);
     expect(events.some((e) => e.type === 'alert' && e.detail.includes('read path looks down'))).toBe(false);
+  });
+});
+
+/**
+ * PRD §5's "authority to write", as it is actually implemented: the agent proposes and the gates
+ * decide. These four are the invariants that make that safe, and each one fails loudly if the
+ * re-gate is removed or bypassed.
+ */
+describe('an agent proposal is re-gated, never applied on trust', () => {
+  const agentProposing = (enrichment: Partial<RoleEnrichment>, seen?: CategorizationItem[][]) => ({
+    delegate: async (items: CategorizationItem[]): Promise<DelegationResult[]> => {
+      seen?.push(items);
+      return items.map((it) => ({
+        item: it.item,
+        role: 'engineer' as const,
+        owner: 'Avery Chen',
+        enrichment: { note: 'n', ...enrichment },
+      }));
+    },
+  });
+
+  it('applies a proposal that survives the gates', async () => {
+    // The positive control. Without it, the refusal tests below would also pass if proposals were
+    // simply never applied at all.
+    const { deps } = makeDeps({ agents: agentProposing({ finalDesc: 'A fuller description from the agent.' }) });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.exec?.created).toBe(1);
+    expect(out.clean[0]!.finalDesc).toBe('A fuller description from the agent.');
+  });
+
+  it('holds instead of writing when a proposal fails a gate', async () => {
+    const { deps } = makeDeps({ agents: agentProposing({ proposedList: 'no-such-list' }) });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.exec?.created).toBe(0);
+    expect(out.held.map((h) => h.gate)).toContain('unknown list key');
+    expect(out.clean).toHaveLength(0);
+  });
+
+  it('holds when a proposed assignee is not on the roster', async () => {
+    const { deps } = makeDeps({ agents: agentProposing({ proposedAssignee: 'Nobody Here' }) });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.exec?.created).toBe(0);
+    expect(out.held.map((h) => h.gate)).toContain('assignee not in team roster');
+  });
+
+  it('turns an ownership doubt into a hold rather than a log line', async () => {
+    const { deps } = makeDeps({ agents: agentProposing({ ownershipDoubt: 'this looks like design work' }) });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.exec?.created).toBe(0);
+    expect(out.held).toHaveLength(1);
+    expect(out.held[0]!.question).toContain('this looks like design work');
+  });
+
+  it('persists and announces a hold the re-gate created', async () => {
+    // The first batch of holds is persisted before it is announced; these are created after that has
+    // already happened, so they need the same treatment rather than silently skipping both.
+    const { deps, events } = makeDeps({ agents: agentProposing({ proposedList: 'no-such-list' }) });
+    const out = await runPipeline(SOURCE, deps);
+
+    const held = events.filter((e) => e.type === 'items:held');
+    expect(held).toHaveLength(1);
+    expect(out.held).toHaveLength(1);
+  });
+
+  /**
+   * The containment invariant. An agent that could reach a held item could un-hold it by talking,
+   * which would defeat every gate in the repo at once. It is enforced structurally — the agent is
+   * handed `checked.clean` and nothing else — so this asserts the agent never even sees it.
+   */
+  it('never shows the agent an item the gates already held', async () => {
+    const seen: CategorizationItem[][] = [];
+    const { deps } = makeDeps({
+      // Route to a list nobody can own, so Pass 2b holds it before the agent layer runs.
+      runCategorization: async () => MANIFEST_2A.replace('LIST: backend', 'LIST: no-such-list'),
+      agents: agentProposing({ finalDesc: 'let me fix that for you' }, seen),
+    });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.held).toHaveLength(1);
+    expect(seen).toEqual([[]]); // delegated nothing: there was nothing clean to delegate
+    expect(out.exec?.created).toBe(0);
   });
 });

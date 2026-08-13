@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: SUBTASK
+MATCH_TASK_ID: t920
+WORTH_A_CARD: not_a_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: t920 Checkout redesign spec is the broader spec document and contains this typo correction; it would close when the spec closes. [Tier-2: task-comments on t920 — no comments on the card, and the source activity is the spec document activity.] A one-word typo fix is a passing aside a team would just fix in the doc, not a board-trackable deliverable.

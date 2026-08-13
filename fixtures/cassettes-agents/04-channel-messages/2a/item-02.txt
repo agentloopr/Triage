@@ -1,11 +1,10 @@
 ITEM: 2
-TITLE: Add an alert for pool exhaustion
+TITLE: Add an alert for connection pool exhaustion
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
 PRIORITY: normal
-STATUS: not started
-FINAL_DESC: Add an alert that detects connection pool exhaustion so the staging 502 issue is caught before users are affected.
+FINAL_DESC: Add an alert for connection pool exhaustion on staging so the team is notified before users are affected.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: No open board card covers staging pool exhaustion or monitoring for it; this is a net-new deliverable. No evidence read needed for NEW_TASK.
+RATIONALE: No open card covers connection pool alerting; the only board card (t800) tracks search relevance, so this is a net-new deliverable.

@@ -1,0 +1,10 @@
+ITEM: 4
+TITLE: Fix off-by-one in the retry backoff
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+FINAL_DESC: Fix the off-by-one in the retry backoff in acme/platform-api. Avery Chen made the commit.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: med
+RATIONALE: No open board card explicitly tracks the retry-backoff off-by-one fix; t900 is scoped to adding rate limiting. No Tier-2 comment history for t900 was provided, so I cannot confirm containment or that this is already logged; defaulting to NEW_TASK per the evidence rule.

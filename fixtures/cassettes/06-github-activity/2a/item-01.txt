@@ -1,0 +1,10 @@
+ITEM: 1
+TITLE: Build the rate-limiting dashboard
+CATEGORY: NEW_TASK
+LIST: backend
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Build the dashboard for the rate limiter introduced in PR #412. The limiter itself is merged, but the dashboard to manage or view rate limits is explicitly not part of that change.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No open card covers the dashboard deliverable. t900 covers adding the rate limiter itself, and closing it would not deliver a dashboard; the source explicitly states the dashboard is out of scope for the merged limiter work.

@@ -1,0 +1,8 @@
+ITEM: 3
+TITLE: Refactor the settings module
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t901
+FINAL_DESC: PR #419 opened to rename a few things and split one long file; no behaviour change.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: Existing card t901 tracks the settings tidy-up. [Tier-2: task-comments on t901 — no comments on this card] The PR opening is genuinely new progress not already logged; no explicit status change was directed.

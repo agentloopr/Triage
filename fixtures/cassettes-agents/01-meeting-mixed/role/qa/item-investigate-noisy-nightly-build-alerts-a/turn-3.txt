@@ -1,3 +1,0 @@
-NOTE: Checked existing card t400 — assigned to Sky Patel, in progress, no comments; the proposed description already states the scope (flaky auth test) and Wednesday deadline.
-DESC: KEEP
-OWNERSHIP: OK

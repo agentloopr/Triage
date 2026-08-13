@@ -241,42 +241,13 @@ export async function runContractCheck(
 
     // ── Checks 2–4 — deterministic ───────────────────────────────────────────
     if (!heldThis && !skippedThis) {
-      const { filled, missing } = fillFieldGaps(m, snap, input.todayIso);
-
-      if (missing.length) {
-        heldThis = {
-          item: m.item,
-          title: m.title,
-          category: m.category,
-          gate: `unresolvable field(s): ${missing.join(', ')}`,
-          question: formatClarifyAsk({
-            choice: `I need ${missing.map(humanizeMissingField).join(' and ')} to create this — can you provide ${
-              missing.length > 1 ? 'them' : 'it'
-            }?`,
-          }),
-          originalItem: m,
-        };
-      } else {
-        // Checked before the other gates: an uncertain field is a more specific, more answerable
-        // reason to ask than anything below it.
-        const uf = uncertainFieldsGate(filled);
-        if (uf) {
-          heldThis = { item: m.item, title: m.title, category: m.category, ...uf, originalItem: filled };
-        } else {
-          const bin = binaryHoldGate(filled, snap, {
-            isVague: inv?.isVague ?? false,
-            identityConfirmed: false,
-            itemText: inv ? `${inv.title} ${inv.desc}` : m.title,
-          });
-          if (bin) {
-            heldThis = { item: m.item, title: m.title, category: m.category, ...bin, originalItem: filled };
-          } else if (routingOn) {
-            const route = routingGate(filled);
-            if (route) heldThis = { item: m.item, title: m.title, category: m.category, ...route, originalItem: filled };
-          }
-        }
-        if (!heldThis) perItemClean[idx] = filled;
-      }
+      const outcome = deterministicGatesForItem(m, snap, {
+        ...(input.todayIso ? { todayIso: input.todayIso } : {}),
+        ...(inv ? { inventoryItem: inv } : {}),
+        routingGateEnabled: routingOn,
+      });
+      if (outcome.held) heldThis = outcome.held;
+      else perItemClean[idx] = outcome.clean!;
     }
 
     if (heldThis) held.push(heldThis);
@@ -290,17 +261,115 @@ export async function runContractCheck(
 
   // ── Check 5 — cross-item consistency over the survivors ────────────────────
   const survivors = perItemClean.filter((x): x is CategorizationItem => x !== null);
+  const cross = crossItemAndNotify(survivors, held, snap);
+
+  skippedNotTask.sort((a, b) => a.item - b.item);
+
+  return { clean: cross.clean, held: cross.held, skippedNotTask, flags: cross.flags };
+}
+
+// ── The deterministic half, extracted ────────────────────────────────────────
+//
+// Checks 2–5 consult no model at all: they read the manifest, the board and the registry. Pulling
+// them out is what lets the same gates run a SECOND time over a proposal from the agent layer, so
+// that an agent's suggestion is subject to exactly the checks the pipeline's own answer was. A
+// second copy of this ordering would be a second thing to get wrong — the order is load-bearing
+// (an uncertain field is a more answerable question than anything below it), so it exists once.
+
+export type DeterministicGateOptions = {
+  todayIso?: string;
+  /** Supplies `isVague` and the item text the duplicate backstop scans. Absent = not vague. */
+  inventoryItem?: EnrichedInventoryItem;
+  routingGateEnabled?: boolean;
+};
+
+/**
+ * Run every non-model gate against one item. Either it is held, or it comes back field-filled and
+ * clean — never both, never neither.
+ */
+export function deterministicGatesForItem(
+  m: CategorizationItem,
+  snap: Map<string, BoardTask>,
+  opts: DeterministicGateOptions = {}
+): { held?: HeldItem; clean?: CategorizationItem } {
+  const inv = opts.inventoryItem;
+  const { filled, missing } = fillFieldGaps(m, snap, opts.todayIso);
+
+  if (missing.length) {
+    return {
+      held: {
+        item: m.item,
+        title: m.title,
+        category: m.category,
+        gate: `unresolvable field(s): ${missing.join(', ')}`,
+        question: formatClarifyAsk({
+          choice: `I need ${missing.map(humanizeMissingField).join(' and ')} to create this — can you provide ${
+            missing.length > 1 ? 'them' : 'it'
+          }?`,
+        }),
+        originalItem: m,
+      },
+    };
+  }
+
+  // Checked before the other gates: an uncertain field is a more specific, more answerable
+  // reason to ask than anything below it.
+  const uf = uncertainFieldsGate(filled);
+  if (uf) return { held: { item: m.item, title: m.title, category: m.category, ...uf, originalItem: filled } };
+
+  const bin = binaryHoldGate(filled, snap, {
+    isVague: inv?.isVague ?? false,
+    identityConfirmed: false,
+    itemText: inv ? `${inv.title} ${inv.desc}` : m.title,
+  });
+  if (bin) return { held: { item: m.item, title: m.title, category: m.category, ...bin, originalItem: filled } };
+
+  if (opts.routingGateEnabled ?? true) {
+    const route = routingGate(filled);
+    if (route) return { held: { item: m.item, title: m.title, category: m.category, ...route, originalItem: filled } };
+  }
+
+  return { clean: filled };
+}
+
+/** Check 5 plus the notify resolution and ordering that always follow it. */
+export function crossItemAndNotify(
+  survivors: CategorizationItem[],
+  heldSoFar: HeldItem[],
+  snap: Map<string, BoardTask>
+): { clean: CategorizationItem[]; held: HeldItem[]; flags: ContractFlag[] } {
   const cross = crossItemGate(survivors, snap);
-  held.push(...cross.held);
+  const held = [...heldSoFar, ...cross.held];
 
   // Work out who should ANSWER each hold, so questions reach the person who can answer them rather
   // than whoever happened to trigger the run.
   for (const h of held) if (!h.notifyAssignee) h.notifyAssignee = resolveHeldTargetName(h, snap);
 
   held.sort((a, b) => a.item - b.item);
-  skippedNotTask.sort((a, b) => a.item - b.item);
+  return { clean: cross.clean, held, flags: cross.flags };
+}
 
-  return { clean: cross.clean, held, skippedNotTask, flags: cross.flags };
+/**
+ * Every deterministic gate, over a whole set of items. This is the re-gate entry point: give it a
+ * set of items the agent layer has proposed changes to, and it answers the only question that
+ * matters — does the pipeline still accept them?
+ */
+export function applyGates(
+  items: CategorizationItem[],
+  snap: Map<string, BoardTask>,
+  opts: DeterministicGateOptions & { inventoryByNum?: Map<number, EnrichedInventoryItem> } = {}
+): { clean: CategorizationItem[]; held: HeldItem[]; flags: ContractFlag[] } {
+  const clean: CategorizationItem[] = [];
+  const held: HeldItem[] = [];
+
+  for (const m of items) {
+    const inv = opts.inventoryByNum?.get(m.item) ?? opts.inventoryItem;
+    const outcome = deterministicGatesForItem(m, snap, { ...opts, ...(inv ? { inventoryItem: inv } : {}) });
+    if (outcome.held) held.push(outcome.held);
+    else clean.push(outcome.clean!);
+  }
+
+  return crossItemAndNotify(clean, held, snap);
 }
 
 /**

@@ -1,0 +1,12 @@
+{
+  "description": "An email thread through the same chain, with quoted reply chains stripped before Pass 1 ever sees them. One status update on an existing card and one genuinely separate backend task — plus a 'going forward we should always' line that is a norm rather than work, and is excluded.",
+  "inventoryCount": 2,
+  "categories": {
+    "NEW_TASK": 1,
+    "UPDATE": 1
+  },
+  "cleanCount": 2,
+  "heldCount": 0,
+  "skippedNotTaskCount": 0,
+  "createdCount": 1
+}

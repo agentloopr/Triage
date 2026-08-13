@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Source shows Avery confirmed pool exhaustion and committed to raising the pool size. The only board card, t800, is unrelated search relevance work, so this is a new concrete infrastructure fix.
+RATIONALE: Full board scan shows only t800 (Search relevance tuning), an unrelated backend deliverable; no existing card covers the staging 502 / connection-pool exhaustion fix. The source confirms Avery committed to raising the pool size, so it is a concrete trackable incident-fix task.

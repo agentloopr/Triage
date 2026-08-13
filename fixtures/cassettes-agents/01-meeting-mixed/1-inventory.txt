@@ -1,31 +1,26 @@
 --- ACTION INVENTORY ---
-1. Ship rate limiting after Sky signs off | quote: "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday."
-   DESC: Avery reported the rate limiting work is done and in review. The token bucket was finished yesterday; the work is waiting on Sky to sign off and is expected to ship Friday.
+1. Ship public API rate limiting Friday | quote: "Rate limiting is done and in review. I finished the token bucket yesterday, it's waiting on Sky to sign off. Should ship Friday."
+   DESC: Avery reported the rate limiting work is complete and in review; the token bucket was finished yesterday. It is waiting on Sky to sign off and is expected to ship Friday.
    TIMESTAMP: [00:00:12-00:00:48]
    POSSIBLE_MATCH_HINT: Public API rate limiting | id:t200
-
-2. Add hard request-size limit to upload endpoint | quote: "we have no request-size cap on the upload endpoint. Someone posted a 400 meg payload last week and it took the workers down. I'll add a hard limit."
-   DESC: Avery reported the upload endpoint has no request-size cap and said a 400 meg payload took the workers down last week. He committed to add a hard limit.
+2. Add a hard request-size cap to the upload endpoint | quote: "I'll add a hard limit."
+   DESC: Avery said there is no request-size cap on the upload endpoint, and a 400 MB payload last week took down workers. Avery committed to add a hard limit.
    TIMESTAMP: [00:01:10-00:01:36]
    POSSIBLE_MATCH_HINT: (none)
-
-3. Write welcome email copy for onboarding revamp | quote: "Now that the main flow is drafted, I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
-   DESC: Rowan committed to write the welcome email copy as part of the onboarding revamp. The main onboarding flow is already drafted, and the email copy will ship when the revamp ships.
+3. Write welcome email copy for the onboarding revamp | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
+   DESC: Rowan said the main onboarding flow is drafted. Rowan committed to write the welcome email copy as part of the onboarding revamp; it will ship when the revamp ships.
    TIMESTAMP: [00:01:58-00:02:30]
    POSSIBLE_MATCH_HINT: Redesign the onboarding flow | id:t100
-
 4. Refresh pricing page copy this week | quote: "I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers."
-   DESC: Noor committed to refresh the pricing page copy this week because it is stale and still shows the old three tiers.
+   DESC: Noor committed to refresh the pricing page copy during the current week because the existing copy is stale and still shows the old three tiers.
    TIMESTAMP: [00:02:52-00:03:34]
    POSSIBLE_MATCH_HINT: Q3 pricing page refresh | id:t300
-
 5. Investigate noisy nightly build alerts and report back Wednesday | quote: "the nightly build alerts have been noisy. I'll check whether it's the flaky auth test and report back Wednesday."
-   DESC: Sky committed to investigate whether the noisy nightly build alerts are caused by the flaky auth test and to report back on Wednesday.
+   DESC: Sky reported the nightly build alerts have been noisy. Sky committed to check whether the flaky auth test is the cause and report back by Wednesday.
    TIMESTAMP: [00:03:56-00:04:38]
    POSSIBLE_MATCH_HINT: Nightly build monitoring | id:t400
-
-6. Write usage-based billing spec | quote: "I'll write that up."
-   DESC: Wren requested a written spec for the usage-based billing idea before committing to anything. Jules committed to write that spec.
-   TIMESTAMP: [00:06:22-00:06:38]
+6. Write a written spec for usage-based billing | quote: "I'll write that up."
+   DESC: Wren requested a written spec for the usage-based billing idea before committing to it. Jules committed to write the spec.
+   TIMESTAMP: [00:05:58-00:06:38]
    POSSIBLE_MATCH_HINT: (none)
 --- END ACTION INVENTORY ---

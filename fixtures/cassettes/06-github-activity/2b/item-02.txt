@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Scanned board: only t900 (rate limiting public API) and t901 (settings module cleanup) exist; neither covers the export endpoint timeout/504 issue. Source [10:05] Sky opened issue #418 with the same details, so this is a distinct new backend deliverable, not contained by the existing cards.

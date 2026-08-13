@@ -2,6 +2,5 @@ ITEM: 4
 TITLE: Refresh pricing page copy this week
 CATEGORY: DUPLICATE
 EXISTING_TASK_ID: t300
-UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t300 — no comments; the card description already tracks updating pricing copy after the tier change.] The source only restates the same deliverable with stale old tiers as context, adding no new status, scope, or explicit field correction.
+RATIONALE: [Tier-2: task-comments on t300 — no comments] Card t300 already tracks the same pricing page copy refresh deliverable with the same owner and scope; the source only restates that it will be done this week, adding no new status or field correction.

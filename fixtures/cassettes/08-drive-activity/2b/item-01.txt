@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: SUBTASK
+MATCH_TASK_ID: t920
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: The source shows Jules requesting the declined-card and expired-session error states and Rowan committing to add them to the spec by Tuesday. That is a specific, contained deliverable within the parent “Checkout redesign spec” (t920), not the whole spec itself, and it closes when the parent closes. [Tier-2: task-comments on t920 — no existing comments to refute; the activity is in the source window.]

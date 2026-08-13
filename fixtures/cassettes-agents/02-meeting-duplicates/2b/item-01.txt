@@ -1,6 +1,6 @@
 VERDICT_CATEGORY: DUPLICATE
-MATCH_TASK_ID: t600
+MATCH_TASK_ID: t500
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t600 — no comments] Board card t600 already covers the same deliverable: its description says "Make the deploy pipeline resilient to partial failures," and Sky's source statement is the same work still needing to be done. No new progress appears in the card's activity log, so this is a duplicate rather than a new task or update.
+RATIONALE: [Tier-2: task-comments on t500 — no comments] Existing card t500 already tracks the same onboarding/first-run deliverable, is assigned to Rowan Diaz, and is in progress. The source only assigns ownership and restates the same first-action goal already captured by t500, so this is not a distinct new task.

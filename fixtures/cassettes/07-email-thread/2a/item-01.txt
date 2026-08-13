@@ -1,0 +1,8 @@
+ITEM: 1
+TITLE: Northwind onboarding go-live remains scheduled for the 28th
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t910
+FINAL_DESC: Jules reported that Northwind migration and account provisioning are complete, and the onboarding now has no remaining blockers except the go-live date, still scheduled for August 28.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t910 — no comments on this card] The existing onboarding card tracks this deliverable, and the source adds genuinely new progress that migration and provisioning are complete with only the go-live date remaining.

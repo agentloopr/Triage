@@ -1,0 +1,12 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_7pNI3dYt5VhGNv2nA61e0572",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t901"
+      }
+    }
+  ]
+}

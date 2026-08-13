@@ -1,0 +1,12 @@
+ITEM: 1
+TITLE: Add declined-card and expired-session error state screens to the spec
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t920
+LIST: design
+ASSIGNEE: Rowan Diaz
+PRIORITY: normal
+DUE_DATE: 2026-08-18
+STATUS: not started
+FINAL_DESC: Add the declined-card and expired-session error state screens to the checkout redesign spec before engineering picks the work up.
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t920 — no comments on this card] The parent card covers the checkout redesign spec, and the missing error state screens live inside that spec scope; closing t920 would also close this work. Same assignee as Rowan Diaz, who committed to the addition.

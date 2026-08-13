@@ -17,23 +17,49 @@
  * confirming the work is really theirs, and phrasing the update the way that role phrases updates
  * (the profile's `Update style` section, which until now was text nobody executed).
  *
- * **What it is NOT for.** It does not categorize, route, or decide anything the gates decide. Its
- * output is advisory and is merged field-by-field by the caller, never wholesale — see
- * `applyEnrichment`. An agent that could rewrite a category would be an agent that can defeat every
- * gate in the repo by talking.
+ * **What it may decide, and what decides it.** A role agent may *propose* a different category, list
+ * or assignee. It does not get to apply one: proposals are copied field-by-field onto a candidate
+ * item and the full deterministic gate set is re-run over it, so a proposal the gates cannot confirm
+ * becomes a human hold rather than a write. Merging a reply wholesale — or trusting a proposal
+ * unchecked — would be an agent that defeats every gate in the repo by talking.
+ *
+ * That is production's shape, where the board agent proposes and one script enforces the guards, and
+ * it is what PRD §5's "authority to write" actually describes. The earlier version of this file could
+ * only rewrite one prose field, which was safe and was not orchestration.
  */
 import { getRoleProfile } from '../registry/roleProfiles';
 import { type RoleArchetype, getMembers } from '../registry/opsRegistry';
 import { readRoleState } from '../state/roleState';
+import { isMeetingCategory, type MeetingCategory } from '../pipeline/parsing/categorizationManifest';
 import { makeToolLoopRunner } from '../pipeline/toolLoop';
 import type { ModelClient } from '../providers';
 import type { TrackerAdapter } from '../trackers';
 
-/** What a role agent is allowed to change. Deliberately two fields, both prose. */
+/**
+ * What a role agent **proposes**. Nothing here is applied as stated: every field is copied by name
+ * onto a candidate item and the whole deterministic gate set is re-run over it. A proposal the gates
+ * reject becomes a human hold, never a write — see `applyProposals` in `pipeline/run.ts`.
+ *
+ * That is the shape production has, where the board agent proposes and one script enforces the
+ * guards. An agent that could only rewrite prose was not an orchestrator; an agent that could write
+ * directly would put a model in the write path. Proposing into the gates is neither.
+ */
 export interface RoleEnrichment {
   /** A fuller description, or undefined to keep what the pipeline produced. */
   finalDesc?: string;
-  /** Set when the agent believes the named owner is wrong. Advisory — the routing gate still decides. */
+  /** A different category. Re-gated: an unsupported one is refused, and the item holds. */
+  proposedCategory?: MeetingCategory;
+  /** A different list key. Re-gated by `routingGate` — an unknown key holds. */
+  proposedList?: string;
+  /** A different owner. Re-gated — off-roster, or not valid for the list, holds. */
+  proposedAssignee?: string;
+  /**
+   * "Wrong owner, and I do not know whose it is." Becomes an `uncertainFields` entry on `assignee`,
+   * which `uncertainFieldsGate` turns into a hold with that reason as the question.
+   *
+   * This used to reach only the run summary and stop nothing — an agent noticing the wrong owner,
+   * and a card landing on that person anyway unless a human happened to read the log.
+   */
   ownershipDoubt?: string;
   /** Always present: what it looked at and why, for the trace. */
   note: string;
@@ -57,11 +83,14 @@ export interface RoleAgentDeps {
 }
 
 const OUTPUT_CONTRACT = [
-  'Reply in exactly this shape, no preamble:',
+  'Reply in exactly this shape, no preamble. Use the word KEEP for anything you would not change:',
   '',
   'NOTE: <one line — what you checked and what you concluded>',
-  'DESC: <the improved description, or the word KEEP to leave it unchanged>',
-  'OWNERSHIP: <OK, or one line explaining why this looks like someone else\'s work>',
+  'DESC: <the improved description, or KEEP>',
+  'CATEGORY: <KEEP, or one of NEW_TASK | DUPLICATE | SUBTASK | UPDATE | RELATE>',
+  'LIST: <KEEP, or the list key this work belongs on>',
+  'ASSIGNEE: <KEEP, or the name of the person who should own this>',
+  "OWNERSHIP: <OK, or one line saying why this is not this person's work when you cannot name who>",
 ].join('\n');
 
 export function buildRoleAgentPrompt(input: RoleAgentInput): string {
@@ -96,8 +125,12 @@ export function buildRoleAgentPrompt(input: RoleAgentInput): string {
     'You have read-only tools. Use them if — and only if — the description is too thin to act on or',
     'you doubt this is really this person\'s work. Reading nothing is a fine answer for a clear item.',
     '',
-    'You may NOT decide whether this is a new task, a duplicate, a subtask or an update. That is',
-    'already decided and is not yours to revisit. Improve how it reads; do not change what it is.',
+    'The pipeline has already categorised, routed and assigned this item. You may PROPOSE a different',
+    'category, list or assignee where you have a specific reason — but understand what a proposal is:',
+    'it is re-checked by the same rules the original answer passed, and a proposal those rules cannot',
+    'confirm stops the item and asks a human instead of writing it. So propose when you know something',
+    'the pipeline could not, and answer KEEP when you do not. KEEP is the right answer most of the time,',
+    'and a speculative change costs someone a question.',
     '',
     OUTPUT_CONTRACT
   );
@@ -128,25 +161,61 @@ export async function runRoleAgent(input: RoleAgentInput, deps: RoleAgentDeps): 
   }
 }
 
+const LABEL_RE = /^(NOTE|DESC|CATEGORY|LIST|ASSIGNEE|OWNERSHIP):\s*(.*)$/;
+
+/**
+ * Line-based rather than regex-sliced.
+ *
+ * The previous version cut DESC at the `OWNERSHIP:` line, which was correct while OWNERSHIP was the
+ * only label after it. With three more labels in between, "cut at the next known label" is the rule,
+ * and expressing that by walking lines is both shorter and immune to the ordering of the reply —
+ * whereas a second `search()` for whichever label happens to come next is the kind of thing that
+ * works until a model emits them in a different order.
+ */
 export function parseRoleReply(raw: string): RoleEnrichment | undefined {
-  const note = /^NOTE:\s*(.+)$/m.exec(raw)?.[1]?.trim();
+  const fields = new Map<string, string>();
+  let current: string | null = null;
+  let buf: string[] = [];
+  const flush = (): void => {
+    if (current) fields.set(current, buf.join('\n').trim());
+    buf = [];
+  };
+
+  for (const line of raw.split('\n')) {
+    const m = LABEL_RE.exec(line);
+    if (m) {
+      flush();
+      current = m[1]!;
+      buf.push(m[2]!);
+    } else if (current) {
+      buf.push(line);
+    }
+  }
+  flush();
+
+  const note = fields.get('NOTE');
   if (!note) return undefined; // no NOTE line means the contract was not followed; keep what we had
 
-  const ownership = /^OWNERSHIP:\s*(.+)$/m.exec(raw)?.[1]?.trim();
+  /** "KEEP" is the explicit no-op, and so is an absent or empty value. */
+  const changed = (label: string, noop = 'KEEP'): string | undefined => {
+    const v = fields.get(label)?.trim();
+    return v && v.toUpperCase() !== noop ? v : undefined;
+  };
 
-  // DESC runs to the OWNERSHIP line or to the end, and may be several lines. Cutting the string
-  // first is plainer than a lookahead that has to express "or end of input" — which JS regex does
-  // not do the way Perl does, and which is where the first attempt at this was wrong.
-  const ownershipAt = raw.search(/^OWNERSHIP:/m);
-  const descRegion = ownershipAt === -1 ? raw : raw.slice(0, ownershipAt);
-  const desc = /^DESC:\s*([\s\S]*)$/m.exec(descRegion)?.[1]?.trim();
+  const category = changed('CATEGORY');
+  const ownership = changed('OWNERSHIP', 'OK');
 
   return {
     note,
-    // "KEEP" is the explicit no-op. Treating an absent or empty DESC as "clear the description"
-    // would let a vague reply delete the only text on a card.
-    ...(desc && desc.toUpperCase() !== 'KEEP' ? { finalDesc: desc } : {}),
-    ...(ownership && ownership.toUpperCase() !== 'OK' ? { ownershipDoubt: ownership } : {}),
+    // Treating an absent or empty DESC as "clear the description" would let a vague reply delete the
+    // only text on a card.
+    ...(changed('DESC') ? { finalDesc: changed('DESC')! } : {}),
+    // An unrecognised category is dropped rather than passed on: the manifest grammar is a closed
+    // set, and inventing a sixth value downstream would fail somewhere less obvious than here.
+    ...(category && isMeetingCategory(category) ? { proposedCategory: category } : {}),
+    ...(changed('LIST') ? { proposedList: changed('LIST')! } : {}),
+    ...(changed('ASSIGNEE') ? { proposedAssignee: changed('ASSIGNEE')! } : {}),
+    ...(ownership ? { ownershipDoubt: ownership } : {}),
   };
 }
 

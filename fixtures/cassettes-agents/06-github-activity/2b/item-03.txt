@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t901
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t901 — no comments] t901 already tracks the same deliverable (“Settings module cleanup” / “Tidy-up only, no behaviour change”). The item reports PR #419 opened for that refactor, which is new progress not yet in t901’s activity log, so this is an update rather than a new or duplicate task.

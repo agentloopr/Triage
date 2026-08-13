@@ -1,0 +1,14 @@
+--- ACTION INVENTORY ---
+1. Build the rate-limiting dashboard | quote: "Ships the limiter itself; the dashboard for it is not in this change."
+   DESC: Avery merged PR #412, adding a per-key token bucket to public routes. The merged change contains only the limiter; the dashboard for the limiter is explicitly not included.
+   TIMESTAMP: [09:12]
+   POSSIBLE_MATCH_HINT: Add rate limiting to the public API | id:t900
+2. Fix export endpoint timeout via pagination or streaming | quote: "Needs pagination or a streaming response before the next client onboarding."
+   DESC: Sky opened issue #418 after reproducing on staging with a 60k-row account. The export request hangs and eventually returns 504; the issue states it needs pagination or a streaming response before the next client onboarding.
+   TIMESTAMP: [10:05]
+   POSSIBLE_MATCH_HINT: (none)
+3. Refactor the settings module | quote: "PR #419 opened: Refactor the settings module"
+   DESC: Avery opened PR #419 to rename a few things and split one long file, with no behaviour change.
+   TIMESTAMP: [11:20]
+   POSSIBLE_MATCH_HINT: Settings module cleanup | id:t901
+--- END ACTION INVENTORY ---

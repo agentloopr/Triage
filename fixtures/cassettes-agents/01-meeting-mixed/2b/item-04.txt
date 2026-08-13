@@ -3,4 +3,4 @@ MATCH_TASK_ID: t300
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t300 — no comments] Existing card t300 already tracks the same deliverable: refreshing the pricing page copy after the tier change. Noor's statement in the source is a recommitment to that existing work, not a new task.
+RATIONALE: Source [00:02:52-00:03:34] has Noor committing to refresh stale pricing page copy still showing the old three tiers — the same deliverable already tracked by t300 (“Q3 pricing page refresh”; description: update pricing copy after the tier change). [Tier-2: task-comments on t300 — none], but the card itself already covers this exact work, so the item is a duplicate, not new.

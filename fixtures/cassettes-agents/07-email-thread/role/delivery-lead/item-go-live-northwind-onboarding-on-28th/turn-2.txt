@@ -1,0 +1,6 @@
+NOTE: Checked t910 — it is Tam Osei's in-progress Northwind onboarding card, so this item is a status update on existing work, not new or misassigned.
+DESC: Go-live 28 August. Migration complete and account provisioned; onboarding now waiting only on the go-live date.
+CATEGORY: KEEP
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

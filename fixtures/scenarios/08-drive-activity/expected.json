@@ -1,0 +1,13 @@
+{
+  "description": "Document activity, where most events are not actionable and one is. Seven raw events — three contentless edits, a typo suggestion, a compliment, and two comments that matter — become four items and two cards.",
+  "inventoryCount": 4,
+  "categories": {
+    "SUBTASK": 2,
+    "UPDATE": 1,
+    "DUPLICATE": 1
+  },
+  "cleanCount": 4,
+  "heldCount": 0,
+  "skippedNotTaskCount": 0,
+  "createdCount": 2
+}

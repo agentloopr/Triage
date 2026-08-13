@@ -38,11 +38,20 @@ a green run as "that prompt change was safe."
 
 **Two cross-item flags compute and never block.** The pipeline raises `over_subtask` (more than two
 subtasks proposed under one parent) and `near_dup_pair` (two near-identical `NEW_TASK`s on the same
-list in one run) as *flags* — they are emitted as events and printed by the runner, and they stop
-nothing. Only `missed_dup` was promoted to a hold that actually drops the item. So a run can print a
-near-duplicate warning and create both cards anyway. This is named here because the alternative is
-finding it on your own board: a flag that reaches a log and not a human is the failure mode the
-`missed_dup` fix exists to correct, and two siblings still have it.
+list in one run) as *flags* — emitted as events, printed by the runner, stopping nothing. Only
+`missed_dup` was promoted to a hold that actually drops the item. So a run can print a near-duplicate
+warning and create both cards anyway.
+
+These are named here because the alternative is finding them on your own board: a signal that reaches
+a log and not a human is the failure mode the `missed_dup` fix exists to correct, and two siblings
+still have it.
+
+*A third used to be on this list.* A role agent's `ownershipDoubt` — "this is not that person's
+work" — reached the run summary and stopped nothing, so a card landed on the wrong person unless a
+human happened to read the log. It now becomes an uncertain field on `assignee`, which holds the item
+and asks the human the agent's own reason. Worth recording as the shape of the fix rather than
+deleting silently: the signal was already there and already correct, and what was missing was a path
+from it to a gate.
 
 **No scenario asserts a human hold.** Whether two independent reads disagree about one genuinely
 ambiguous item varies run to run — three consecutive re-recordings of one identical fixture gave
@@ -92,9 +101,33 @@ not-duplicate pairs. Nothing in the pipeline *writes* one: a human does, with `n
 There is no Slack button and no approval UI here, because the surface that captures a correction is
 product, and every team's is different.
 
-**Ingestion is out of scope entirely.** No webhooks, no polling, no auth, no retry logic. The
-pipeline starts at `runPipeline(source, deps)` with a normalized source. Getting a meeting into that
-shape is your problem.
+**Ingestion transport is out of scope; reads and normalization are not.** No webhooks, no polling
+schedules, no cron, no OAuth refresh, and no queue — those are product surface. What does ship is
+[`src/sources/`](src/sources) (GitHub, Gmail and Drive read clients) and [`src/ingest/`](src/ingest)
+(five payload shapes → one `IngestedSource`). Scheduling a read and handing the result to
+`runPipeline` is your problem.
+
+This distinction is narrower than an earlier version of this file drew it. "Ingestion is out of scope
+entirely" was written once and then cited as though it were a requirement, and the repo shipped two
+sources on the strength of it — which is how a source-agnostic pipeline came to look like a meeting
+pipeline with a second entry point.
+
+**The three source clients have never made a live call.** They are proven exactly as far as the
+tracker adapters were before their smoke: a contract suite against hand-written fakes, written from
+the same reading of the vendor docs as the clients they test. Endpoint paths, field names and auth
+headers are unverified.
+
+**All three normalizers now run end-to-end** — `06-github-activity`, `07-email-thread` and
+`08-drive-activity` each go through the full 1 → 2d chain offline, so "the pipeline does not care
+which source produced it" is demonstrated for all five kinds rather than argued for three of them.
+That covers the *normalizers*. The **clients** in `src/sources/` are still fake-tested only: a
+scenario replays a recorded payload, and no scenario has ever called GitHub, Gmail or Drive. See
+[ADAPTERS.md](ADAPTERS.md#the-source-clients-have-had-no-live-call-at-all).
+
+**Only DeepSeek has recordings for those three.** Scenarios 01–05 have both providers; 06–08 have
+DeepSeek alone, so the cross-provider comparison in [PROVIDERS.md](PROVIDERS.md) covers five of eight.
+`npm run demo -- --provider anthropic` names the three it skips rather than replaying them into an
+empty result, because an absence reported as a divergence is worse than an absence reported as one.
 
 **Retrieval is a null interface.** [`Retriever`](src/pipeline/retrieval/index.ts) is declared and
 wired into passes 2a/2b, and the only implementation that ships returns **no documents, ever**. The

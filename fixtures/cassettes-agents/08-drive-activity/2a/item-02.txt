@@ -1,0 +1,11 @@
+ITEM: 2
+TITLE: Fix the 'reciept' typo in the second paragraph
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t920
+LIST: design
+ASSIGNEE: Rowan Diaz
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Correct the typo "reciept" to "receipt" in the second paragraph of the checkout redesign spec.
+CONFIDENCE: med
+RATIONALE: [Tier-2: task-comments on t920 — no comments on this card] The parent card owns the checkout redesign spec, and fixing a typo in that document is a discrete edit contained within it; closing the spec would also close this typo fix.

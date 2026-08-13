@@ -1,0 +1,7 @@
+ITEM: 4
+TITLE: Rowan Diaz edited the document
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t920
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t920 — no comments on this card] The open checkout redesign spec card already tracks this document work, and the source item is only an edit event with no content details, so no new deliverable, status, or information was added.

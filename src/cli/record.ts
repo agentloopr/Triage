@@ -51,6 +51,27 @@ async function main(): Promise<void> {
     const run = await runScenario(scenario, { model, agents });
 
     console.log(`  ${run.modelCalls} model call(s)`);
+
+    // An empty inventory is never a recording, whatever the reason. The pipeline fails OPEN on a
+    // provider error — correct for a production run, where a degraded answer beats no answer — but
+    // for the recorder it means an auth failure, a quota wall or an outage comes out looking like a
+    // golden mismatch: "inventory: expected 2, got 0", with no cassette on disk and nothing saying
+    // why. That happened here with an invalid API key, and the message sent the reader to check
+    // their fixture rather than their credentials.
+    // ...unless the scenario is *supposed* to extract nothing. `03-meeting-noise` exists precisely to
+    // prove the pipeline does not invent work out of pure discussion, and its golden says zero.
+    if (run.result.inventory.length === 0 && scenario.expected.inventoryCount > 0) {
+      console.error(
+        `\n✗ ${name}: Pass 1 produced no items, so nothing was recorded.\n` +
+          '  This is almost never the fixture. Check, in order:\n' +
+          `    1. the ${provider} credential — an auth failure fails open and looks exactly like this\n` +
+          '    2. quota or rate limits on that account\n' +
+          '    3. the provider being down\n' +
+          '  Re-run once it is fixed; already-recorded cassettes are reused, so nothing is wasted.\n'
+      );
+      process.exit(1);
+    }
+
     if (run.mismatches.length) {
       console.log('  ⚠ the recorded run does not match expected.json:');
       for (const m of run.mismatches) console.log(`      ${m}`);

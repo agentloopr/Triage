@@ -1,3 +1,6 @@
-NOTE: Checked t800 and its comment history — assigned to Avery Chen, no PR or artifact recorded; the item is an update to that existing card.
-DESC: Search relevance tuning for short queries. Implementation is complete and in review; awaiting reviewer feedback.
+NOTE: Checked t800 — it is Avery Chen's "Search relevance tuning" card in progress on backend, so this item is a status update to it.
+DESC: Improve result ordering for short queries. Work is now in review and ready for a look.
+CATEGORY: UPDATE
+LIST: KEEP
+ASSIGNEE: KEEP
 OWNERSHIP: OK

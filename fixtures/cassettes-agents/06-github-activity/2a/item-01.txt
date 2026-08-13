@@ -1,0 +1,10 @@
+ITEM: 1
+TITLE: Add dashboard for token-bucket rate limiting
+CATEGORY: NEW_TASK
+LIST: backend
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Build the dashboard for the token-bucket rate limiting that PR #412 merged. The limiter itself shipped; this work adds the dashboard that was explicitly not included in that change.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: med
+RATIONALE: Existing card t900 covers the rate limiter itself, not the dashboard; the source says the dashboard was not in that change. Closing t900 would not complete a dashboard, so this is new work rather than a duplicate or subtask.

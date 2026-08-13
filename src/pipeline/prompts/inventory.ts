@@ -5,6 +5,7 @@
  * asking one model to do everything is that a narrow job has a checkable output — the inventory
  * either parses or it doesn't — and deterministic code sits between the stages.
  */
+import type { SourceKind } from '../../ingest';
 import { INVENTORY_END, INVENTORY_START, CONSOLIDATED_END, CONSOLIDATED_START } from '../parsing/inventory';
 
 /** Pass 0 — clean up a raw source without changing what it says. */
@@ -33,15 +34,31 @@ export type InventoryPromptOptions = {
   participantNames?: string;
   /** Compact board rows (id | title | list | assignee | status) — for match hints only. */
   boardCompact?: string;
-  sourceKind?: 'transcript' | 'channel';
+  sourceKind?: SourceKind;
+};
+
+/**
+ * What Pass 1 is told it is reading. Naming the medium is the whole of the source-specific prompt
+ * surface — every other line below applies unchanged to all five.
+ *
+ * `transcript` and `channel` must keep rendering the exact strings the previous boolean produced, or
+ * every recorded cassette drifts. The default is `transcript` for the same reason: the old expression
+ * fell through to "meeting transcript" whenever `sourceKind` was absent.
+ */
+const SOURCE_LABEL: Record<SourceKind, { long: string; short: string; delim: string }> = {
+  transcript: { long: 'meeting transcript', short: 'transcript', delim: 'TRANSCRIPT' },
+  channel: { long: 'channel log', short: 'log', delim: 'CHANNEL LOG' },
+  github: { long: 'GitHub activity feed', short: 'activity feed', delim: 'GITHUB ACTIVITY' },
+  gmail: { long: 'email thread', short: 'thread', delim: 'EMAIL THREAD' },
+  drive: { long: 'document activity feed', short: 'activity feed', delim: 'DOCUMENT ACTIVITY' },
 };
 
 /** Pass 1 — extract every actionable item. */
 export function buildInventoryPrompt(sourceText: string, opts: InventoryPromptOptions = {}): string {
-  const isChannel = opts.sourceKind === 'channel';
+  const src = SOURCE_LABEL[opts.sourceKind ?? 'transcript'];
 
   return [
-    `You are extracting every ACTIONABLE item from a ${isChannel ? 'channel log' : 'meeting transcript'}.`,
+    `You are extracting every ACTIONABLE item from a ${src.long}.`,
     '',
     'An actionable item is a concrete deliverable someone committed to, or a reported change in the',
     'state of existing work. Extract the SUBSTANCE, not the wording.',
@@ -66,7 +83,7 @@ export function buildInventoryPrompt(sourceText: string, opts: InventoryPromptOp
     'about someone, extract nothing from it. Do not restate it as a task to be safe.',
     '',
     'GROUNDING — the single most important rule:',
-    `  Everything you write MUST trace to the ${isChannel ? 'log' : 'transcript'} below. It is the ONLY source.`,
+    `  Everything you write MUST trace to the ${src.short} below. It is the ONLY source.`,
     '  The board rows (if provided) are for suggesting a possible MATCH — never a source of content.',
     '  Do not import a term, a name or a label from a board row into an item. If a detail was not said,',
     '  it does not go in.',
@@ -87,7 +104,7 @@ export function buildInventoryPrompt(sourceText: string, opts: InventoryPromptOp
     ...(opts.boardCompact
       ? ['--- BOARD (for match hints ONLY — never a source of content) ---', opts.boardCompact, '']
       : []),
-    `--- ${isChannel ? 'CHANNEL LOG' : 'TRANSCRIPT'} ---`,
+    `--- ${src.delim} ---`,
     sourceText,
     '--- END ---',
   ].join('\n');

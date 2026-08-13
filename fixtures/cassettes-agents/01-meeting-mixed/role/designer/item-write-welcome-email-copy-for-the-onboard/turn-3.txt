@@ -1,0 +1,6 @@
+NOTE: Checked t100 (Redesign the onboarding flow, Rowan Diaz) and its history — the email copy is not yet tracked there, and as the designer owning the onboarding revamp this copy deliverable is plausibly in Rowan's scope.
+DESC: KEEP
+CATEGORY: KEEP
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

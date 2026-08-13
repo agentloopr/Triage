@@ -1,0 +1,27 @@
+{
+  "threadId": "thread-07-onboarding",
+  "deliveryId": "delivery-07",
+  "subject": "Northwind onboarding — where are we?",
+  "messages": [
+    {
+      "from": "Tam Osei",
+      "at": "2026-08-14T08:30:00Z",
+      "body": "Checking in on Northwind before the weekend. Where are we on the onboarding?"
+    },
+    {
+      "from": "Jules Kim",
+      "at": "2026-08-14T09:15:00Z",
+      "body": "Migration is done and the account is provisioned. The onboarding is now waiting on nothing but the go-live date itself, which is still the 28th.\n\nOn Fri, Tam Osei wrote:\n> Checking in on Northwind before the weekend.\n> Where are we on the onboarding?"
+    },
+    {
+      "from": "Avery Chen",
+      "at": "2026-08-14T09:40:00Z",
+      "body": "Separately from onboarding — I found the export endpoint times out above about 50k rows. That is a backend bug in its own right and I am going to add pagination to the export endpoint this week.\n\n> Migration is done and the account is provisioned."
+    },
+    {
+      "from": "Noor Haddad",
+      "at": "2026-08-14T10:40:00Z",
+      "body": "Unrelated, but going forward we should always be clearer in the docs about limits like that. Not a task, just a habit worth having.\n\n> That is a backend bug in its own right."
+    }
+  ]
+}

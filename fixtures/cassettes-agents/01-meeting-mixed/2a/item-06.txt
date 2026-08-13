@@ -1,10 +1,11 @@
 ITEM: 6
-TITLE: Write usage-based billing spec
+TITLE: Write a written spec for usage-based billing
 CATEGORY: NEW_TASK
 LIST: product
 ASSIGNEE: Jules Kim
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Write a written spec for the usage-based billing idea before committing to any build work. Jules agreed to write it up.
+FINAL_DESC: Write a written specification for the usage-based billing idea before committing to it. Jules committed to writing this up after Wren requested it.
+UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: No open board card covers a usage-based billing spec; this is a new deliverable raised by Wren and assigned in conversation to Jules. No evidence read needed for NEW_TASK.
+RATIONALE: No open board card covers a usage-based billing spec. The existing pricing page refresh card is about updating stale tier copy, not specifying a new billing model. Net-new deliverable; no evidence read needed for NEW_TASK.

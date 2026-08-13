@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: unsure
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: This is a small standalone commit fixing an off-by-one in retry backoff, not tied to t900 (rate limiting) or t901 (settings cleanup) — no containment or update relationship evidenced. It's a completed, minor fix with no remaining work described, so a PM might not open a card for it, but it is a concrete shipped fix; marking unsure given the ambiguity between "done, nothing left" and "trackable fix."

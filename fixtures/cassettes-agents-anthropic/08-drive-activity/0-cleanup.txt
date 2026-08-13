@@ -1,0 +1,6 @@
+[09:05–09:18] Rowan Diaz made 2 edits to the document (Drive reports no content for an edit)
+[09:30] Jules Kim commented: The error states are still missing from this — we need designs for the declined-card and expired-session cases before engineering can pick it up.
+[09:44] Rowan Diaz commented: Fair. I'll add the error state screens to the spec by Tuesday.
+[10:02] Jules Kim commented: Nice work on the empty-cart illustration by the way, that reads much better.
+[10:30] Sky Patel suggested: Typo in the second paragraph — 'reciept' should be 'receipt'.
+[11:00] Rowan Diaz edited the document (Drive reports no content for an edit)

@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Per LEARNED FACTS, invoice rendering and billing webhooks are separate workstreams, and a human already confirmed "fix the invoice API endpoint" is not the same work as t900 (billing webhook retry). No other card in the snapshot covers invoice rendering, so this is a distinct, concrete deliverable with a named owner (Rowan Diaz) — a genuine new task.
+RATIONALE: Explicit note confirms "Fix the invoice API endpoint" is NOT the same as t900 (billing webhook retry) — invoice rendering and billing webhooks are separate workstreams. No other card covers this. Concrete bug with owner (Rowan Diaz) assigned — a real trackable task.

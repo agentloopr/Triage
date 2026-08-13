@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing card covers usage-based billing spec; this is a concrete deliverable (write a spec) with a clear owner (Jules) requested by Wren, distinct from all board cards. Worth tracking as new.
+RATIONALE: No existing board card covers usage-based billing spec work; nothing on the board relates. Wren requested a concrete deliverable (a written spec) with Jules as owner, which is a trackable task, not just chatter.

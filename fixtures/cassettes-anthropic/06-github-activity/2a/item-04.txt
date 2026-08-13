@@ -1,0 +1,6 @@
+ITEM: 4
+TITLE: Refactor the settings module
+CATEGORY: DUPLICATE
+EXISTING_TASK_ID: t901
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t901 — no comments] Card t901 "Settings module cleanup" matches this PR opening exactly (renames, splits long file, no behaviour change); no new info beyond what the card already describes.

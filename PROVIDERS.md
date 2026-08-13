@@ -26,22 +26,36 @@ written. Re-derive it with `npm run demo` and `npm run demo -- --provider anthro
 | `03-meeting-noise` | 0 items | 0 items | identical |
 | `04-channel-messages` | 4 items · 3 created | **3 items · 2 created** | differs |
 | `05-corrections` | 1 item · 1 created | 1 item · 1 created | identical |
-| `06-github-activity` | 4 items · 0 created · 2 held | **not recorded** | — |
-| `07-email-thread` | 2 items · 1 created | **not recorded** | — |
-| `08-drive-activity` | 4 items · 2 created | **not recorded** | — |
+| `06-github-activity` | 4 items · 0 created · 2 held | 4 items · **1 created · 1 held** | differs |
+| `07-email-thread` | 2 items · 1 created | **1 item** · 1 created | differs |
+| `08-drive-activity` | 4 items · 2 created | **1 item · 0 created** | differs |
 
-**The comparison covers five of the eight scenarios.** The three source scenarios were added after
-the Claude credential for this project stopped working. Listing them as zeros would report an
-*absence* as a divergence — the one thing this table exists to measure — so they are marked instead,
-and `npm run demo -- --provider anthropic` skips them by name rather than replaying them empty.
-Recording each is one command once a key is available:
-`npm run record -- --scenario <name> --provider anthropic`.
+**All eight scenarios, both providers.** The three source scenarios diverge more sharply than the
+five meeting ones, and in a consistent direction: **Claude extracts fewer items from a non-conversational
+feed.** Four events of GitHub activity and seven of document activity became one item each under
+Claude where DeepSeek found four.
 
-**Both divergences are at Pass 1 — the extraction — and nowhere else.** Given each provider's own
+That is worth reading as a finding rather than a defect. A transcript states commitments out loud
+("I'll ship it Friday"); a commit log and an edit history state that *something happened* and leave
+the deliverable implicit. Deciding whether a merged PR implies remaining work is a judgement call,
+and the two models make it differently — Claude conservatively, DeepSeek expansively. Neither is
+wrong, and this repo has no ground truth to say otherwise, which is the whole reason both recordings
+ship side by side and the portability test asserts only that the *layers* agree.
+
+The practical consequence for anyone porting this: **a source that does not speak in commitments will
+amplify whatever extraction bias your model has.** The gates cannot correct for an item that was never
+extracted — that is the `miss_rate` blind spot [EVAL.md](EVAL.md) declines to score.
+
+**Every divergence is at Pass 1 — the extraction — and nowhere else.** Given each provider's own
 replies, every downstream layer behaved identically: same parsers, same gates, same plan, same
 writes, same audit result. That is the portability claim, and it has a test
 (`providerPortability.test.ts`) that asserts it directly while deliberately *not* asserting the two
 providers agree.
+
+**Five of eight scenarios now differ, where two of five did before.** That is not a regression — the
+three new ones are all non-conversational sources, which is precisely where the two models disagree
+most. Reading it the other way round is the useful version: on meeting transcripts and chat, the two
+providers agreed on three of five; on activity feeds, on none of three.
 
 The disagreement is not a bug in either model. On `01` the two extract the *same* six items and
 categorize one differently — Claude reads it as an UPDATE where DeepSeek reads a SUBTASK, which is
@@ -121,11 +135,19 @@ scenarios:
 
 | | calls, agents off | calls, agents on |
 |---|---|---|
-| DeepSeek | 44 | **65** (+48%) |
-| Claude | 42 | **53** (+26%) |
+| DeepSeek | 76 | **93** (+22%) |
+| Claude | 66 | **78** (+18%) |
 
-**The two models delegate very differently**, and that gap is the interesting number. Both were
-offered the same items and the same read-only tools; DeepSeek went and looked far more often. Neither
+*Measured across all eight scenarios. An earlier version of this table read 44 → 65 and 42 → 53, from
+five scenarios and — more importantly — from a counter that **did not count the agent layer at all**.
+Role agents hold the model client directly and call it themselves, so their turns bypassed the
+wrapper doing the counting: scenario 01 reported 16 calls with agents on and 16 with them off, while
+its agent recording held 21 replies. Five paid calls were invisible to the number this page publishes
+as cost. The counter now sits on the seam rather than at one call site, so anything wired in later is
+counted too.*
+
+**The two models delegate differently**, and that gap is the interesting number. Both were
+offered the same items and the same read-only tools; DeepSeek went and looked more often. Neither
 is wrong — a model that reads more card history is buying recall with tokens — but it means an agent
 budget is not portable between providers even when the prompts are byte-identical.
 

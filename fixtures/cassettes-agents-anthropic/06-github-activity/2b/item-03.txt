@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t901
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t901 — no comments] PR #419 opening the settings-module refactor is the same deliverable as the existing "Settings module cleanup" card; matches title/description exactly (rename + split, no behaviour change), so this is progress on t901, not a new card.

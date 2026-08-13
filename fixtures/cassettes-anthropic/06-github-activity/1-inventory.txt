@@ -1,0 +1,21 @@
+--- ACTION INVENTORY ---
+1. Merge token-bucket rate limiting to public endpoints | quote: "PR #412 merged: Add token-bucket rate limiting to public endpoints"
+   DESC: Applies a per-key token bucket to every public route. Ships the limiter itself; the dashboard for it is not included in this change.
+   TIMESTAMP: [09:12]
+   POSSIBLE_MATCH_HINT: Add rate limiting to the public API | id:t900
+
+2. Fix off-by-one in retry backoff | quote: "commit: Fix off-by-one in the retry backoff"
+   DESC: Committed fix for an off-by-one bug in retry backoff logic.
+   TIMESTAMP: [09:40]
+   POSSIBLE_MATCH_HINT: (none)
+
+3. Fix export endpoint timeout above 50k rows | quote: "Export endpoint times out above 50k rows"
+   DESC: Reproduced on staging with a 60k-row account; the request hangs and eventually 504s. Needs pagination or a streaming response before the next client onboarding.
+   TIMESTAMP: [10:05]
+   POSSIBLE_MATCH_HINT: (none)
+
+4. Refactor the settings module | quote: "PR #419 opened: Refactor the settings module"
+   DESC: Renames a few things and splits one long file; no behaviour change.
+   TIMESTAMP: [11:20]
+   POSSIBLE_MATCH_HINT: Settings module cleanup | id:t901
+--- END ACTION INVENTORY ---

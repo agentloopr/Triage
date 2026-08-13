@@ -1,0 +1,11 @@
+ITEM: 1
+TITLE: Build rate limit usage dashboard
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Build a dashboard for monitoring/visualizing rate limit usage across public API endpoints; the limiter itself shipped in PR #412 but the dashboard was explicitly excluded from that change.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: med
+RATIONALE: [Tier-2: task-comments on t900 — no comments on this card] t900 covers the rate-limiting implementation which is now merged/done; the dashboard is explicitly called out as separate, unimplemented follow-on work. Since t900 could be closed (limiter shipped) without the dashboard existing, this fails containment and is not a subtask — it's a new deliverable.

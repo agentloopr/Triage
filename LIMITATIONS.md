@@ -31,6 +31,13 @@ The test suite covers the **deterministic layers**: prompt construction, parsers
 plan, the writes, the audit, the idempotency layers. Cassettes freeze the model's replies, which is
 what makes CI free and reproducible — and is exactly why:
 
+**A number can be measured and still be wrong.** The model-call counter behind
+[PROVIDERS.md](PROVIDERS.md)'s cost table sat at one call site rather than on the seam, so the agent
+layer — which holds the client directly — was never counted. Agents on and agents off both reported
+16 calls for scenario 01 while the agent recording held 21 replies. The figure looked measured, was
+reproducible, and under-reported paid calls by a fifth. Fixed by counting at the seam; worth
+remembering because a wrong number is more persuasive than no number.
+
 **Being tested and being reachable are different properties, and only one used to be checked.** Four
 times this repo shipped a module with real code and real tests that nothing in production imported —
 the observability seam, `makeToolLoopRunner`, `src/sources/`, and the hold-resume path. A test suite
@@ -163,10 +170,15 @@ That covers the *normalizers*. The **clients** in `src/sources/` are still fake-
 scenario replays a recorded payload, and no scenario has ever called GitHub, Gmail or Drive. See
 [ADAPTERS.md](ADAPTERS.md#the-source-clients-have-had-no-live-call-at-all).
 
-**Only DeepSeek has recordings for those three.** Scenarios 01–05 have both providers; 06–08 have
-DeepSeek alone, so the cross-provider comparison in [PROVIDERS.md](PROVIDERS.md) covers five of eight.
-`npm run demo -- --provider anthropic` names the three it skips rather than replaying them into an
-empty result, because an absence reported as a divergence is worse than an absence reported as one.
+**Both providers now have all eight scenarios**, and the three source ones diverge more than the five
+meeting ones — Claude extracts fewer items from a feed that states no commitments out loud. See
+[PROVIDERS.md](PROVIDERS.md). The gates cannot correct for an item that was never extracted, which is
+the `miss_rate` blind spot above, so a source that reads like a log rather than a conversation
+amplifies whatever extraction bias your model already has.
+
+*(`npm run demo -- --provider anthropic` still names any scenario it has no recording for rather than
+replaying it into an empty result, because an absence reported as a divergence is worse than one
+reported as an absence. There are none at present.)*
 
 **Retrieval is a null interface.** [`Retriever`](src/pipeline/retrieval/index.ts) is declared and
 wired into passes 2a/2b, and the only implementation that ships returns **no documents, ever**. The

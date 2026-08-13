@@ -1,0 +1,6 @@
+NOTE: Checked t400 "Nightly build monitoring" — this investigation is a follow-up task on that alerting work, owned by Sky already.
+DESC: Investigate root cause of noisy nightly build alerts; determine if a flaky auth test is triggering false failures. Report findings (test results, pass/fail evidence, and whether flakiness is confirmed) by Wednesday. Related to t400 (Nightly build monitoring).
+CATEGORY: SUBTASK
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

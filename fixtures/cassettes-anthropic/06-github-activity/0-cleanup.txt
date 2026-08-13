@@ -1,0 +1,8 @@
+[09:12] Avery Chen — PR #412 merged: Add token-bucket rate limiting to public endpoints (branch: feat/rate-limiting)
+    Applies a per-key token bucket to every public route. Ships the limiter itself; the dashboard for it is not in this change.
+[09:40] Avery Chen — commit: Fix off-by-one in the retry backoff
+[10:05] Sky Patel — issue #418 opened: Export endpoint times out above 50k rows
+    Reproduced on staging with a 60k-row account. The request hangs and eventually 504s. Needs pagination or a streaming response before the next client onboarding.
+[11:20] Avery Chen — PR #419 opened: Refactor the settings module (branch: chore/settings-tidy)
+    Renames a few things and splits one long file. No behaviour change.
+[11:45] Sky Patel — review: Nice, this reads much better than the old version

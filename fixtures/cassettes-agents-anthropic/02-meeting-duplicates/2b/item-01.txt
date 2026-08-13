@@ -3,4 +3,4 @@ MATCH_TASK_ID: t500
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t500 — no comments, but title/description "Build the first-run experience for new signups: welcome, setup, first action" matches exactly the discussed onboarding revamp walking new users through their first meaningful action, now with Rowan Diaz confirmed as owner]. Same deliverable already tracked as t500; this is not a new card, just confirming ownership.
+RATIONALE: [Tier-2: task-comments on t500 — no comments] but the card description ("first-run experience for new signups: welcome, setup, first action") matches exactly the onboarding revamp Jules proposed and Rowan agreed to own; same deliverable, so this is a duplicate rather than a new card.

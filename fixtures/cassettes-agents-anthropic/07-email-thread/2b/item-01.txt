@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: This is a distinct backend bug fix explicitly called out as "separate from onboarding" by Avery, not contained by or part of t910 (Northwind onboarding, which per Jules is now just waiting on go-live date). No existing card covers an export endpoint pagination fix, so this is a genuinely new, concrete, ownable deliverable (Avery, this week).

@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Distinct deliverable (add a request-size cap on upload endpoint) not covered by t200's rate-limiting scope — that card is about throttling, not payload size caps, so containment fails. No existing card matches this new fix; owner (Avery) and concrete deliverable are named, making it real_task.
+RATIONALE: This is a distinct deliverable (request-size cap on upload endpoint), separate from the rate-limiting card t200 which covers throttling on public endpoints, not upload payload size caps. No existing card covers this specific fix, and it's a concrete engineering task with a clear owner (Avery). Not contained by t200 since it addresses a different failure mode.

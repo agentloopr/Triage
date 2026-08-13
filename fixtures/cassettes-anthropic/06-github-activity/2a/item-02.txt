@@ -1,0 +1,7 @@
+ITEM: 2
+TITLE: Fix off-by-one in retry backoff
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t900
+FINAL_DESC: Fixed an off-by-one bug in the retry backoff logic, part of the rate limiting work on the public API.
+CONFIDENCE: med
+RATIONALE: [Tier-2: task-comments/description on t900] The rate limiting card covers the token-bucket limiter; this commit fixes a bug in the retry backoff logic related to that same effort (PR #412 merged just before). No history block was provided for t900 beyond the snapshot description, but the work is clearly a follow-on progress note on the same rate-limiting deliverable rather than a new card.

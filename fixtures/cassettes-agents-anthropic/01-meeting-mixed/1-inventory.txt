@@ -1,31 +1,31 @@
 --- ACTION INVENTORY ---
-1. Rate limiting awaiting sign-off | quote: "it's waiting on Sky to sign off. Should ship Friday."
-   DESC: Avery finished the token bucket implementation for rate limiting; it's in review pending Sky's approval, expected to ship Friday.
+1. Rate limiting sign-off pending | quote: "it's waiting on Sky to sign off. Should ship Friday."
+   DESC: Avery finished the token bucket work for rate limiting; it's in review awaiting Sky's sign-off, targeted to ship Friday.
    TIMESTAMP: [00:00:12-00:00:48]
-   POSSIBLE_MATCH_HINT: Public API rate limiting | id:t200
+   POSSIBLE_MATCH_HINT: t200
 
-2. Add upload size limit | quote: "I'll add a hard limit."
-   DESC: There's no request-size cap on the upload endpoint; a 400MB payload previously took workers down. Avery will add a hard limit to fix it.
+2. Add request-size cap on upload endpoint | quote: "we have no request-size cap on the upload endpoint... I'll add a hard limit."
+   DESC: A 400MB payload took the workers down last week; Avery will add a hard limit on upload request size.
    TIMESTAMP: [00:01:10-00:01:36]
    POSSIBLE_MATCH_HINT: (none)
 
 3. Write welcome email copy for onboarding | quote: "I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships."
-   DESC: Rowan will write welcome email copy as part of the onboarding flow redesign, tied to that card's release.
+   DESC: Rowan will write welcome email copy as part of the onboarding flow redesign, to ship alongside it.
    TIMESTAMP: [00:01:58-00:02:30]
-   POSSIBLE_MATCH_HINT: Redesign the onboarding flow | id:t100
+   POSSIBLE_MATCH_HINT: t100
 
 4. Refresh pricing page copy | quote: "I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers."
-   DESC: Noor will update the pricing page copy this week since it's outdated and still shows old tiers.
+   DESC: Noor will update the pricing page copy this week since it still displays outdated tier information.
    TIMESTAMP: [00:02:52-00:03:34]
-   POSSIBLE_MATCH_HINT: Q3 pricing page refresh | id:t300
+   POSSIBLE_MATCH_HINT: t300
 
-5. Investigate nightly build alert noise | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
-   DESC: Sky will investigate whether noisy nightly build alerts are caused by a flaky auth test, and report back Wednesday.
+5. Investigate noisy nightly build alerts | quote: "I'll check whether it's the flaky auth test and report back Wednesday."
+   DESC: Sky will investigate whether noisy nightly build alerts are caused by a flaky auth test and report back Wednesday.
    TIMESTAMP: [00:03:56-00:04:38]
-   POSSIBLE_MATCH_HINT: Nightly build monitoring | id:t400
+   POSSIBLE_MATCH_HINT: t400
 
-6. Write billing spec | quote: "I'll write that up."
-   DESC: Jules will write a spec for the usage-based billing idea before committing to it, per Wren's request.
+6. Write spec for usage-based billing idea | quote: "I'll write that up."
+   DESC: Wren requested a written spec for the usage-based billing idea before committing to it; Jules agreed to write it up.
    TIMESTAMP: [00:05:58-00:06:38]
    POSSIBLE_MATCH_HINT: (none)
 --- END ACTION INVENTORY ---

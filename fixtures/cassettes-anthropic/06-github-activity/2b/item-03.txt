@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: No existing board card covers the export endpoint; t900 (rate limiting) and t901 (settings cleanup) are unrelated deliverables. This is a concrete, reproduced bug with a clear owner-relevant fix (pagination/streaming) needed before onboarding — a genuinely new trackable task.

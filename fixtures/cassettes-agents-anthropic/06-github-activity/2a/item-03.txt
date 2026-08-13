@@ -1,0 +1,9 @@
+ITEM: 3
+TITLE: Refactor settings module
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t901
+STATUS: in progress (PR opened for review)
+FINAL_DESC: PR #419 opened on branch chore/settings-tidy: renames a few things and splits one long file in the settings module. No behaviour change intended.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t901 — no comments on this card] confirms t901 is the same "Settings module cleanup" deliverable with no prior activity logged, so the PR opening is genuinely new status info to add, not a duplicate report.

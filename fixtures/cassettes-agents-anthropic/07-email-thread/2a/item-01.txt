@@ -1,0 +1,10 @@
+ITEM: 1
+TITLE: Add pagination to export endpoint
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: in progress
+FINAL_DESC: The export endpoint times out above roughly 50k rows. This is a distinct backend bug; Avery will add pagination to the export endpoint to fix the timeout.
+CONFIDENCE: high
+RATIONALE: No existing card covers the export endpoint bug; the only related card, t910 (Northwind onboarding), is scoped to migration/cutover and would not be closed by fixing this unrelated backend bug, so it's not containment. This is a net-new deliverable.

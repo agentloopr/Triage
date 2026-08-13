@@ -1,10 +1,10 @@
 ITEM: 1
-TITLE: Fix staging 502s from pool exhaustion
+TITLE: Raise connection pool size and add alert
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
 PRIORITY: high
 STATUS: in progress
-FINAL_DESC: Staging began returning 502s around 8am, traced to connection pool exhaustion. Avery is raising the pool size and adding an alert to catch this proactively before it recurs.
+FINAL_DESC: Staging has been returning 502s since ~8am due to connection pool exhaustion. Avery will raise the connection pool size and add an alert to catch this earlier next time.
 CONFIDENCE: high
-RATIONALE: No card in the snapshot covers staging 502s or pool exhaustion; the only existing card (t800, search relevance) is unrelated. This is a distinct new incident/deliverable, not covered elsewhere.
+RATIONALE: No open card in the snapshot covers staging 502s or connection pool issues; the only related card (t800) is about search relevance ranking, a different deliverable. This is net-new work, so NEW_TASK with no evidence lookup required.

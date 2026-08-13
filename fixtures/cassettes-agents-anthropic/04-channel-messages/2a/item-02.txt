@@ -5,6 +5,7 @@ LIST: backend
 ASSIGNEE: Sky Patel
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Document the runbook for the recurring staging 502/connection pool exhaustion issue, which has now occurred twice, so the team can respond faster next time.
+FINAL_DESC: Document a runbook for the recurring staging 502 connection pool exhaustion issue, so the team has a reference the next time it occurs.
+UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: No existing card covers a runbook doc; the only related card (t800, search relevance) is unrelated in scope. Net-new deliverable requested by Jules and accepted by Sky.
+RATIONALE: No existing card covers documentation of this runbook; the only related card, t800, is about search relevance tuning and unrelated in scope. This is a net-new deliverable explicitly assigned to Sky Patel.

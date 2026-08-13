@@ -1,0 +1,6 @@
+NOTE: Existing card t800 matches this work and belongs to Avery Chen; description is vague but generic enough to reflect a status-only update.
+DESC: Search relevance tuning (t800) moved from in progress to review — ready for review. No PR/endpoint specified in source; recommend adding artifact link when commenting.
+CATEGORY: UPDATE
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: This is a distinct backend bug (export endpoint timeout above ~50k rows) explicitly called out as separate from the Northwind onboarding card (t910), which covers migration/cutover and is otherwise complete pending go-live date. Pagination work would not close when t910 closes, so it's not a subtask or duplicate. No existing card covers this; it's a concrete, owned deliverable (Avery Chen, this week), so it warrants a new card.

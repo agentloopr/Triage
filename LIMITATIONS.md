@@ -129,17 +129,15 @@ endpoint returns PRs and issues in one stream and this repo's own history contai
 ISO and none epoch-zero (so `internalDate` was really present), and all six bodies extracted through
 the multipart walk and base64url decode.
 
-**Drive is live-verified**, against a sheet holding one open and one resolved comment. Metadata,
-revisions and comments all confirmed, and the resolved-comment filter proven by counting: Drive held
-two, the client returned one.
+**Drive is live-verified**, against a sheet holding four conversation nodes — two comments, each with
+a reply, one thread resolved. The client returned two events: the open comment and its reply, the
+resolved pair dropped. One count, two properties: the resolved-thread filter, and reply flattening
+carrying the reply's **own** author rather than its parent's.
 
 That smoke also corrected this client's own docstring. It claimed that omitting the `fields`
 parameter returned a stripped projection behind a 200 — the silent failure this repo keeps naming.
 Drive actually returns `400 — The 'fields' parameter is required for this method`. It fails loudly,
 and the comment described a trap that does not exist.
-
-**Reply flattening remains unverified.** The only reply in the smoke account sits on the resolved
-comment, so the filter dropped it before the flattening code could run.
 
 **Rate-limit handling is unverified for all three** — no smoke hit a 429.
 

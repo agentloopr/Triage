@@ -31,6 +31,13 @@ The test suite covers the **deterministic layers**: prompt construction, parsers
 plan, the writes, the audit, the idempotency layers. Cassettes freeze the model's replies, which is
 what makes CI free and reproducible — and is exactly why:
 
+**Being tested and being reachable are different properties, and only one used to be checked.** Four
+times this repo shipped a module with real code and real tests that nothing in production imported —
+the observability seam, `makeToolLoopRunner`, `src/sources/`, and the hold-resume path. A test suite
+cannot see this: the test imports the module directly, so it is exercised and unreachable at once,
+and coverage reads as fine. `reachable.test.ts` now fails on any module only a test imports. It found
+the fourth one.
+
 **A prompt edit that makes the model itself reason worse will not fail this suite.** Every test will
 stay green while the model quietly gets worse at the judgement the prompt asks for. Detecting that
 needs a re-record and an eval diff, which is the workflow [EVAL.md](EVAL.md) prescribes. Do not read

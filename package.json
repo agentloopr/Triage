@@ -19,7 +19,8 @@
     "eval": "tsx src/cli/eval.ts",
     "board": "tsx src/cli/board.ts",
     "correct": "tsx src/cli/correct.ts",
-    "pull": "tsx src/cli/pull.ts"
+    "pull": "tsx src/cli/pull.ts",
+    "answer": "tsx src/cli/answer.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

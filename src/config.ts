@@ -37,7 +37,9 @@ export const DEEPSEEK_MAX_OUTPUT_TOKENS = int('DEEPSEEK_MAX_OUTPUT_TOKENS', 16_3
 
 export const ANTHROPIC_API_KEY = str('ANTHROPIC_API_KEY', '');
 /** Env-driven on purpose — a hardcoded model id 404s the day the provisioned model changes. */
-export const ANTHROPIC_MODEL = str('ANTHROPIC_MODEL', 'claude-opus-5');
+// Defaults to the model the shipped recordings were made against. A different default means
+// `npm run record` without a .env reproduces neither PROVIDERS.md's numbers nor the cassettes.
+export const ANTHROPIC_MODEL = str('ANTHROPIC_MODEL', 'claude-sonnet-5');
 export const ANTHROPIC_MAX_OUTPUT_TOKENS = int('ANTHROPIC_MAX_OUTPUT_TOKENS', 16_384);
 
 /** Total wall-clock budget for one completion including retries. */

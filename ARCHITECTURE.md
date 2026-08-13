@@ -53,6 +53,14 @@ tidy.
 | [`IdempotencyStore`](src/idempotency/index.ts) | `memory`, `jsonFile` | Three layers, below. |
 | [`IngestedSource`](src/ingest/index.ts) | `transcript`, `channel` | A meeting and a channel log run the identical 1 → 2d chain. |
 
+[`Retriever`](src/pipeline/retrieval/index.ts) is **not** in that table, deliberately: it has one
+implementation and that implementation returns nothing. It is a declared interface for an external
+knowledge layer, wired into passes 2a/2b so a real retriever needs no other change — and it stays out
+of the seams table because a seam here means *there was a second implementation to write*, and there
+was not. Omit `deps.retrieval` and no retrieval happens at all: no call, no block, and a prompt
+byte-identical to one built before the interface existed. A test asserts that byte-identity, because
+it is what keeps every recorded cassette replaying.
+
 ### The rule that makes the tracker seam real
 
 > **The pipeline speaks canonical member names and list keys; only the adapter ever sees a tracker

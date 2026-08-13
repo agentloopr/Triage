@@ -27,6 +27,8 @@ export type CategorizationPromptOptions = {
   totalItems?: number;
   todayIso?: string;
   tier2Evidence?: string;
+  /** Already-formatted block from the retrieval seam. Absent (the default) changes nothing. */
+  retrievedContext?: string;
 };
 
 export function buildCategorizationPrompt(
@@ -37,6 +39,7 @@ export function buildCategorizationPrompt(
   opts: CategorizationPromptOptions = {}
 ): PromptParts {
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
+  const retrievedBlock = opts.retrievedContext ?? '';
   const routes = getRoutes();
   const listKeys = routes.map((r) => r.key);
   const memberNames = getMembers().map((m) => m.name);
@@ -275,6 +278,7 @@ export function buildCategorizationPrompt(
     '══════════════════════════════════════════════════════════════════════',
     itemBlock,
     ...(tier2Block ? ['', tier2Block] : []),
+    ...(retrievedBlock ? ['', retrievedBlock] : []),
   ].join('\n');
 
   return { system, user };

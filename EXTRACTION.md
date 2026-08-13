@@ -21,7 +21,7 @@ this line is how you work out whether the other already has it.
 | Per-role state | A `STATE.md` and journal per agent, rewritten on a schedule | One JSON file per archetype: what that role currently has open, plus human-maintained context | Same idea, scoped to what a pipeline can honestly maintain. Production's version is an agent's working memory; here it is a memo the pipeline writes after each run and reads back into the next one's prompt. No journal — nothing here would read one. |
 | Read-only enforcement in agent passes | An environment variable read by a shell script | A wrapper around the adapter whose `apply()` refuses | Same intent, fewer moving parts, and the guarantee sits next to the thing it guards. |
 | Tracker client | A 2,034-line bash script shelling out from TypeScript | Typed HTTP adapters for ClickUp and Linear | Most of that script was `jq` shaping. Three pieces were real logic and were carried across; see below. |
-| Retrieval | A live vector substrate | A null retrieval interface | Retrieval quality has never been measured, so no claim about it would be falsifiable. |
+| Retrieval | A live vector substrate | A declared `Retriever` interface, wired into 2a/2b, whose only implementation returns nothing | Retrieval quality has never been measured, so no claim about it would be falsifiable. The interface ships so the architecture visibly accommodates a knowledge layer; the substrate does not, because nothing could be said about it honestly. |
 
 ## What was de-tuned, and how that was checked
 

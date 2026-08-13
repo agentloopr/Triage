@@ -6,10 +6,14 @@
  *  • `GET /files/{id}/comments` for comments and replies;
  *  • `GET /files/{id}/revisions` for edits.
  *
- * **`fields` is mandatory in practice, not optional.** Drive v3 returns a minimal projection by
- * default: ask for comments without `fields` and every one of them comes back with no author, no
- * content and no timestamp — a successful response carrying nothing, which is the failure mode this
- * repo keeps naming. The projections below are explicit for that reason.
+ * **`fields` is mandatory, literally.** Omit it on the comments endpoint and Drive answers
+ * `400 — The 'fields' parameter is required for this method.` Verified live, 2026-08-13.
+ *
+ * An earlier version of this comment claimed it returned a *stripped* projection instead — comments
+ * with no author, no content and no timestamp behind a 200. That would have been the silent failure
+ * this repo keeps naming, and it is not what happens: Drive fails loudly, which is the better design
+ * and the opposite of what was written here. The projections below are explicit because the API
+ * requires them, not to dodge a trap that does not exist.
  *
  * Resolved comments are dropped. A resolved comment is a conversation someone already closed, and
  * turning it into a card re-opens by robot what a human decided was finished.

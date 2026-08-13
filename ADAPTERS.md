@@ -147,7 +147,7 @@ deliberately separate interface with **no write method on it at all**. That is t
 by a wrapper that has to remember to refuse.
 
 Those clients are held to the standard below just as the adapters are: proven against hand-written
-wire fakes first, then smoked live. **GitHub and Gmail are verified; Drive is half** — see the last
+wire fakes first, then smoked live. **All three are verified live** — see the last
 section, and
 [LIMITATIONS.md](LIMITATIONS.md#integrations).
 
@@ -180,7 +180,7 @@ or log is tracked, because a committed smoke needs credentials to mean anything.
 above as testimony rather than evidence. What you *can* run is `npm run board`, which reaches a real
 tracker through the same adapter — read-only.
 
-### The source clients: GitHub and Gmail verified live, Drive half
+### The source clients: all three verified live
 
 **GitHub: live-verified, 2026-08-13.** Two reads through the real client, no script standing in for
 it. Against `agentloopr/ops-agent-reference`: 11 commits, every author resolved, every timestamp ISO,
@@ -202,16 +202,25 @@ timestamp ISO and none of them epoch-zero — which is the check that matters, b
 which exercises the multipart walk and the base64url decode against mail a person actually sent
 rather than a fixture built to be walkable.
 
-**Drive: half-verified.** The file-metadata and revisions endpoints are confirmed — the name
-resolves, and every revision carries an author and an ISO `modifiedTime` through the explicit
-`fields` projection. **The comments half is not.** Every file in the smoke account returned zero
-comments, so three pieces of logic never ran: the claim that Drive returns an empty projection
-without an explicit `fields` argument, the resolved-comment filter, and reply flattening. An empty
-200 confirms the path and the auth and nothing about the mapping — the same trap the GitHub smoke
-fell into against this repo's own history, and the reason that one moved to a busy public repo.
+**Drive: live-verified, 2026-08-13**, against a sheet carrying two comments — one open, one resolved,
+with a reply on the resolved one. File metadata, revisions and comments all confirmed: the name
+resolves, revisions carry an author and an ISO `modifiedTime`, and the comment came back with author,
+content and timestamp intact.
 
-Closing it needs a document with at least one comment and one resolved comment on it, and nobody has
-run that. It is a read-only client, so the only cost of trying is finding such a file.
+**The resolved-comment filter was proven by counting.** Drive held two comments; the client returned
+one. The resolved conversation was dropped, which is the point — turning a closed thread into a card
+reopens by robot what a human decided was finished.
+
+Two things that smoke corrected or left open, both worth stating:
+
+- **`fields` is required, not merely advisable.** This client's own comment used to claim that
+  omitting it returned a *stripped* projection — comments with no author, content or timestamp behind
+  a 200, the silent failure this repo keeps naming. Drive actually answers
+  `400 — The 'fields' parameter is required for this method.` It fails loudly. The comment described
+  a trap that does not exist, and has been corrected.
+- **Reply flattening is still unverified.** The only reply in the account sits on the *resolved*
+  comment, so the filter correctly dropped it before the flattening code could run. Closing it needs
+  a reply on an open comment.
 
 **None of this is reproducible from the repo**, for the same reason the tracker smokes are not: it
 needs a credential to mean anything. Treat it as testimony. What you *can* run is

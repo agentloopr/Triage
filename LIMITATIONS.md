@@ -119,22 +119,27 @@ entirely" was written once and then cited as though it were a requirement, and t
 sources on the strength of it — which is how a source-agnostic pipeline came to look like a meeting
 pipeline with a second entry point.
 
-**GitHub is live-verified; Gmail and Drive are not.** The GitHub client made real reads on
+**All three source clients are live-verified.** The GitHub client made real reads on
 2026-08-13, including one against a busy public repo that returned **85 pull requests, 15 issues and
 9 commits** — which is the only way to exercise the mapping that matters, since the `/issues`
 endpoint returns PRs and issues in one stream and this repo's own history contains neither. See
-[ADAPTERS.md](ADAPTERS.md#the-source-clients-github-and-gmail-verified-live-drive-half).
+[ADAPTERS.md](ADAPTERS.md#the-source-clients-all-three-verified-live).
 
 **Gmail is live-verified too**, on a real six-message thread: every sender resolved, every timestamp
 ISO and none epoch-zero (so `internalDate` was really present), and all six bodies extracted through
 the multipart walk and base64url decode.
 
-**Drive is half-verified, and the unverified half is the interesting one.** File metadata and
-revisions are confirmed live. Comments are not: every file in the smoke account had zero, so the
-`fields`-projection claim, the resolved-comment filter and reply flattening never ran. **An empty 200
-confirms the path and the auth and nothing about the mapping** — which is exactly how the GitHub
-smoke nearly passed while leaving its riskiest branch untouched. Closing it needs a document carrying
-at least one comment and one resolved comment.
+**Drive is live-verified**, against a sheet holding one open and one resolved comment. Metadata,
+revisions and comments all confirmed, and the resolved-comment filter proven by counting: Drive held
+two, the client returned one.
+
+That smoke also corrected this client's own docstring. It claimed that omitting the `fields`
+parameter returned a stripped projection behind a 200 — the silent failure this repo keeps naming.
+Drive actually returns `400 — The 'fields' parameter is required for this method`. It fails loudly,
+and the comment described a trap that does not exist.
+
+**Reply flattening remains unverified.** The only reply in the smoke account sits on the resolved
+comment, so the filter dropped it before the flattening code could run.
 
 **Rate-limit handling is unverified for all three** — no smoke hit a 429.
 

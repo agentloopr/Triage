@@ -123,11 +123,20 @@ pipeline with a second entry point.
 2026-08-13, including one against a busy public repo that returned **85 pull requests, 15 issues and
 9 commits** — which is the only way to exercise the mapping that matters, since the `/issues`
 endpoint returns PRs and issues in one stream and this repo's own history contains neither. See
-[ADAPTERS.md](ADAPTERS.md#the-source-clients-github-verified-live-gmail-and-drive-not).
+[ADAPTERS.md](ADAPTERS.md#the-source-clients-github-and-gmail-verified-live-drive-half).
 
-**Gmail and Drive remain fake-tested only.** Contract suite against hand-written fakes, written from
-the same reading of the vendor docs as the clients they test, so their endpoint paths, field names
-and auth headers are unverified. Rate-limit handling is unverified for all three — no smoke hit a 429.
+**Gmail is live-verified too**, on a real six-message thread: every sender resolved, every timestamp
+ISO and none epoch-zero (so `internalDate` was really present), and all six bodies extracted through
+the multipart walk and base64url decode.
+
+**Drive is half-verified, and the unverified half is the interesting one.** File metadata and
+revisions are confirmed live. Comments are not: every file in the smoke account had zero, so the
+`fields`-projection claim, the resolved-comment filter and reply flattening never ran. **An empty 200
+confirms the path and the auth and nothing about the mapping** — which is exactly how the GitHub
+smoke nearly passed while leaving its riskiest branch untouched. Closing it needs a document carrying
+at least one comment and one resolved comment.
+
+**Rate-limit handling is unverified for all three** — no smoke hit a 429.
 
 `npm run pull` is the command that settles it — client → normalizer → pipeline, needing only a
 read-scoped credential. It exists because without it the clients had **zero call sites outside their

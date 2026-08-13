@@ -27,7 +27,7 @@ import { PipelineEvents } from './events';
 import { prefetchTier2Evidence } from './evidence/tier2Prefetch';
 import { type Retriever, retrieveForItems } from './retrieval';
 import type { ContractFlag, HeldItem } from './gates/contractGates';
-import { type CategorizationItem, formatCategorizationManifest } from './parsing/categorizationManifest';
+import { type CategorizationItem } from './parsing/categorizationManifest';
 import { parseEnrichedInventoryItems } from './parsing/inventory';
 import { type CategorizationAgentRunner, runCategorizationPass } from './passes/categorization';
 import { type ContractCheckerRunner, type SkippedNotTask, runContractCheck } from './passes/contractCheck';
@@ -361,9 +361,4 @@ function recordExecutedWorkByRole(
   } catch (err) {
     alert(`could not update role state: ${(err as Error)?.message ?? err}`);
   }
-}
-
-/** The manifest as text — for traces, and for a human reading what the run decided. */
-export function renderManifest(result: PipelineResult): string {
-  return formatCategorizationManifest(result.manifest);
 }

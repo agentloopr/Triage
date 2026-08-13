@@ -30,7 +30,7 @@ jobs:
       - run: npm run demo -- --twice
       # The second provider's recording, replayed offline. It does not gate — the goldens describe
       # the DeepSeek run and the two models disagree about what counts as an action item — but it
-      # must still REPLAY, or 46 committed cassettes quietly rot behind a doc that cites them.
+      # must still REPLAY, or the committed cassettes quietly rot behind a doc that cites them.
       - run: npm run demo -- --provider anthropic
       # The agent layer, replayed offline on both providers. It is off by default in normal use, so
       # without these steps its recordings rot exactly like the Anthropic set nearly did — and the
@@ -68,23 +68,34 @@ jobs:
       # which leak where the code came from without being secret. gitleaks has no rule for any of them,
       # and that is not an oversight in gitleaks: a task id authenticates nothing. It is how a real
       # ClickUp id survived four commits inside a worked example, wearing a fixture-shaped prefix.
-      # Patterns live in this file, which the --include flags deliberately exclude from the scan.
+      #
+      # THE PATTERNS ARE NOT IN THIS FILE. They used to be, and that was self-defeating: a guard whose
+      # job is keeping internal names out of a public repo cannot list those names in a file the repo
+      # publishes. They live in the IDENTIFIER_PATTERNS repository variable, one extended-regex per
+      # line, and the step below fails loudly if it is unset — an empty pattern list would otherwise
+      # scan for nothing and pass, which is the exact "configured but doing nothing" failure this
+      # repo documents.
+      #
+      # Set it with:  gh variable set IDENTIFIER_PATTERNS --repo <owner>/<repo> --body "$(cat patterns.txt)"
       - name: no internal identifiers
+        env:
+          IDENTIFIER_PATTERNS: ${{ vars.IDENTIFIER_PATTERNS }}
         run: |
           set -u
+          if [ -z "${IDENTIFIER_PATTERNS// /}" ]; then
+            echo "::error::IDENTIFIER_PATTERNS repository variable is unset — the identifier guard would scan for nothing and pass"
+            exit 1
+          fi
           fail=0
-          scan() {
-            if grep -rniE --exclude-dir=node_modules --exclude-dir=.git \
-                 --include='*.ts' --include='*.md' --include='*.json' --include='*.txt' "$1" .; then
-              echo "::error::found $2 — see the matches above"
-              fail=1
-            fi
-          }
-          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal system or product name'
           # FILE CONTENT ONLY, deliberately — not git history. Commit authorship is attribution and
           # is meant to be public; --exclude-dir=.git is a decision, not an oversight. Do not read a
           # green run here as "the history was scrubbed", because it was not.
-          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal person name'
-          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'a real tracker id shape'
-          scan '<moved to the IDENTIFIER_PATTERNS repository variable>' 'an internal doc reference'
+          while IFS= read -r pattern; do
+            [ -z "${pattern// /}" ] && continue
+            if grep -rniE --exclude-dir=node_modules --exclude-dir=.git \
+                 --include='*.ts' --include='*.md' --include='*.json' --include='*.txt' "$pattern" .; then
+              echo "::error::an internal identifier matched — see the matches above"
+              fail=1
+            fi
+          done <<< "$IDENTIFIER_PATTERNS"
           exit $fail

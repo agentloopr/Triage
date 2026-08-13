@@ -43,7 +43,13 @@ async function main(): Promise<void> {
     events = [];
     for (const name of listScenarios()) {
       const scenario = loadScenario(name);
-      const { result } = await runScenario(scenario, { model: cassetteClient(join(CASSETTE_DIR, name)), quiet: true });
+      const { result } = await runScenario(scenario, {
+        model: cassetteClient(join(CASSETTE_DIR, name)),
+        quiet: true,
+        // Pinned off, not left to `AGENTS_ENABLED`: eval scores the non-agent recordings, and
+        // inheriting the environment here would look for cassettes that are not in this directory.
+        agents: false,
+      });
       events.push(...eventsFromResult(result, name));
     }
   }

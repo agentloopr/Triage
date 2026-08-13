@@ -178,10 +178,6 @@ export function opsRegistryDegradedReason(explicitPath?: string): string | null 
     : null;
 }
 
-export function isOpsRegistryDegraded(): boolean {
-  return degraded;
-}
-
 function warnDegraded(msg: string): void {
   degraded = true;
   const now = Date.now();

@@ -7,7 +7,19 @@ Three ship: `memory` (in-process, the reference implementation), `clickup` (REST
 TRACKER=memory   # default; no credentials, no network
 TRACKER=clickup  # CLICKUP_API_TOKEN + CLICKUP_TEAM_ID
 TRACKER=linear   # LINEAR_API_KEY
+
+npm run board                  # read the configured tracker and print what the pipeline would see
+npm run board -- --tracker linear
 ```
+
+`npm run board` exists so that switch has an **observed effect** you can run rather than a claim you
+have to trust. It calls `listTasks` through [`makeTracker()`](src/trackers/factory.ts) and the shared
+snapshot renderer, and holds no code path that writes — proving the seam should never require writing
+to somebody's board. A missing credential is a loud error, never a silent fallback to `memory`.
+
+**The scenario demo deliberately ignores `TRACKER`** and always replays against the in-memory board.
+Fixtures must not reach a real workspace because a developer left `TRACKER=clickup` in their `.env`.
+Embedders pick their adapter with `makeTracker()` and pass it to `runPipeline`.
 
 ## The rule
 
@@ -52,7 +64,11 @@ fix. See [ARCHITECTURE.md](ARCHITECTURE.md#opoutcome--a-write-is-not-a-boolean).
 
 ## Capabilities
 
-Not documentation — the pipeline reads these, and the contract suite asserts the difference is real.
+**The pipeline does not read these; the adapter answers with them.** `planOperations` emits a
+`moveList` unconditionally and the adapter replies `unsupported` — that is what keeps the pipeline
+tracker-blind, and it is why `unsupported` is a distinct `OpOutcome` rather than a failure. The
+contract suite asserts the difference between adapters is real, so the matrix below is checked rather
+than asserted.
 
 | | memory | clickup | linear |
 |---|---|---|---|

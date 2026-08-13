@@ -15,7 +15,7 @@
  */
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
+import { AGENTS_ENABLED, CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
 import { listScenarios, loadScenario } from '../fixtures';
 import { cassetteClient } from '../providers/cassette';
 import { runScenario } from './runScenario';
@@ -23,7 +23,11 @@ import { runScenario } from './runScenario';
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const twice = args.includes('--twice');
-  const agents = args.includes('--agents');
+  // Either mechanism turns the layer on, because AGENTS.md documents both. The flag is computed
+  // ONCE and drives the cassette directory as well as the run: deciding them separately is how
+  // you get an agent run replaying a non-agent recording, which fails as a missing cassette
+  // rather than as the configuration mistake it actually is.
+  const agents = args.includes('--agents') || AGENTS_ENABLED;
   const providerIdx = args.indexOf('--provider');
   const provider = providerIdx !== -1 ? args[providerIdx + 1] : 'deepseek';
   const only = args.filter((a) => !a.startsWith('--')).find((a) => a !== provider);
@@ -61,6 +65,8 @@ async function main(): Promise<void> {
   }
 
   let failures = 0;
+  let differing = 0;
+  let matched = 0;
 
   for (const name of scenarios) {
     const scenario = loadScenario(name);
@@ -83,6 +89,7 @@ async function main(): Promise<void> {
       // traced to earlier passes — scenario 01's Pass 1 extracted 7 items where the deterministic
       // recording got 6, and scenario 04's Pass 1.5 critic raised an item it had previously passed
       // on. Re-recording moves those; agents cannot.
+      differing++;
       const r = run.result;
       console.log(`  ≠ ${r.inventory.length} items · ${r.exec?.created ?? 0} created · ${r.held.length} held — differs from the golden:`);
       for (const m of run.mismatches) console.log(`      ${m}`);
@@ -91,6 +98,7 @@ async function main(): Promise<void> {
       console.log('  ✗ does not match expected.json:');
       for (const m of run.mismatches) console.log(`      ${m}`);
     } else {
+      matched++;
       const r = run.result;
       console.log(
         `  ✓ ${r.inventory.length} items · ${r.exec?.created ?? 0} created · ${r.held.length} held · ` +
@@ -99,12 +107,19 @@ async function main(): Promise<void> {
     }
 
     if (twice) {
-      const second = await runScenario(scenario, { model, idempotencyPath: statePath, quiet: true });
+      // `agents` is threaded through deliberately: without it the second pass ran the non-agent
+      // path, so `--twice --agents` silently proved nothing about the agent path's idempotency.
+      const second = await runScenario(scenario, { model, idempotencyPath: statePath, quiet: true, agents });
       const ok = second.result.status === 'skipped' && second.modelCalls === 0;
       if (!ok) failures++;
+      // The layer is READ from the run, never hardcoded. It used to print 'source' unconditionally
+      // while the skip actually fired at 'event' — the fixtures carry a deliveryId, which is checked
+      // first. A hardcoded label that happens to name a real layer is indistinguishable from a
+      // correct one, and an audit of this repo believed the string over the code.
+      const layer = second.events.find((e) => e.type === 'skipped')?.layer ?? 'unknown';
       console.log(
         ok
-          ? `  ✓ re-run: skipped at layer 'source' — 0 model calls, $0.00`
+          ? `  ✓ re-run: skipped at layer '${layer}' — 0 model calls, $0.00`
           : `  ✗ re-run should have been skipped with 0 model calls; got status=${second.result.status}, calls=${second.modelCalls}`
       );
     }
@@ -113,8 +128,22 @@ async function main(): Promise<void> {
     rmSync(join(scenario.dir, '.corrections.json'), { force: true });
   }
 
-  console.log(failures === 0 ? '\n✓ all scenarios match\n' : `\n✗ ${failures} scenario(s) failed\n`);
-  process.exit(failures === 0 ? 0 : 1);
+  // The summary must never contradict the lines above it. Printing "all scenarios match" directly
+  // under a printed `≠` block is the exact shape of failure this repo calls unacceptable elsewhere:
+  // "a silent miss produces a green demo that did nothing at all". Divergence from a DIFFERENT
+  // recording is still not a failure — that decision is argued above and the exit code is unchanged
+  // — but it is reported, because an unreported difference cannot be noticed when it grows.
+  if (failures > 0) {
+    console.log(`\n✗ ${failures} scenario(s) failed\n`);
+    process.exit(1);
+  }
+  console.log(
+    differing === 0
+      ? '\n✓ all scenarios match\n'
+      : `\n✓ ${matched} match · ≠ ${differing} differ from the golden ` +
+          '(informational: a different recording may extract a different number of items — not gating)\n'
+  );
+  process.exit(0);
 }
 
 main().catch((err) => {

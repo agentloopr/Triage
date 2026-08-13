@@ -87,7 +87,6 @@ export interface ModelClient {
 }
 
 export const DEFAULT_TIMEOUT_MS = 600_000;
-export const DEFAULT_MAX_OUTPUT_TOKENS = 16_384;
 
 /**
  * Don't start a RETRY with less budget left than this — a doomed second call just burns the

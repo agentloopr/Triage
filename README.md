@@ -3,13 +3,18 @@
 A production ops-agent pipeline: meeting transcripts and channel logs in, governed tracker writes
 out, with human-in-the-loop gates on everything it is not sure about.
 
-From real trace data across 40 meeting runs: **14.2 items per meeting, 68% auto-created clean, 29%
-held for a human, 3% confidently skipped.** Company context: 14 people, 13 client workstreams,
-founder coordination time down to roughly 4 hours a day.
+From real trace data across 49 production runs — 48 meetings and one channel log — totalling 711
+items: **14.5 items per run, 62.6% applied automatically, 27.3% held for a human, 8.2% skipped as a
+duplicate, 2.0% failed.** Company context: 14 people, 13 client workstreams, founder coordination
+time down to roughly 4 hours a day.
 
-**That 29% is the number to look at.** A pipeline that writes to a real board is only useful if it
-knows what it does not know, and nearly a third of everything it sees goes to a human instead of to
-the board. The gates that decide which third are the substance of this repo.
+Those four dispositions partition every item, so they sum to 100% — a fifth outcome would show up
+as a gap. *Applied* counts everything the pipeline did without a human: creates, status changes and
+comments. Creates alone are 44.4%.
+
+**That 27.3% is the number to look at.** A pipeline that writes to a real board is only useful if it
+knows what it does not know, and better than a quarter of everything it sees goes to a human instead
+of to the board. The gates that decide which quarter are the substance of this repo.
 
 **No precision or recall is claimed, here or anywhere.** That needs a hand-labelled ground truth that
 does not exist, and the only alternative — a model grading a model — is a system agreeing with

@@ -25,8 +25,10 @@ import { atomicWriteJson, makeFifoLock, readJsonOrNull } from '../state/jsonStor
 // ── Serialized shape (mirrors the JSON on disk) ──────────────────────────────
 
 /**
- * Role archetypes. These are *profiles* that shape routing, assignment and prompt context — they
- * are not running agents. The pipeline has exactly one LLM-driven orchestrator.
+ * Role archetypes. These are *profiles* that shape routing, assignment and prompt context. On the
+ * default path they are not running agents at all; with the agent layer on they also become the
+ * read-only role agents in `src/agents/`. Orchestration above them is deterministic code
+ * (`selectForDelegation`), not a model.
  *
  * The union values are also the `config/roles/<name>.md` filenames; keep them in lockstep.
  */

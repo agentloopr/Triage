@@ -86,6 +86,12 @@ this repo can be re-run by a reader — treat these two paragraphs as testimony 
 reach: sustained load, rate-limit behaviour under real traffic, and every edge case the vendor's API
 has that a handful of manual calls does not exercise. See [ADAPTERS.md](ADAPTERS.md).
 
+**The corrections loop closes through a CLI, not through the pipeline.** The pipeline *reads*
+corrections — they reach both the 2a and 2b prompts, and the cross-item gate consults the
+not-duplicate pairs. Nothing in the pipeline *writes* one: a human does, with `npm run correct`.
+There is no Slack button and no approval UI here, because the surface that captures a correction is
+product, and every team's is different.
+
 **Ingestion is out of scope entirely.** No webhooks, no polling, no auth, no retry logic. The
 pipeline starts at `runPipeline(source, deps)` with a normalized source. Getting a meeting into that
 shape is your problem.

@@ -1,0 +1,10 @@
+--- ACTION INVENTORY ---
+1. Go-live Northwind onboarding on 28th | quote: "Migration is done and the account is provisioned. The onboarding is now waiting on nothing but the go-live date itself, which is still the 28th."
+   DESC: Jules Kim reported that the Northwind migration is complete and the account is provisioned. The onboarding is now waiting only on the go-live date, which remains scheduled for the 28th.
+   TIMESTAMP: [09:15]
+   POSSIBLE_MATCH_HINT: Northwind onboarding | id:t910
+2. Add pagination to export endpoint | quote: "I am going to add pagination to the export endpoint this week."
+   DESC: Avery Chen found that the export endpoint times out above about 50k rows and identified it as a backend bug. Avery committed to adding pagination to the export endpoint this week.
+   TIMESTAMP: [09:40]
+   POSSIBLE_MATCH_HINT: (none)
+--- END ACTION INVENTORY ---

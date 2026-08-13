@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Searched t900 (“Add rate limiting to the public API”); its scope is the limiter itself, and the source explicitly says the dashboard “is not in this change.” [Tier-2: task-comments on t900 — no comments]. The dashboard is a distinct deliverable, not contained by t900, so NEW_TASK.

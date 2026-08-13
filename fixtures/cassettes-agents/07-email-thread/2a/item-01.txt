@@ -1,0 +1,8 @@
+ITEM: 1
+TITLE: Go-live Northwind onboarding on 28th
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t910
+FINAL_DESC: Migration is complete and the account is provisioned. Onboarding is now waiting only on the go-live date, still scheduled for 28 August.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t910 — no comments on this card] The snapshot card t910 already tracks Northwind onboarding with go-live 28 August, and this source adds genuinely new progress: migration complete and account provisioned, with nothing else blocking go-live. That progress is not already in the card's activity history.

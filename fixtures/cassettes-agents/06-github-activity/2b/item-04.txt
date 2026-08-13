@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t900
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: The only plausible board candidate is t900 (“Add rate limiting to the public API”, in progress). Source shows PR #412 merged at 09:12 adding the token-bucket rate limiter, then this commit at 09:40 fixes an off-by-one in the retry backoff as follow-up progress on that same rate-limiting work — so it reports progress on t900, not a separate new task.

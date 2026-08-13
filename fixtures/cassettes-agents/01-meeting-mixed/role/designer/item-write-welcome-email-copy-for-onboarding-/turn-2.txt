@@ -1,3 +1,0 @@
-NOTE: Checked t100 ("Redesign the onboarding flow", in-progress design card for Rowan Diaz, no comments) — the item is clearly written, but it is copywriting, not design.
-DESC: KEEP
-OWNERSHIP: Writing welcome email copy is copywriting/UX writing, not interface or visual design — this looks like content's work.

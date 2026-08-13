@@ -1,12 +1,17 @@
 # ops-agent-reference
 
-A production ops-agent pipeline: meeting transcripts and channel logs in, governed tracker writes
-out, with human-in-the-loop gates on everything it is not sure about.
+A production ops-agent pipeline: meeting transcripts, channel logs, GitHub activity, email threads
+and document activity in — governed tracker writes out, with human-in-the-loop gates on everything
+it is not sure about.
+
+**Not a product. Not a maintained service. A reference that runs.** There is no support channel and
+no compatibility promise; the point is that you can read it, run it offline, and take the parts that
+are useful.
 
 From real trace data across 49 production runs — 48 meetings and one channel log — totalling 711
 items: **14.5 items per run, 62.6% applied automatically, 27.3% held for a human, 8.2% skipped as a
-duplicate, 2.0% failed.** Company context: 14 people, 13 client workstreams, founder coordination
-time down to roughly 4 hours a day.
+duplicate, 2.0% failed.** It runs for a team of 12, which is the roster size in the routing registry
+that governs it.
 
 Those four dispositions partition every item — 445 + 194 + 58 + 14 = 711, so a fifth outcome would
 show up as a gap. (The rounded percentages sum to 100.1; the counts are the claim.)
@@ -27,10 +32,30 @@ It is extracted from a system that has been running in production. **The archite
 what we run; the tuned few-shot examples are replaced with generic ones.**
 [EXTRACTION.md](EXTRACTION.md) records exactly what changed on the way out and why.
 
+### What this is one half of
+
+The production system runs **two paths over one writer**, and they are matched to two different
+shapes of input:
+
+| | Agent path | This repo |
+|---|---|---|
+| Input | one conversational request, ambiguous, a human present | 6–14 items, uniform policy, nobody watching |
+| Decides by | a model, over a long tool-using loop | deterministic code, in passes 2a/2b |
+| Reaches the tracker via | the same single writer | the same single writer |
+
+**This repo is the second path**, and it is the one worth publishing: an agent is good at one
+ambiguous request with a human on the other end, and bad at applying consistent policy to fourteen
+items unattended. A pipeline is the reverse.
+
+The agent path itself is **not here**, and could not be — production delegates that loop to a
+separate runtime whose prompts read internal workspace files by name, and those names are exactly
+what this repo's CI guard blocks. What *is* here is an agent layer written for this repo, off by
+default, described in [AGENTS.md](AGENTS.md).
+
 ## The shape
 
 ```
-source (transcript | channel log)
+source (transcript | channel | github | gmail | drive)
   └─ Pass 0    cleanup
      Pass 1    inventory        ─ what was actually asked for
      Pass 1.5  critic           ─ what the inventory got wrong
@@ -52,7 +77,7 @@ the real parsers and the real gates:
 
 ```bash
 npm ci
-npm run demo                           # all five scenarios, offline, ~30ms
+npm run demo                           # all eight scenarios, offline, ~40ms
 npm run demo -- --twice                # proves a redelivery costs zero tokens
 npm run demo -- --provider anthropic   # the same scenarios, replayed from a Claude recording
 npm run demo -- --agents               # with the agent layer on (PRD §5), also offline
@@ -80,27 +105,38 @@ The replayed replies are real: recorded from `deepseek-v4-pro` against these exa
 cassette is a loud error, never an empty reply — an empty reply is indistinguishable from a pass that
 legitimately found nothing, which would make the demo go green having done nothing at all.
 
-Both providers have been run live against the same fixtures and both recordings ship — see
+Both providers have been run live and both recordings ship, but **not over the same set**: Claude has
+scenarios 01–05, DeepSeek has all eight. `--provider anthropic` names the three it skips rather than
+replaying them into an empty result that would read as a disagreement. See
 [PROVIDERS.md](PROVIDERS.md) for the measured cost and where the two models disagree.
 
-## The five scenarios
+## The eight scenarios
 
 | | What it demonstrates |
 |---|---|
 | `01-meeting-mixed` | A normal standup. Four categories exercised, four cards created, one duplicate skipped. |
 | `02-meeting-duplicates` | Both deliverables already on the board under different wording. **The run writes nothing at all.** |
 | `03-meeting-noise` | Pure discussion. Nothing is extracted — the pipeline does not invent work to look useful. |
-| `04-channel-messages` | A channel log through the identical 1 → 2d chain. The pipeline is source-agnostic. |
+| `04-channel-messages` | A channel log through the identical 1 → 2d chain. |
 | `05-corrections` | A recorded human correction changes a later run — no duplicate hold on work a human already said is separate. |
+| `06-github-activity` | Merged PRs, a commit and a new issue. **Two of four items hold**, because a code feed says who wrote a change and never who owns the follow-up. |
+| `07-email-thread` | A thread with quoted reply chains stripped before Pass 1 sees them, and a "going forward we should always" line excluded as a norm. |
+| `08-drive-activity` | Seven raw events — three contentless edits, a typo fix, a compliment — become four items and two cards. |
+
+The last three are why the source seam is a seam: **the same 1 → 2d chain, no pass that branches on
+which source produced the text.**
 
 **What they do and do not pin.** They pin what deterministic code does with a given set of replies:
 the parsers, the gates, the plan, the writes, the audit, the idempotency layers. They cannot pin
-*which* reply a model returns. Held items are the clearest case — whether two independent reads
-disagree about one ambiguous item varies between recordings of the identical fixture, so no scenario
-asserts a hold. The gates that produce holds are proven separately and deterministically, with
-scripted replies, in `contractGates.test.ts` and `run.test.ts`.
+*which* reply a model returns.
 
-## The four seams
+Holds are the case worth being precise about. A hold that rests on a **judgement** — two independent
+reads disagreeing about an ambiguous item — varies between recordings of the identical fixture, so no
+scenario asserts one. A hold that rests on a **missing field** does not vary that way, and
+`06-github-activity` asserts two of them. The gates themselves are proven separately and
+deterministically, with scripted replies, in `contractGates.test.ts` and `run.test.ts`.
+
+## The five seams
 
 Everything is injected. Each seam exists because there was a real second implementation to write.
 
@@ -109,7 +145,17 @@ Everything is injected. Each seam exists because there was a real second impleme
 | `ModelClient` | `deepseek` · `anthropic` · `cassette` | [PROVIDERS.md](PROVIDERS.md) |
 | `TrackerAdapter` | `memory` · `clickup` · `linear` | [ADAPTERS.md](ADAPTERS.md) |
 | `IdempotencyStore` | `memory` · `jsonFile` | three layers: event, source, content |
-| `IngestedSource` | `transcript` · `channel` | ingestion itself is out of scope |
+| `IngestSource` | `transcript` · `channel` · `github` · `gmail` · `drive` | payload → `IngestedSource`, pure |
+| `SourceClient` | `github` · `gmail` · `drive` | reads a service. **No write method exists** |
+
+**Reading a service and normalizing its payload are separate seams on purpose.** Every fixture in
+this repo is a raw payload, so the entire pipeline is testable with no network and no credential —
+the client is the only thing that ever needs one. Slack has no client of its own because a team-chat
+log *is* the `channel` source; a fifth kind that rendered identically would be a name, not a
+capability.
+
+**Transport is still your problem.** Webhooks, polling schedules, cron, OAuth refresh and the queue
+that hands a payload to `runPipeline` are not here, and every team's are different.
 
 **An optional agent layer** (PRD §5) sits between the gates and the writer: a board agent that
 delegates to eight role agents with **read-only** tools. It is off by default, it cannot write, and

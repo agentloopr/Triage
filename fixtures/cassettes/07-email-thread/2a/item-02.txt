@@ -1,0 +1,11 @@
+ITEM: 2
+TITLE: Add pagination to export endpoint
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: The export endpoint times out above about 50k rows. Avery identified this as a backend bug and will add pagination this week.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: The only open board card is t910 Northwind onboarding, which covers data migration and cutover for go-live. Pagination on the export endpoint is a separate backend bug; closing the onboarding card would not make this done.

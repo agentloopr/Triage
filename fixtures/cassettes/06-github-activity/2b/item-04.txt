@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: not_a_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Board candidate t900 covers rate limiting, not the retry-backoff fix; no comment history links this commit to t900, so no DUPLICATE/UPDATE. The commit is already done with no remaining deliverable, so a PM would not open/track a card for it.

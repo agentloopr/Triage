@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t910
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: Existing card t910 "Northwind onboarding" covers the same onboarding deliverable; the source reports migration complete and account provisioned, with only the 28th go-live remaining. [Tier-2: task-comments on t910 — no comments] so this is new progress not already logged, hence UPDATE rather than a duplicate/new task.

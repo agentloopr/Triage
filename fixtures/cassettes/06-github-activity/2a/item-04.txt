@@ -1,0 +1,11 @@
+ITEM: 4
+TITLE: Fix off-by-one in the retry backoff
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: done
+FINAL_DESC: Avery Chen committed a fix for an off-by-one error in the retry backoff logic in the platform-api repository.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No open board card covers the retry backoff fix; t900 is rate limiting and t901 is settings cleanup, so this is a separate backend bugfix already committed. No evidence read required for NEW_TASK.

@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Scanned the board snapshot; the only candidate, t900 Billing webhook retry, is explicitly a separate workstream from invoice API rendering, and the notes state a human confirmed they are not the same work. No existing card covers fixing the invoice endpoint, so this is a new, concrete backend deliverable with clear ownership.
+RATIONALE: Scanned the full board; the only candidate is t900 “Billing webhook retry,” but the provided board note explicitly states fixing the invoice API endpoint is NOT the same work as t900, and the source describes a concrete deliverable (return totals in the correct field so PDF columns stop overlapping) with an owner (Rowan Diaz). No broader card contains it.

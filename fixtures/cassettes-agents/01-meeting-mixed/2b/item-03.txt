@@ -2,5 +2,5 @@ VERDICT_CATEGORY: SUBTASK
 MATCH_TASK_ID: t100
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t100 — no comments] The source explicitly scopes the welcome email copy inside the onboarding revamp (“it ships when that ships”) and Jules says keep it under t100, so it is a contained deliverable under the existing onboarding card rather than a new standalone task.
+ROUTING_OK: yes
+RATIONALE: Rowan explicitly says the welcome email copy “sits inside the onboarding revamp, it ships when that ships,” and Jules says “keep it under that card” — pointing to t100 as the parent. It is a distinct deliverable contained by the broad onboarding-flow card and closes with it. [Tier-2: task-comments on t100 — no comments on this card] No prior activity already covers this copy task.

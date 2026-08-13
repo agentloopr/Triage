@@ -38,6 +38,9 @@ describe('demo smoke', () => {
       '03-meeting-noise',
       '04-channel-messages',
       '05-corrections',
+      '06-github-activity',
+      '07-email-thread',
+      '08-drive-activity',
     ]);
   });
 

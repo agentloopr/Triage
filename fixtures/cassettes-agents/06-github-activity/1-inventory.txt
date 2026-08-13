@@ -1,0 +1,14 @@
+--- ACTION INVENTORY ---
+1. Add dashboard for token-bucket rate limiting | quote: "Ships the limiter itself; the dashboard for it is not in this change."
+   DESC: PR #412 merged the token-bucket rate limiter for public endpoints. It applies a per-key token bucket to every public route. The limiter itself shipped; the dashboard was not in this change.
+   TIMESTAMP: [09:12]
+   POSSIBLE_MATCH_HINT: t900 | id:t900
+2. Add pagination or streaming response to export endpoint | quote: "Needs pagination or a streaming response before the next client onboarding."
+   DESC: Issue #418 opened. The export endpoint times out above 50k rows. Reproduced on staging with a 60k-row account; the request hangs and eventually 504s.
+   TIMESTAMP: [10:05]
+   POSSIBLE_MATCH_HINT: (none)
+3. Refactor the settings module | quote: "PR #419 opened: Refactor the settings module (branch: chore/settings-tidy)"
+   DESC: PR #419 opened. It renames a few things and splits one long file. No behaviour change.
+   TIMESTAMP: [11:20]
+   POSSIBLE_MATCH_HINT: t901 | id:t901
+--- END ACTION INVENTORY ---

@@ -1,6 +1,6 @@
 VERDICT_CATEGORY: NEW_TASK
 MATCH_TASK_ID: (none)
-WORTH_A_CARD: real_task
+WORTH_A_CARD: not_a_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Scanned the board; only t800 exists and it is unrelated search relevance work. The source reports a concrete staging 502 incident that leads to real follow-up work (pool fix, alert, runbook), so a PM would track it.
+RATIONALE: The source line is a pure heads-up that staging has been returning 502s; no existing board card matches (t800 is unrelated search relevance work). The report itself is already complete and names no follow-up deliverable in this item, so a PM would not open a card for just the status alert.

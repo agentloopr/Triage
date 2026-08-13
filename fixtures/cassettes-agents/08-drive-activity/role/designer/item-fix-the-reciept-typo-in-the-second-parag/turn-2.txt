@@ -1,0 +1,6 @@
+NOTE: Checked t920 — it is Rowan Diaz's in-progress "Checkout redesign spec" in the design list, so this typo correction is genuinely her spec work and the description is clear as written.
+DESC: KEEP
+CATEGORY: KEEP
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

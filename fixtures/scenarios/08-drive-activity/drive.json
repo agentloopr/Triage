@@ -1,0 +1,47 @@
+{
+  "fileId": "file-08-checkout-spec",
+  "fileName": "Checkout redesign — spec v3",
+  "deliveryId": "delivery-08",
+  "dateIso": "2026-08-14",
+  "events": [
+    {
+      "kind": "edit",
+      "author": "Rowan Diaz",
+      "at": "2026-08-14T09:05:00Z"
+    },
+    {
+      "kind": "edit",
+      "author": "Rowan Diaz",
+      "at": "2026-08-14T09:18:00Z"
+    },
+    {
+      "kind": "comment",
+      "author": "Jules Kim",
+      "at": "2026-08-14T09:30:00Z",
+      "text": "The error states are still missing from this — we need designs for the declined-card and expired-session cases before engineering can pick it up."
+    },
+    {
+      "kind": "comment",
+      "author": "Rowan Diaz",
+      "at": "2026-08-14T09:44:00Z",
+      "text": "Fair. I'll add the error state screens to the spec by Tuesday."
+    },
+    {
+      "kind": "comment",
+      "author": "Jules Kim",
+      "at": "2026-08-14T10:02:00Z",
+      "text": "Nice work on the empty-cart illustration by the way, that reads much better."
+    },
+    {
+      "kind": "suggestion",
+      "author": "Sky Patel",
+      "at": "2026-08-14T10:30:00Z",
+      "text": "Typo in the second paragraph — 'reciept' should be 'receipt'."
+    },
+    {
+      "kind": "edit",
+      "author": "Rowan Diaz",
+      "at": "2026-08-14T11:00:00Z"
+    }
+  ]
+}

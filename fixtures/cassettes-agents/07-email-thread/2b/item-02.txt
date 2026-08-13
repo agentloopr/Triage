@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Scanned the board snapshot; the only existing card is t910 Northwind onboarding, which is explicitly a different deliverable from the export endpoint pagination bug. The source says the issue is “separately from onboarding,” so it is not a duplicate, subtask, or update of t910. The item describes a concrete backend fix with a named owner and completion commitment this week.

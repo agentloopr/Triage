@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Scanned the board — closest candidate t200 "Public API rate limiting" is only about throttling public endpoints; the source explicitly separates the request-size cap on the upload endpoint ("Separately though…") and it is not contained by t200 or any other open card. This is a concrete backend deliverable with a clear completion state.
+RATIONALE: Scanned board; the closest card is t200 Public API rate limiting, but that covers throttling, not an upload request-size cap. The source shows Avery committing to a new hard limit on the upload endpoint after a 400 MB payload took workers down — a distinct, concrete backend deliverable.

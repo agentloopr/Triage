@@ -95,7 +95,10 @@ export async function delegateToRoleAgents(
     );
     if (!enrichment) continue; // fails open — keep the pipeline's own answer
 
-    if (enrichment.finalDesc) it.finalDesc = enrichment.finalDesc;
+    // Deliberately does NOT touch `it`. Every change an agent asks for is applied by `applyProposals`
+    // in `pipeline/run.ts` and then re-gated, so there is exactly one place where an agent's words
+    // become an item — and it is a place that re-checks them. This function used to write `finalDesc`
+    // straight onto the item, which meant one field skipped the check the others now get.
     out.push({ item: it.item, role, owner, enrichment });
   }
 

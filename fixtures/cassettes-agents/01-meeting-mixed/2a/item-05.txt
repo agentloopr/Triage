@@ -7,7 +7,7 @@ ASSIGNEE: Sky Patel
 PRIORITY: normal
 DUE_DATE: 2026-08-12
 STATUS: not started
-FINAL_DESC: Investigate whether the flaky auth test is causing the noise in nightly build alerts and report back on Wednesday.
+FINAL_DESC: Investigate the noisy nightly build alerts, checking whether the flaky auth test is the cause, and report back by Wednesday.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: med
-RATIONALE: [Tier-2: task-comments on t400 — no comments; snapshot description is "Alerting for failed nightly builds"] The noisy-alert investigation is a discrete step inside the existing nightly build monitoring/alerting card, same assignee Sky Patel, and would be closed when that parent card completes.
+RATIONALE: [Tier-2: task-comments on t400 — no comments; snapshot shows t400 Nightly build monitoring is an in-progress platform card assigned to Sky, and the alert-noise investigation is a discrete step inside that scope.]

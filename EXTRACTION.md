@@ -16,12 +16,38 @@ this line is how you work out whether the other already has it.
 | Passes 2a/2b | Tool-using agents that can fetch extra card history on demand | Plain completions; all evidence pre-fetched host-side. An optional agent layer sits *above* them, off by default | The default path costs duplicate recall on semantically-worded matches; the whole-board Jaccard backstop and the evidence-citation hold gate catch the fallout as human holds, not silent creates. |
 | The agent loop itself | Delegated to a separate agent runtime — the pipeline is a *client* of it, over CLI and HTTP | **Written for this repo**, on the existing read-only tool loop | The only component here that is not an extraction. The production loop is a different product whose prompts read internal workspace files; porting it was neither possible nor in scope. Stated plainly in `LIMITATIONS.md`, and the reason `AGENTS_ENABLED` defaults to false. |
 | Read-only enforcement | Structural, via a wrapper script that refuses write subcommands | Enforced at the adapter | Same guarantee, fewer moving parts. |
-| Ingestion | 8 webhooks, 14 cron routes, an Express app | Out of scope entirely | Ingestion is your problem; this repo starts at `runPipeline(source, deps)`. |
+| Ingestion — transport | 8 webhooks, 14 cron routes, an Express app | Out of scope | Scheduling and delivery are product surface, and every team's differ. This repo starts at `runPipeline(source, deps)`. |
+| Ingestion — reads and shapes | Slack, Gmail, GitHub, Drive and meeting transcripts | Read clients for GitHub, Gmail and Drive; normalizers for five payload shapes | Reading a service is not the same concern as scheduling the read, and conflating them cost this repo three sources — see below. |
 | Per-person agents | 12 live agent runtimes with their own state and tool access | 8 role *archetypes* — a profile, routing keywords and a state file each, drivable as read-only agents | Archetypes de-identify by construction: there is no real name to strip, because the concept is generic. They are load-bearing either way — the profile shapes the prompt even with agents off. |
 | Per-role state | A `STATE.md` and journal per agent, rewritten on a schedule | One JSON file per archetype: what that role currently has open, plus human-maintained context | Same idea, scoped to what a pipeline can honestly maintain. Production's version is an agent's working memory; here it is a memo the pipeline writes after each run and reads back into the next one's prompt. No journal — nothing here would read one. |
 | Read-only enforcement in agent passes | An environment variable read by a shell script | A wrapper around the adapter whose `apply()` refuses | Same intent, fewer moving parts, and the guarantee sits next to the thing it guards. |
 | Tracker client | A 2,034-line bash script shelling out from TypeScript | Typed HTTP adapters for ClickUp and Linear | Most of that script was `jq` shaping. Three pieces were real logic and were carried across; see below. |
 | Retrieval | A live vector substrate | A declared `Retriever` interface, wired into 2a/2b, whose only implementation returns nothing | Retrieval quality has never been measured, so no claim about it would be falsifiable. The interface ships so the architecture visibly accommodates a knowledge layer; the substrate does not, because nothing could be said about it honestly. |
+
+### A sentence that hardened into a constraint
+
+Worth recording, because it is the most expensive mistake in this repo's history and it left no trace
+anywhere a test could find.
+
+The row above used to read "Out of scope **entirely**", written while scoping the extraction. Nothing
+in the specification said that. The spec listed the sources the repo should demonstrate — Slack,
+Gmail, GitHub and Drive reads — and separately described ingestion in one line without excluding
+anything. The "entirely" was a scoping decision, and a defensible one at the time.
+
+What made it costly is what happened next: the sentence was **cited back as though the specification
+had said it**, in a later status note, as the reason not to build the sources. A decision recorded in
+one's own documentation had become the authority for itself. Two review rounds and three independent
+audits read past it, because every one of them checked the repo against its own documents — and by
+then the documents agreed with each other perfectly.
+
+The repo shipped two sources on the strength of that, and read to its first outside reader as a
+meeting pipeline with a second entry point: the exact thing [`channel.ts`](src/ingest/channel.ts) was
+written to disprove.
+
+**The general lesson, which is not about ingestion:** internal consistency is not conformance. A
+document that quotes your own earlier document is not evidence, and a review that only checks the
+artifact against its own docs cannot see a boundary that was drawn too tight — it can only confirm
+that everyone has been told the same thing.
 
 ## What was de-tuned, and how that was checked
 
@@ -80,11 +106,26 @@ one remaining category-dispute hold, and three consecutive re-recordings of the 
 three different answers. The conclusion is not that those fixtures were badly written — it is that
 **no cassette can pin a model judgement.** Whether two independent reads disagree about one genuinely
 ambiguous item is exactly the kind of thing that varies run to run, which is *why* the disagreement is
-worth surfacing to a human in the first place. So no scenario asserts a hold any more. Scenarios pin
+worth surfacing to a human in the first place. So no scenario asserts a **dispute** hold. Scenarios pin
 what deterministic code does with a given reply — parsers, gates, plan, writes, audit, idempotency —
 and every gate, including the ones that produce holds, is proven separately with scripted replies in
 `contractGates.test.ts` and `run.test.ts`. The alternative was re-recording until a hold appeared,
 which is not evidence of anything except patience.
+
+**That sentence used to read "no scenario asserts a hold", full stop, and the qualifier matters.**
+`06-github-activity` asserts two, and they are a different kind: `uncertain field(s)`, raised because
+a code feed named nobody to own the follow-up work and `fillFieldGaps` refused to write the list's
+default owner as though it were a fact. That is deterministic given the manifest — the only model
+input is whether Pass 2a emitted an `ASSIGNEE` line at all, which is far more stable than whether two
+independent reads disagree about an ambiguous category. The distinction worth carrying is not
+"holds are unpinnable" but **"a hold that rests on a judgement is unpinnable; one that rests on a
+missing field is not."**
+
+`07-email-thread` was written the wrong way first and is the cheaper illustration. Its original draft
+tied the export work to an onboarding card, and two items came back as category disputes — a coin
+toss baked straight into a new fixture. It was rewritten until the source itself said which was
+which, and the disputes disappeared. **A fixture should be over-determined by its input**, and the
+test of that is not whether it passed once.
 
 **Two prompt bugs surfaced the same way, both the same shape:** the prompt under-specified something a
 deterministic gate strictly required, so a reworded-but-correct reply was held.

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "t920",
+    "title": "Checkout redesign spec",
+    "listKey": "design",
+    "assignees": [
+      "Rowan Diaz"
+    ],
+    "status": "in progress",
+    "description": "Spec for the checkout flow redesign, ahead of engineering pickup."
+  }
+]

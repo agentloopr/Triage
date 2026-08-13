@@ -26,6 +26,16 @@ written. Re-derive it with `npm run demo` and `npm run demo -- --provider anthro
 | `03-meeting-noise` | 0 items | 0 items | identical |
 | `04-channel-messages` | 4 items · 3 created | **3 items · 2 created** | differs |
 | `05-corrections` | 1 item · 1 created | 1 item · 1 created | identical |
+| `06-github-activity` | 4 items · 0 created · 2 held | **not recorded** | — |
+| `07-email-thread` | 2 items · 1 created | **not recorded** | — |
+| `08-drive-activity` | 4 items · 2 created | **not recorded** | — |
+
+**The comparison covers five of the eight scenarios.** The three source scenarios were added after
+the Claude credential for this project stopped working. Listing them as zeros would report an
+*absence* as a divergence — the one thing this table exists to measure — so they are marked instead,
+and `npm run demo -- --provider anthropic` skips them by name rather than replaying them empty.
+Recording each is one command once a key is available:
+`npm run record -- --scenario <name> --provider anthropic`.
 
 **Both divergences are at Pass 1 — the extraction — and nowhere else.** Given each provider's own
 replies, every downstream layer behaved identically: same parsers, same gates, same plan, same

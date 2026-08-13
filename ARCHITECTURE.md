@@ -7,8 +7,11 @@ idempotency (event) → idempotency (source) → Pass 0 → idempotency (content
   → Pass 1 → 1.5 → 1.7 → evidence prefetch → Pass 2a → 2b → 2c → 2d
 ```
 
-Ingestion is out of scope — webhooks, polling, auth and retries are product surface, and every
-team's are different. The pipeline starts at a normalized `IngestedSource` and a `TrackerAdapter`.
+**Transport** is out of scope — webhooks, polling schedules, cron, OAuth refresh and retry policy are
+product surface, and every team's are different. **Reading a service and normalizing its payload are
+not**: [`src/sources/`](src/sources) reads GitHub, Gmail and Drive, and [`src/ingest/`](src/ingest)
+turns five payload shapes into one `IngestedSource`. The pipeline starts there, and at a
+`TrackerAdapter`.
 
 ## The passes
 
@@ -51,7 +54,8 @@ tidy.
 | [`ModelClient`](src/providers/index.ts) | `deepseek`, `anthropic`, `cassette` | The cassette impl is what makes the demo run offline. See [PROVIDERS.md](PROVIDERS.md). |
 | [`TrackerAdapter`](src/trackers/index.ts) | `memory`, `clickup`, `linear` | Three adapters, one contract suite. See [ADAPTERS.md](ADAPTERS.md). |
 | [`IdempotencyStore`](src/idempotency/index.ts) | `memory`, `jsonFile` | Three layers, below. |
-| [`IngestedSource`](src/ingest/index.ts) | `transcript`, `channel` | A meeting and a channel log run the identical 1 → 2d chain. |
+| [`IngestSource`](src/ingest/index.ts) | `transcript`, `channel`, `github`, `gmail`, `drive` | Five payload shapes, one 1 → 2d chain, and no pass that branches on which. |
+| [`SourceClient`](src/sources/index.ts) | `github`, `gmail`, `drive` | Reads a live service. The interface has **no write method**, so read-only is a type, not a policy. |
 
 [`Retriever`](src/pipeline/retrieval/index.ts) is **not** in that table, deliberately: it has one
 implementation and that implementation returns nothing. It is a declared interface for an external
@@ -140,6 +144,28 @@ A hold is a question, and questions outlive processes. Held items are persisted 
 [`PendingHumanStore`](src/state/pendingHuman.ts) **before** the hold is announced — a lost
 notification is recoverable, a lost question is not.
 
+### What actually decides a hold
+
+Worth stating precisely, because "the gates hold it" hides three different kinds of decision, and
+only one of them involves a model at the moment of blocking.
+
+| | Gates | Decided by |
+|---|---|---|
+| **Pure code over structured data** | unknown list key · assignee not in team roster · assignee not valid for list · referenced/parent/RELATE task id not on the board · subtask list ≠ parent list · RELATE self-link · evidence not cited · uncertain field(s) · vague update — card not confirmed · update — card match not confident · possible missed duplicate · registry degraded | The board, the registry, and a literal read of the manifest. No model is consulted. |
+| **A code rule over a model's stated verdict** | legitimacy — may not be a trackable task | `legitimacyHolds()` combines Pass 2b's legitimacy verdict with 2a's confidence and the source's ASR provenance. The *rule* is code; one of its three inputs is a judgement. |
+| **Two independent model reads disagreeing** | category dispute | Genuinely a model decision, and the only one. |
+
+**This is the opposite of what the design anticipated.** The system this was extracted from expected
+deterministic blocking to be the rare case and model judgement the norm; here twelve of fourteen
+gates never ask a model anything. That is not an accident of porting — it is what happens when the
+model's job is narrowed to producing a *manifest* and every structural claim in that manifest is
+checked against data the pipeline already holds.
+
+The practical consequence: **most holds are reproducible.** Feed the same manifest and board twice
+and the same twelve gates fire identically. Only `category dispute` can move between two runs of the
+same fixture, which is exactly why no scenario asserts a hold — see
+[LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers).
+
 **Persistence is an injection, not a default.** Pass `pendingHuman` to `runPipeline` (or
 `pendingHumanPath` to `runScenario`) and holds survive a restart; omit it and a hold exists only in
 the returned result and the `items:held` event. The demo omits it deliberately — a fixture replay has
@@ -154,7 +180,8 @@ is **refused rather than invented**.
 
 ## What is deliberately not here
 
-Retrieval is a null interface and ingestion is out of scope. Passes 2a and 2b are plain completions
+Retrieval is a null interface and ingestion *transport* is out of scope — the reads and the
+normalizers ship; the webhooks, schedules and token refresh do not. Passes 2a and 2b are plain completions
 with evidence pre-fetched host-side; an optional agent layer sits above them, off by default and
 unable to write — see [AGENTS.md](AGENTS.md). See [LIMITATIONS.md](LIMITATIONS.md) for
 what each of those costs, and [EXTRACTION.md](EXTRACTION.md) for how the production system differs.

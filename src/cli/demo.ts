@@ -13,7 +13,7 @@
  * the point — see PROVIDERS.md. Asserting them away would mean picking one provider's judgement and
  * calling it the truth.
  */
-import { rmSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { AGENTS_ENABLED, CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
 import { listScenarios, loadScenario } from '../fixtures';
@@ -64,11 +64,26 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // A scenario with no recording for this provider is NOT a scenario the provider disagreed about.
+  // Replaying it produces an empty Pass 1 and then zero of everything, which lands in the "differs
+  // from the golden" bucket and reads as a finding. It is an absence, and absence has to look
+  // different from disagreement or the summary line quietly overstates what was compared.
+  const unrecorded = scenarios.filter((name) => !existsSync(join(cassettes, name)));
+  const runnable = scenarios.filter((name) => !unrecorded.includes(name));
+
+  if (unrecorded.length) {
+    console.log(
+      `\n⊘ no ${provider}${agents ? ' agent' : ''} recording for: ${unrecorded.join(', ')}\n` +
+        `  Skipped rather than replayed — an empty replay would be reported as a divergence.\n` +
+        `  Record with:  npm run record -- --scenario <name> --provider ${provider}${agents ? ' --agents' : ''}`
+    );
+  }
+
   let failures = 0;
   let differing = 0;
   let matched = 0;
 
-  for (const name of scenarios) {
+  for (const name of runnable) {
     const scenario = loadScenario(name);
     const statePath = join(scenario.dir, '.demo-idempotency.json');
     rmSync(statePath, { force: true });
@@ -80,15 +95,21 @@ async function main(): Promise<void> {
 
     if (run.mismatches.length && (comparing || agents)) {
       // Not counted as a failure, for the same reason in both cases: the goldens describe ONE
-      // recording of a model reading a meeting, and any other recording is allowed to extract a
+      // recording of a model reading a source, and any other recording is allowed to extract a
       // different number of items. What would be a failure is the deterministic layers behaving
       // differently on identical replies, and that has its own test.
       //
-      // For --agents specifically: the agent layer runs AFTER every gate, so it cannot change an
-      // inventory count, a category or a hold. Both divergences in the shipped agent recording were
-      // traced to earlier passes — scenario 01's Pass 1 extracted 7 items where the deterministic
-      // recording got 6, and scenario 04's Pass 1.5 critic raised an item it had previously passed
-      // on. Re-recording moves those; agents cannot.
+      // For --agents this now says something stronger than it used to. The agent layer may PROPOSE
+      // a different category, list or assignee: a proposal that survives `applyGates` changes what
+      // is written, and one that fails it becomes a hold. So an agent run legitimately differs from
+      // the deterministic golden — that is the feature working, not drift.
+      //
+      // No `expected.agents.json` ships, deliberately. A golden per path would pin one recording of
+      // a model judgement, which is the mistake EXTRACTION.md records having made twice. What holds
+      // the agent path to account instead is `run.test.ts`'s invariants, asserted with scripted
+      // replies rather than recordings: a refused proposal holds rather than writes, an agent is
+      // never shown an item the gates already held, and the summary reports only what the executor
+      // returned.
       differing++;
       const r = run.result;
       console.log(`  ≠ ${r.inventory.length} items · ${r.exec?.created ?? 0} created · ${r.held.length} held — differs from the golden:`);
@@ -137,11 +158,18 @@ async function main(): Promise<void> {
     console.log(`\n✗ ${failures} scenario(s) failed\n`);
     process.exit(1);
   }
+  // Skips are counted in the summary for the same reason divergences are: "3 match" under a run of
+  // eight scenarios reads as a pass unless the missing five are named. The totals have to add up to
+  // the number of scenarios that exist, or the line quietly overstates what was compared.
+  const skipped = unrecorded.length ? ` · ⊘ ${unrecorded.length} not recorded for ${provider}` : '';
   console.log(
-    differing === 0
+    differing === 0 && !skipped
       ? '\n✓ all scenarios match\n'
-      : `\n✓ ${matched} match · ≠ ${differing} differ from the golden ` +
-          '(informational: a different recording may extract a different number of items — not gating)\n'
+      : `\n✓ ${matched} match` +
+          (differing ? ` · ≠ ${differing} differ from the golden` : '') +
+          skipped +
+          `  (of ${scenarios.length} scenarios; divergence is informational — a different recording may` +
+          ' extract a different number of items — and is not gating)\n'
   );
   process.exit(0);
 }

@@ -1,0 +1,10 @@
+--- ACTION INVENTORY ---
+1. Add declined-card and expired-session error state screens to the spec | quote: "I'll add the error state screens to the spec by Tuesday."
+   DESC: Rowan Diaz committed to add the error state screens to the spec by Tuesday. Jules Kim stated the declined-card and expired-session error states are missing and are needed before engineering can pick up the work.
+   TIMESTAMP: 09:30–09:44
+   POSSIBLE_MATCH_HINT: Checkout redesign spec | id:t920
+2. Fix the 'reciept' typo in the second paragraph | quote: "Typo in the second paragraph — 'reciept' should be 'receipt'."
+   DESC: Sky Patel flagged a typo in the second paragraph: "reciept" should be corrected to "receipt".
+   TIMESTAMP: 10:30
+   POSSIBLE_MATCH_HINT: Checkout redesign spec | id:t920
+--- END ACTION INVENTORY ---

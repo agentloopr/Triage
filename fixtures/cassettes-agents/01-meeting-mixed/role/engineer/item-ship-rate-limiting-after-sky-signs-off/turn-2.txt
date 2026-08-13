@@ -1,3 +1,0 @@
-NOTE: Checked t200 and its history — card is assigned to Avery Chen and covers public API rate limiting, so the work matches.
-DESC: Public API rate limiting: token bucket is implemented for the public endpoints; waiting on Sky's sign-off, planned to ship Friday.
-OWNERSHIP: OK

@@ -15,6 +15,7 @@
  * Everything is injected. No provider, tracker, clock or notification channel is imported here.
  */
 import { type DelegationResult, summariseRun } from '../agents/boardAgent';
+import { indexTasks } from './gates/clarify';
 import { type IdempotencyStore, contentKey } from '../idempotency';
 import type { IngestedSource } from '../ingest';
 import { errText } from '../providers';
@@ -30,8 +31,8 @@ import type { ContractFlag, HeldItem } from './gates/contractGates';
 import { type CategorizationItem } from './parsing/categorizationManifest';
 import { parseEnrichedInventoryItems } from './parsing/inventory';
 import { type CategorizationAgentRunner, runCategorizationPass } from './passes/categorization';
-import { type ContractCheckerRunner, type SkippedNotTask, runContractCheck } from './passes/contractCheck';
 import { type AuditResult, auditPostWrite } from './passes/audit';
+import { type ContractCheckerRunner, type SkippedNotTask, applyGates, runContractCheck } from './passes/contractCheck';
 import { type ExecuteResult, executeOperations, planOperations } from './passes/execute';
 import { type PassRunner, runCleanup, runInventory, runInventoryConsolidator, runInventoryCritic } from './passes/inventory';
 import type { EnrichedInventoryItem } from './types';
@@ -60,9 +61,10 @@ export type PipelineDeps = {
   /**
    * The optional agent layer (PRD §5). Omit and the pipeline runs exactly as it always has.
    *
-   * It runs **after every gate and before the writer**, and it may only improve how an item reads —
-   * `delegateToRoleAgents` merges field by field for that reason. An agent that could change a
-   * category would be able to walk past every gate in this repo by talking.
+   * It runs **after every gate and before the writer**, and it sees only the items that survived —
+   * so it cannot reach, or un-hold, anything a gate already stopped. What it proposes is merged by
+   * named field and then re-gated by the same `applyGates` Pass 2b uses, so a proposal the gates
+   * refuse becomes a human hold rather than a write.
    */
   agents?: { delegate(items: CategorizationItem[]): Promise<DelegationResult[]> };
   /**
@@ -276,9 +278,10 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
 
   if (deps.execute === false) return base;
 
-  // ── Agent layer (optional) — decides, does not write ─────────────────────
-  // Sits between the gates and the writer on purpose: after every gate has had its say, so an agent
-  // cannot talk its way past one, and before 2c, so anything it improves is what actually lands.
+  // ── Agent layer (optional) — proposes, does not write ────────────────────
+  // Sits between the gates and the writer on purpose. It sees ONLY `checked.clean`, so it cannot
+  // reach an item a gate already held — an agent that could un-hold by talking is the whole failure
+  // this ordering prevents. What it proposes is re-gated below.
   // Fails open as a whole — the pipeline's own answer stands if the agent layer errors.
   const delegations = deps.agents
     ? await timed('agents', async () => {
@@ -291,14 +294,61 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
       })
     : [];
 
+  // Re-gate. A proposal is a claim, and it is checked by exactly the rules the pipeline's own answer
+  // passed — the same `applyGates` Pass 2b runs, not a second copy of the ordering. Anything the
+  // gates now refuse leaves `clean` and joins `held`, so a bad proposal costs a human a question
+  // rather than putting a wrong card on the board.
+  let writable = checked.clean;
+  let held = checked.held;
+
+  if (deps.agents && delegations.some((d) => hasProposal(d.enrichment))) {
+    const snap = indexTasks(tasks);
+    const invByNum = new Map(inventory.map((i) => [i.number, i]));
+    const proposed = applyProposals(checked.clean, delegations);
+    const regated = applyGates(proposed, snap, {
+      inventoryByNum: invByNum,
+      ...(source.todayIso ? { todayIso: source.todayIso } : {}),
+    });
+
+    const newlyHeld = regated.held.filter((h) => !checked.held.some((p) => p.item === h.item));
+
+    writable = regated.clean;
+    held = [...checked.held, ...newlyHeld].sort((a, b) => a.item - b.item);
+
+    if (newlyHeld.length) {
+      // Same order as the first batch above, and for the same reason: a lost notification is
+      // recoverable, a lost question is not. These holds are announced separately rather than
+      // folded into the earlier event because they did not exist when it fired.
+      try {
+        deps.pendingHuman?.register(source.sourceId, newlyHeld);
+      } catch (err) {
+        emit({ type: 'alert', detail: `could not persist ${newlyHeld.length} agent-proposal hold(s): ${errText(err)}` });
+      }
+
+      for (const h of newlyHeld) {
+        emit({ type: 'alert', detail: `item ${h.item}: an agent proposal did not survive the gates (${h.gate}) — held` });
+      }
+
+      emit({
+        type: 'items:held',
+        items: newlyHeld.map((h) => ({
+          item: h.item, title: h.title, gate: h.gate, question: h.question,
+          ...(h.notifyAssignee ? { notifyAssignee: h.notifyAssignee } : {}),
+        })),
+      });
+    }
+
+    if (regated.flags.length) emit({ type: 'flags', flags: regated.flags });
+  }
+
   // ── Pass 2c — the only writer ────────────────────────────────────────────
   const exec = await timed('2c-execute', () =>
-    executeOperations(planOperations(checked.clean, { ...(source.todayIso ? { todayIso: source.todayIso } : {}) }), deps.tracker)
+    executeOperations(planOperations(writable, { ...(source.todayIso ? { todayIso: source.todayIso } : {}) }), deps.tracker)
   );
   emit({ type: 'executed', ...exec });
 
   // Derived from the executor's results, never from the model. See `summariseRun`.
-  if (deps.agents) emit({ type: 'agent:summary', summary: summariseRun(exec, checked.held, delegations) });
+  if (deps.agents) emit({ type: 'agent:summary', summary: summariseRun(exec, held, delegations) });
 
   // Per-role memory, written from what actually landed rather than from what was planned — a plan
   // that failed at the tracker must not leave the next run believing the work is underway. Opt-in:
@@ -310,12 +360,21 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
   // ── Pass 2d — audit against a FRESH read ─────────────────────────────────
   // Re-read rather than reusing `tasks`: auditing against the pre-write snapshot would just re-read
   // our own assumptions and pass every time.
+  //
+  // `writable`/`held`, NOT `checked.*`. This pass asks "did what we said we would do actually
+  // happen", so it must be given what Pass 2c was actually handed. Auditing the pre-proposal list
+  // reports every item the re-gate moved to held as a card that should exist and does not — a false
+  // alarm, from the one pass whose whole job is to not raise them. Pass 2d caught this itself the
+  // first time the re-gate ran, which is the best argument in the repo for why it exists.
   const audit = await timed('2d-audit', async () =>
-    auditPostWrite(checked.clean, exec, await deps.tracker.listTasks({ includeClosed: true }), checked.held)
+    auditPostWrite(writable, exec, await deps.tracker.listTasks({ includeClosed: true }), held)
   );
   emit({ type: 'audit', passed: audit.passed, mismatched: audit.mismatched, report: audit.report });
 
-  return { ...base, exec, audit };
+  // `clean` and `held` are re-stated rather than taken from `base`: the agent layer may have moved
+  // an item between them, and a caller reading `base`'s copies would be told a card was written that
+  // the re-gate actually held.
+  return { ...base, clean: writable, held, exec, audit };
 }
 
 /**
@@ -361,4 +420,57 @@ function recordExecutedWorkByRole(
   } catch (err) {
     alert(`could not update role state: ${(err as Error)?.message ?? err}`);
   }
+}
+
+// ── Agent proposals ──────────────────────────────────────────────────────────
+
+/** True when an enrichment asks to change anything a gate would need to re-check. */
+function hasProposal(e: DelegationResult['enrichment']): boolean {
+  // `finalDesc` counts. A rewritten description is not cosmetic to the gates: the whole-board
+  // duplicate backstop scans the item's text, so changing it can change whether the item is a
+  // near-duplicate of something already on the board.
+  return Boolean(e.finalDesc || e.proposedCategory || e.proposedList || e.proposedAssignee || e.ownershipDoubt);
+}
+
+/**
+ * Copy an agent's proposals onto a **copy** of each item, by name.
+ *
+ * Three rules, each load-bearing:
+ *
+ *  1. **Named fields only.** Never `{...item, ...enrichment}`. A wholesale merge would let a reply
+ *     set `tier2Cited`, `uncertainFields` or `raw` — fields the gates read to decide — and an agent
+ *     that can set the evidence flag is an agent that can walk past the evidence gate by talking.
+ *  2. **Copies, not mutation.** The originals stay intact so a refused proposal leaves the
+ *     pipeline's own answer available, and so `base.manifest` still reports what Pass 2a said.
+ *  3. **`ownershipDoubt` becomes an uncertain field, not a summary line.** That routes it through
+ *     `uncertainFieldsGate`, which holds the item and asks the human the agent's own reason. This is
+ *     the same shape Pass 2b already uses when its blind read doubts the routing.
+ */
+export function applyProposals(items: CategorizationItem[], delegations: DelegationResult[]): CategorizationItem[] {
+  const byItem = new Map(delegations.map((d) => [d.item, d.enrichment]));
+
+  return items.map((item) => {
+    const e = byItem.get(item.item);
+    if (!e || !hasProposal(e)) return item;
+
+    return {
+      ...item,
+      ...(e.finalDesc ? { finalDesc: e.finalDesc } : {}),
+      ...(e.proposedCategory ? { category: e.proposedCategory } : {}),
+      ...(e.proposedList ? { list: e.proposedList } : {}),
+      ...(e.proposedAssignee ? { assignee: e.proposedAssignee } : {}),
+      ...(e.ownershipDoubt
+        ? {
+            uncertainFields: [
+              ...(item.uncertainFields ?? []),
+              {
+                field: 'assignee' as const,
+                reason: e.ownershipDoubt,
+                ...(item.assignee ? { suggested: item.assignee } : {}),
+              },
+            ],
+          }
+        : {}),
+    };
+  });
 }

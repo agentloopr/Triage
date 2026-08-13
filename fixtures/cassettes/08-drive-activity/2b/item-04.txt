@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t920
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: Source activity on "Checkout redesign — spec v3" corresponds to existing card t920. Rowan Diaz editing the document is progress on that spec; [Tier-2: task-comments on t920 — no comments] shows this activity is not already logged on the card, so it is an update to t920 rather than a new task.

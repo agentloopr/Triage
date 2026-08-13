@@ -14,8 +14,9 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MAX_DELEGATIONS, delegateToRoleAgents, selectForDelegation, summariseRun } from './boardAgent';
-import { buildRoleAgentPrompt, parseRoleReply, roleOf, runRoleAgent } from './roleAgent';
+import { type DelegationResult, MAX_DELEGATIONS, delegateToRoleAgents, selectForDelegation, summariseRun } from './boardAgent';
+import { type RoleEnrichment, buildRoleAgentPrompt, parseRoleReply, roleOf, runRoleAgent } from './roleAgent';
+import { applyProposals } from '../pipeline/run';
 import type { CategorizationItem } from '../pipeline/parsing/categorizationManifest';
 import type { ExecuteResult } from '../pipeline/passes/execute';
 import { type OpsRegistry, setOpsRegistryPath } from '../registry/opsRegistry';
@@ -89,9 +90,13 @@ describe('a role agent is built from its profile and its state', () => {
     expect(prompt).toContain('HOW YOUR ROLE PHRASES AN UPDATE:');
   });
 
-  it('is forbidden from revisiting the category, which the gates already decided', () => {
+  it('tells the agent a proposal is re-checked, and that a failed one costs a human a question', () => {
+    // The prompt used to forbid revisiting the category outright. It now permits a proposal and
+    // states the consequence, which is the honest framing: the gates contain the agent, not the
+    // wording. A prompt that says "you may not" is a request; a re-gate is a guarantee.
     const prompt = buildRoleAgentPrompt({ role: 'engineer', owner: 'Avery Chen', title: 't', desc: 'd' });
-    expect(prompt).toMatch(/may NOT decide whether this is a new task, a duplicate/i);
+    expect(prompt).toMatch(/re-checked by the same rules/i);
+    expect(prompt).toMatch(/asks a human instead of writing it/i);
   });
 });
 
@@ -200,25 +205,32 @@ describe('selecting what deserves an agent', () => {
   });
 });
 
-describe('delegation merges field by field, never wholesale', () => {
-  it('takes the improved description', async () => {
-    const items = [item()];
+describe('delegation proposes; it never applies', () => {
+  it('returns the proposal without touching the item', async () => {
+    // The load-bearing half. `delegateToRoleAgents` used to write `finalDesc` straight onto the
+    // item, which meant one field reached the writer without passing a gate a second time. Nothing
+    // it returns is applied until `applyProposals` + `applyGates` have both run.
+    const items = [item({ finalDesc: 'short' })];
     const model = scripted([{ text: 'NOTE: n\nDESC: A much fuller description of the work.\nOWNERSHIP: OK' }]);
-    await delegateToRoleAgents(items, { model, tracker: memoryTracker({ tasks: [] }) });
-    expect(items[0]!.finalDesc).toBe('A much fuller description of the work.');
+    const out = await delegateToRoleAgents(items, { model, tracker: memoryTracker({ tasks: [] }) });
+
+    expect(items[0]!.finalDesc).toBe('short');
+    expect(out[0]!.enrichment.finalDesc).toBe('A much fuller description of the work.');
   });
 
-  /**
-   * The containment test. An agent that could rewrite `category` would walk past every gate in the
-   * repo by talking, so the merge must not be able to carry one even if the model emits it.
-   */
-  it('cannot change the category, the list, or the assignee', async () => {
+  it('carries a category, list and assignee proposal through as proposals', async () => {
     const items = [item({ category: 'NEW_TASK', list: 'backend', assignee: 'Avery Chen' })];
     const model = scripted([
-      { text: 'NOTE: n\nCATEGORY: DUPLICATE\nLIST: design\nASSIGNEE: Rowan Diaz\nDESC: new text\nOWNERSHIP: OK' },
+      { text: 'NOTE: n\nDESC: KEEP\nCATEGORY: DUPLICATE\nLIST: design\nASSIGNEE: Rowan Diaz\nOWNERSHIP: OK' },
     ]);
-    await delegateToRoleAgents(items, { model, tracker: memoryTracker({ tasks: [] }) });
+    const out = await delegateToRoleAgents(items, { model, tracker: memoryTracker({ tasks: [] }) });
 
+    expect(out[0]!.enrichment).toMatchObject({
+      proposedCategory: 'DUPLICATE',
+      proposedList: 'design',
+      proposedAssignee: 'Rowan Diaz',
+    });
+    // Still untouched — the proposal exists, the item does not yet reflect it.
     expect(items[0]!.category).toBe('NEW_TASK');
     expect(items[0]!.list).toBe('backend');
     expect(items[0]!.assignee).toBe('Avery Chen');
@@ -230,6 +242,55 @@ describe('delegation merges field by field, never wholesale', () => {
     const out = await delegateToRoleAgents(items, { model, tracker: memoryTracker({ tasks: [] }) });
     expect(items[0]!.finalDesc).toBe('original');
     expect(out).toHaveLength(0);
+  });
+});
+
+describe('applyProposals copies named fields onto a copy', () => {
+  const delegation = (enrichment: Partial<RoleEnrichment>): DelegationResult => ({
+    item: 1,
+    role: 'engineer',
+    owner: 'Avery Chen',
+    enrichment: { note: 'n', ...enrichment },
+  });
+
+  it('does not mutate the original item', () => {
+    const original = item({ category: 'NEW_TASK' });
+    const out = applyProposals([original], [delegation({ proposedCategory: 'UPDATE' })]);
+
+    expect(original.category).toBe('NEW_TASK'); // the pipeline's own answer survives a refusal
+    expect(out[0]!.category).toBe('UPDATE');
+    expect(out[0]).not.toBe(original);
+  });
+
+  /**
+   * The containment test, moved rather than deleted. An agent may now propose a category — but a
+   * *wholesale* merge would also let a reply set `tier2Cited`, which is the flag the evidence gate
+   * reads. An agent that can set its own evidence flag walks past the evidence gate by talking.
+   */
+  it('ignores fields outside the proposal set, even when the enrichment carries them', () => {
+    const original = item({ tier2Cited: false });
+    const smuggled = { ...delegation({ proposedCategory: 'UPDATE' }) };
+    (smuggled.enrichment as unknown as Record<string, unknown>).tier2Cited = true;
+    (smuggled.enrichment as unknown as Record<string, unknown>).raw = 'forged';
+
+    const out = applyProposals([original], [smuggled]);
+    expect(out[0]!.tier2Cited).toBe(false);
+    expect(out[0]!.raw).toBe(original.raw);
+  });
+
+  it('turns an ownership doubt into an uncertain field, so a gate can act on it', () => {
+    // Previously this reached the run summary and stopped nothing: an agent could notice the wrong
+    // owner and the card still landed on that person.
+    const out = applyProposals([item({ assignee: 'Avery Chen' })], [delegation({ ownershipDoubt: 'this is design work' })]);
+
+    expect(out[0]!.uncertainFields).toEqual([
+      { field: 'assignee', reason: 'this is design work', suggested: 'Avery Chen' },
+    ]);
+  });
+
+  it('leaves an item alone when its agent proposed nothing', () => {
+    const original = item();
+    expect(applyProposals([original], [delegation({})])[0]).toBe(original);
   });
 });
 

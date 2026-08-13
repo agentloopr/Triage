@@ -1,11 +1,17 @@
 /**
  * The ingest seam.
  *
- * **Ingestion itself is deliberately out of scope for this repo** — webhooks, polling, auth and
- * retries are product surface, not architecture, and every team's are different. What matters is the
- * shape everything downstream depends on, and the fact that the pipeline genuinely does not care
- * which source produced it: a meeting transcript and a channel log both arrive as `IngestedSource`
- * and run the identical 1 → 2d chain.
+ * **Normalization ships; transport does not.** Five sources normalize here — a meeting transcript, a
+ * channel log, a GitHub activity feed, an email thread and a document activity feed — and all five
+ * arrive as `IngestedSource` and run the identical 1 → 2d chain. What is *not* here is the delivery
+ * mechanism: webhooks, polling, cron and retry policy are product surface, and every team's are
+ * different. Reading a service is a separate concern again, and lives in `src/sources/`.
+ *
+ * An earlier version of this file said ingestion was "out of scope entirely". That was overstated,
+ * and it hardened into a constraint nobody had actually imposed — the repo shipped two sources and
+ * read as a meeting pipeline with a second entry point, which is the exact thing `channel.ts` was
+ * written to disprove. The boundary is narrower than that sentence claimed: **shapes in, transport
+ * out.**
  *
  * The three ids exist to serve the three idempotency layers, and keeping them distinct is what makes
  * "a redelivery costs zero tokens" true rather than aspirational:
@@ -14,7 +20,11 @@
  *   content    — hashed downstream, catching the same content arriving under a different id
  */
 
-export type SourceKind = 'transcript' | 'channel';
+/**
+ * Slack is deliberately absent: a team-chat log **is** `channel`. Adding a fifth kind that rendered
+ * identically would be a name, not a capability.
+ */
+export type SourceKind = 'transcript' | 'channel' | 'github' | 'gmail' | 'drive';
 
 export interface IngestedSource {
   kind: SourceKind;

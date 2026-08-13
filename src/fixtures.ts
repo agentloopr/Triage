@@ -7,9 +7,12 @@
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import type { IngestedSource } from './ingest';
-import { channelSource, type RawChannelLog } from './ingest/channel';
-import { transcriptSource, type RawTranscript } from './ingest/transcript';
+import type { IngestSource, IngestedSource } from './ingest';
+import { channelSource } from './ingest/channel';
+import { driveSource } from './ingest/drive';
+import { githubSource } from './ingest/github';
+import { gmailSource } from './ingest/gmail';
+import { transcriptSource } from './ingest/transcript';
 import type { BoardTask } from './trackers';
 
 export const FIXTURES_ROOT = resolve('./fixtures/scenarios');
@@ -47,23 +50,32 @@ export function listScenarios(root = FIXTURES_ROOT): string[] {
 
 const readJson = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
 
+/**
+ * Which filename in a scenario directory means which source. A table rather than a chain of
+ * `else if`, so adding a source is one row — and so that "the pipeline does not care which source
+ * produced it" stays true of the *loader* too, which was the one place still enumerating them by
+ * hand. First match wins; a scenario carries exactly one source file.
+ */
+const SOURCE_FILES: ReadonlyArray<readonly [string, IngestSource<never>]> = [
+  ['transcript.json', transcriptSource as IngestSource<never>],
+  ['channel.json', channelSource as IngestSource<never>],
+  ['github.json', githubSource as IngestSource<never>],
+  ['gmail.json', gmailSource as IngestSource<never>],
+  ['drive.json', driveSource as IngestSource<never>],
+];
+
 export function loadScenario(name: string, root = FIXTURES_ROOT): Scenario {
   const dir = join(root, name);
   if (!existsSync(dir)) {
     throw new Error(`no such scenario "${name}" — available: ${listScenarios(root).join(', ') || '(none)'}`);
   }
 
-  const transcriptPath = join(dir, 'transcript.json');
-  const channelPath = join(dir, 'channel.json');
-
-  let source: IngestedSource;
-  if (existsSync(transcriptPath)) {
-    source = transcriptSource.normalize(readJson<RawTranscript>(transcriptPath));
-  } else if (existsSync(channelPath)) {
-    source = channelSource.normalize(readJson<RawChannelLog>(channelPath));
-  } else {
-    throw new Error(`scenario "${name}" has neither transcript.json nor channel.json`);
+  const found = SOURCE_FILES.find(([file]) => existsSync(join(dir, file)));
+  if (!found) {
+    throw new Error(`scenario "${name}" has none of: ${SOURCE_FILES.map(([f]) => f).join(', ')}`);
   }
+  const [file, ingest] = found;
+  const source: IngestedSource = ingest.normalize(readJson(join(dir, file)));
 
   const correctionsPath = join(dir, 'corrections.json');
 

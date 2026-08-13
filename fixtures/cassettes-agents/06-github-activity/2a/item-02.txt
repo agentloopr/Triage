@@ -1,0 +1,9 @@
+ITEM: 2
+TITLE: Add pagination or streaming response to export endpoint
+CATEGORY: NEW_TASK
+LIST: backend
+PRIORITY: normal
+FINAL_DESC: The export endpoint hangs and eventually returns 504 for accounts above 50k rows, reproduced on staging with a 60k-row account. Add pagination or a streaming response before the next client onboarding.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No open board card covers the export endpoint timeout; t900 is rate limiting and t901 is settings cleanup. This is a net-new deliverable from issue #418.

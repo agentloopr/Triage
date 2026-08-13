@@ -128,6 +128,29 @@ the suite rather than failing in production.
 3. Add your adapter to the `ADAPTERS` array in `adapter.contract.test.ts` and write a wire fake.
 4. Green suite = the pipeline can drive it.
 
+**Notion and Jira are the plausible next two.** Both express the concepts this interface needs — a
+task with a title, a status vocabulary, an assignee, a parent — so neither would need the interface
+widened, and Jira's transition model is the interesting one to get right because a status change is a
+*transition id* rather than a name, which is precisely what `capabilities` and `unsupported` exist to
+express.
+
+**This is not a promise to connect anything.** Two adapters ship, a third is a documented exercise,
+and a maintenance commitment to an open-ended list is not something this repo is making. If your
+tracker cannot express an operation, the honest result is `unsupported` — not a widened interface
+that pretends every tracker is the same.
+
+## Reading a source is a different seam
+
+Adapters *write*. [`src/sources/`](src/sources) *reads* — GitHub, Gmail and Drive — and it is a
+deliberately separate interface with **no write method on it at all**. That is the same guarantee
+`readOnlyTracker` gives the agent layer, moved one level earlier and enforced by the type rather than
+by a wrapper that has to remember to refuse.
+
+Those clients are held to the standard below just as the adapters are: proven against hand-written
+wire fakes, and **no live call has been made against any of the three**. Where the tracker adapters
+have a smoke to point at, the source clients have none — see the last section, and
+[LIMITATIONS.md](LIMITATIONS.md#integrations).
+
 ## What the suite cannot prove
 
 The fakes were written **from the same reading of the vendor docs as the adapters they test**. A
@@ -156,3 +179,13 @@ a curl script standing in for the adapter.
 or log is tracked, because a committed smoke needs credentials to mean anything. Treat the counts
 above as testimony rather than evidence. What you *can* run is `npm run board`, which reaches a real
 tracker through the same adapter — read-only.
+
+### The source clients have had no live call at all
+
+`github`, `gmail` and `drive` in [`src/sources/`](src/sources) are at the stage the two adapters were
+*before* 2026-08-12: contract suite green against fakes, and nothing beyond that. Everything in the
+first paragraph of this section applies to them and none of the testimony does. Concretely, the
+things a fake cannot check and nobody has: that the GitHub issues endpoint really does return pull
+requests alongside issues, that Gmail's `internalDate` is present on every message, and that Drive
+rejects an unprojected `fields` request the way the client assumes. Each is a documented behaviour
+the client was written from, and a documented behaviour is a claim, not a measurement.

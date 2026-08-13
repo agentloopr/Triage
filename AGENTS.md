@@ -63,19 +63,69 @@ is deterministic code over `ExecuteResult`: an item is reported as created only 
 returned `applied`. The rule is enforced by construction, not by instruction — the same reasoning as
 the read-only wrapper.
 
-## What an agent may change
+## What an agent may propose — and what decides it
 
-Exactly two fields, both prose, merged **field by field**:
+An agent proposes; the gates decide. Nothing below is applied as stated.
 
-| Field | Effect |
+| Field | Proposes |
 |---|---|
-| `DESC` | a fuller description, or `KEEP` to leave it alone |
-| `OWNERSHIP` | `OK`, or a doubt that surfaces in the summary — **advisory only** |
+| `DESC` | a fuller description, or `KEEP` |
+| `CATEGORY` | a different one of `NEW_TASK` / `DUPLICATE` / `SUBTASK` / `UPDATE` / `RELATE` |
+| `LIST` | a different list key |
+| `ASSIGNEE` | a different owner |
+| `OWNERSHIP` | "not this person's work, and I cannot name who" |
 
-It may **not** change the category, the list, or the assignee. Merging the reply wholesale would hand
-an agent the ability to rewrite a category and walk past every gate in the repo by talking, so the
-merge copies named fields and ignores everything else. There is a test that emits `CATEGORY:
-DUPLICATE` from an agent and asserts nothing moved.
+Every one of those is copied **by name** onto a *copy* of the item, and then the whole deterministic
+gate set — the same `applyGates` Pass 2b runs, not a second copy of it — is re-run over the result:
+
+```
+agent proposes → applyProposals (named fields, onto a copy) → applyGates → clean | held
+```
+
+**A proposal the gates refuse becomes a human hold, never a write.** Propose an unknown list key and
+the routing gate holds the item. Propose an assignee who is not on the roster, or not valid for that
+list, and it holds. Raise an ownership doubt without naming a successor and it becomes an uncertain
+field on `assignee`, which holds and asks the human your own reason.
+
+This is why the merge is by named field rather than `{...item, ...reply}`. A wholesale merge would
+also let a reply set `tier2Cited` — the flag the evidence gate reads — and an agent that can set its
+own evidence flag walks past the evidence gate by talking. There is a test that smuggles `tier2Cited`
+into an enrichment and asserts it does not land.
+
+### What the shipped recordings actually show
+
+Worth stating before you read a green `--agents` run as evidence the mechanism does something.
+
+Across all eight recorded scenarios the role agents produced **three proposals, and all three agreed
+with what Pass 2a had already decided** — each proposed `CATEGORY: UPDATE` on an item 2a had already
+marked `UPDATE`. Every other field came back `KEEP`. **Zero proposals were refused by the gates,
+because none of them contradicted anything.**
+
+So the re-gate path is wired and exercised, and no recording demonstrates it *changing* an outcome.
+What proves it works is `run.test.ts`, with scripted replies rather than recordings: a proposed
+unknown list key holds, an off-roster assignee holds, an ownership doubt holds and carries the
+agent's own reason into the question, a surviving proposal reaches the writer, and an agent is never
+handed an item the gates already held.
+
+That split is deliberate and is the repo's usual standard. A recording can only show what one model
+happened to say on one day; if the feature needed a model to disagree in order to be demonstrated,
+the demonstration would be the weather. But it does mean the honest claim is **"the path is proven by
+test, not by recording"** — and a reader who wants to see it fire should run the tests, not the demo.
+
+### This is what §5's "authority to write" means
+
+PRD §5 describes the Board agent as *"the orchestrator above the role agents, holding board state and
+authority to write."* Read literally that sounds like a write handle, and building it that way would
+put a model in the write path and cost the guarantee the README leads with.
+
+**Production does not work that way either.** Its board agent proposes, and one script enforces the
+protected-status guard, the duplicate check and read-only mode. "Authority to write" there means *its
+decisions result in writes* — not that it performs them. Pass 2c is this repo's equivalent of that
+script. Proposing into the gates is the faithful port: the agent genuinely decides, and something
+deterministic and auditable is still the only thing that writes.
+
+An earlier version of this layer could change one prose field. That was safe, and it was not
+orchestration.
 
 ## Failure behaviour: open, at every level
 

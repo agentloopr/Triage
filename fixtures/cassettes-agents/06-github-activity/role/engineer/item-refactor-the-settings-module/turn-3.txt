@@ -1,0 +1,6 @@
+NOTE: Checked t901 — it is Avery Chen's existing backend "Settings module cleanup" card; the item adds PR #419 detail, so this is an update, not new work.
+DESC: PR #419 opened to rename a few things and split one long file; no behaviour change.
+CATEGORY: UPDATE
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

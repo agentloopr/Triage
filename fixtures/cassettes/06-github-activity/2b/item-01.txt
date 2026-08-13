@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: [Tier-2: task-comments on t900 — no comments] Closest existing card t900 covers the limiter itself; the source explicitly says the dashboard is NOT in this change, so it is a separate deliverable and not contained by t900. The dashboard is a concrete, trackable build item.

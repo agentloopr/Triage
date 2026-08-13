@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: Scanned the full board snapshot; the only card is t910 Northwind onboarding, and Avery explicitly says the export endpoint timeout is “separately from onboarding,” so it is not a duplicate, subtask, or update of that card. This is a concrete backend bug fix with an owner (Avery), a deliverable (add pagination), and a timeframe (this week).

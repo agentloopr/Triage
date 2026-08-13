@@ -77,6 +77,11 @@ setStatus, an unknown-status rejection, a single assignee, **two assignees corre
 real issue, and a snapshot carrying the member name and never the raw Linear user id. Seventeen
 checks, all passed, then deleted its own test issue.
 
+**Neither smoke is reproducible from this repo, and that is the one claim here you cannot check.**
+Both were run by hand against throwaway accounts and both deleted their own test objects; no script or
+log is tracked, because a committed smoke would need credentials to mean anything. Everything else in
+this repo can be re-run by a reader — treat these two paragraphs as testimony rather than evidence.
+
 **Both adapters are now live-verified.** What remains unmeasured is everything a short smoke cannot
 reach: sustained load, rate-limit behaviour under real traffic, and every edge case the vendor's API
 has that a handful of manual calls does not exercise. See [ADAPTERS.md](ADAPTERS.md).

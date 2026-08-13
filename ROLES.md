@@ -103,9 +103,12 @@ moment the pipeline touches the file.
 failed or was refused is not "already open" for anyone, and recording it would teach the next run to
 treat undone work as done. Capped at 5 for the same reason the profile block is compact.
 
-**Scenario runs reset it.** The pipeline writes state, that state enters the next run's prompt, and a
-fixture whose prompt depends on how many times you have run it is not a fixture. `runScenario` clears
-`.role-state/` per scenario per run — which is what keeps the demo byte-identical across invocations.
+**Scenario runs isolate it.** The pipeline writes state, that state enters the next run's prompt, and
+a fixture whose prompt depends on how many times you have run it is not a fixture. `runScenario`
+creates a **fresh temp directory per invocation** (`mkdtempSync`) and removes it afterwards — not a
+fixed path it clears, because a path derived from the scenario is shared mutable state between
+concurrent test files, and one runner resetting it while another builds a prompt produces cassette
+drift on recordings nobody touched.
 
 ## Failure behaviour: open
 

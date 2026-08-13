@@ -77,7 +77,7 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
   const emitter = new PipelineEvents();
   emitter.on((e) => {
     events.push(e);
-    if (!opts.quiet) print(e);
+    if (!opts.quiet) printEvent(e);
   });
 
   // Wired unconditionally, with no flag and no endpoint check. `@opentelemetry/api` hands back
@@ -172,7 +172,8 @@ function itemKey(label: string): string {
   return n ? `item-${n.padStart(2, '0')}` : label.replace(/[^a-z0-9-]/gi, '-');
 }
 
-function print(e: PipelineEvent): void {
+/** Shared with `pull`, so a live run prints exactly what the demo prints. */
+export function printEvent(e: PipelineEvent): void {
   switch (e.type) {
     case 'pass:done':
       console.log(`  ✓ ${e.pass.padEnd(20)} ${e.ms}ms`);

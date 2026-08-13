@@ -157,6 +157,19 @@ capability.
 **Transport is still your problem.** Webhooks, polling schedules, cron, OAuth refresh and the queue
 that hands a payload to `runPipeline` are not here, and every team's are different.
 
+**One command joins the two seams end to end**, so "this repo reads GitHub" is something you can run
+rather than something you read:
+
+```bash
+npm run pull -- --source github --repo owner/name --since 2026-08-01
+npm run pull -- --source gmail --thread <threadId>
+npm run pull -- --source drive --file <fileId> --write   # --write, or it only plans
+```
+
+This is the **only** path that needs credentials, and it plans without writing unless you ask. Every
+fixture, test and demo stays offline because they start from a recorded payload rather than a live
+read.
+
 **An optional agent layer** (PRD §5) sits between the gates and the writer: a board agent that
 delegates to eight role agents with **read-only** tools. It is off by default, it cannot write, and
 it cannot change what an item is — only how it reads. See [AGENTS.md](AGENTS.md).

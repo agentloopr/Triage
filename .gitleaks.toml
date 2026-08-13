@@ -36,9 +36,14 @@ keywords = ["lin_api_"]
 
 [allowlist]
 description = "Synthetic values that exist to prove redaction works"
-paths = [
-  # Asserts that a token pasted into a card comment is scrubbed before it reaches a prompt.
-  '''src/pipeline/evidence/tier2Prefetch\.test\.ts''',
-  # Placeholders only — every value is empty or an obvious stand-in.
-  '''\.env\.example''',
+# Allowlisted by VALUE, never by path. Exempting a whole file means a real credential committed to
+# that file later is invisible, and the two files previously exempted here — `tier2Prefetch.test.ts`
+# and `.env.example` — turned out to trip no rule at all. The exemptions bought nothing and cost a
+# permanent blind spot in the one gate that has to be airtight before publishing.
+#
+# Each literal below is a fixture asserting that redaction works. If a scan ever fails on one, check
+# the value is still synthetic — do not put its file back in a path list.
+regexes = [
+  '''xoxb-1234567890-abcdefghijkl''',                    # tier2Prefetch.test.ts — scrubbed from a card comment
+  '''pk_12345678_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345''',    # otel.test.ts — scrubbed from a span attribute
 ]

@@ -196,6 +196,8 @@ taxonomy is tracker-blind because of it.
 ```bash
 npm run board         # read the configured tracker (TRACKER=...) — read-only, needs credentials
 npm run correct       # record a human correction that later runs read back
+npm run answer        # list open human holds; --approve or --skip one
+npm run pull          # read a live source and run the pipeline over it
 
 npm test              # the full suite; count deliberately not quoted here
 npx tsc --noEmit      # tests included in typecheck

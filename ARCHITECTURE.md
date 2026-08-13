@@ -178,6 +178,17 @@ model call**. A second inference would mean the human approved one thing and som
 written. Approving a hold that has no per-item decision behind it (the registry-degraded batch hold)
 is **refused rather than invented**.
 
+```bash
+npm run answer                      # every open hold, and why each is held
+npm run answer -- <id> --approve    # replay the stored decision
+npm run answer -- <id> --skip
+```
+
+That command was missing until `reachable.test.ts` was written. `resumeHold` existed, was tested and
+was correct, and **nothing could call it** — so the repo could raise a question and had no way to
+answer one. "Human-in-the-loop" named a loop that did not close, behind a green suite. It is the
+fourth defect of that exact shape here, and the reason there is now a test for the shape itself.
+
 ## What is deliberately not here
 
 Retrieval is a null interface and ingestion *transport* is out of scope — the reads and the

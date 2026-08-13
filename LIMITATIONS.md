@@ -77,9 +77,15 @@ has that a handful of manual calls does not exercise. See [ADAPTERS.md](ADAPTERS
 pipeline starts at `runPipeline(source, deps)` with a normalized source. Getting a meeting into that
 shape is your problem.
 
-**Retrieval is a null interface.** There is a seam and nothing behind it. The production system runs
-a live vector substrate, but its retrieval quality has never been measured, so any claim made here
-would be unfalsifiable. Better an obvious hole than a number nobody checked.
+**Retrieval is a null interface.** [`Retriever`](src/pipeline/retrieval/index.ts) is declared and
+wired into passes 2a/2b, and the only implementation that ships returns **no documents, ever**. The
+production system runs a live vector substrate, but its retrieval quality has never been measured, so
+any claim made here would be unfalsifiable. Better an obvious hole than a number nobody checked.
+
+So: **nothing in this repo demonstrates that retrieval helps.** The interface exists to show the
+architecture accommodates a knowledge layer, and that is the entire claim — swapping in a real
+retriever is a change nobody here has evaluated the output of. Retrieved text also never satisfies
+the evidence-citation gate: that gate wants card comment history, and a document is not one.
 
 ## Model behaviour
 

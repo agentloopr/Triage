@@ -70,6 +70,8 @@ export type ContractCheckInput = {
   todayIso?: string;
   /** item number → pre-fetched evidence block. */
   tier2ByItem?: Map<number, string>;
+  /** item number → retrieved-context block from the retrieval seam. Empty by default. */
+  retrievalByItem?: Map<number, string>;
   /** item number → source confidence in [0,1]. A missing entry means unknown, which is trusted. */
   provenanceByItem?: Map<number, number>;
 };
@@ -142,6 +144,7 @@ export async function runContractCheck(
         const parts = buildContractCheckerPrompt(inv, input.boardSnapshot, input.sourceSummary, input.sourceText, {
           ...(input.participantLine ? { participantLine: input.participantLine } : {}),
           ...(input.tier2ByItem?.get(inv.number) ? { tier2Evidence: input.tier2ByItem.get(inv.number)! } : {}),
+          ...(input.retrievalByItem?.get(inv.number) ? { retrievedContext: input.retrievalByItem.get(inv.number)! } : {}),
           provenance,
         });
         const reply = await opts.runAgent(parts.user, `pass2b:item${m.item}`, parts.system);

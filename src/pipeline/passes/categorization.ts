@@ -26,6 +26,8 @@ export type CategorizationPassInput = {
   todayIso?: string;
   /** item number → pre-fetched evidence block. */
   tier2ByItem?: Map<number, string>;
+  /** item number → retrieved-context block from the retrieval seam. Empty by default. */
+  retrievalByItem?: Map<number, string>;
 };
 
 export type CategorizationPassResult = {
@@ -63,6 +65,7 @@ export async function runCategorizationPass(
       totalItems: items.length,
       ...(input.todayIso ? { todayIso: input.todayIso } : {}),
       ...(input.tier2ByItem?.get(inv.number) ? { tier2Evidence: input.tier2ByItem.get(inv.number)! } : {}),
+      ...(input.retrievalByItem?.get(inv.number) ? { retrievedContext: input.retrievalByItem.get(inv.number)! } : {}),
     });
 
     try {

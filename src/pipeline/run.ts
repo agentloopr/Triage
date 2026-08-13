@@ -25,6 +25,7 @@ import type { BoardTask, TrackerAdapter } from '../trackers';
 import { renderBoardSnapshot, renderCompactSnapshot } from '../trackers/renderSnapshot';
 import { PipelineEvents } from './events';
 import { prefetchTier2Evidence } from './evidence/tier2Prefetch';
+import { type Retriever, retrieveForItems } from './retrieval';
 import type { ContractFlag, HeldItem } from './gates/contractGates';
 import { type CategorizationItem, formatCategorizationManifest } from './parsing/categorizationManifest';
 import { parseEnrichedInventoryItems } from './parsing/inventory';
@@ -64,6 +65,14 @@ export type PipelineDeps = {
    * category would be able to walk past every gate in this repo by talking.
    */
   agents?: { delegate(items: CategorizationItem[]): Promise<DelegationResult[]> };
+  /**
+   * The retrieval seam (PRD §8) — an external knowledge layer feeding extra context to passes 2a/2b.
+   *
+   * Omit it and no retrieval happens at all: not a null call, no block, and a prompt byte-identical
+   * to one built before this seam existed. That is what keeps every recorded cassette replaying, and
+   * it is why the default is absence rather than `nullRetriever`.
+   */
+  retrieval?: Retriever;
   /** Passes 0 → 1.7. */
   runPass: PassRunner;
   /** Pass 2a. */
@@ -174,6 +183,12 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
     });
   }
 
+  // Supplementary context, if a knowledge layer is configured. Skipped entirely when it is not —
+  // an unconfigured seam must not cost a pass, an event, or a byte of prompt.
+  const retrievalByItem = deps.retrieval
+    ? await timed('retrieval', () => retrieveForItems(inventory, deps.retrieval!))
+    : new Map<number, string>();
+
   // ── Pass 2a ───────────────────────────────────────────────────────────────
   const categorization = await timed('2a-categorization', () =>
     runCategorizationPass(
@@ -185,6 +200,7 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
         ...(source.participantNames ? { participantLine: source.participantNames } : {}),
         ...(source.todayIso ? { todayIso: source.todayIso } : {}),
         tier2ByItem: tier2.evidenceByItem,
+        retrievalByItem,
       },
       {
         runAgent: deps.runCategorization,
@@ -215,6 +231,7 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
         ...(source.participantNames ? { participantLine: source.participantNames } : {}),
         ...(source.todayIso ? { todayIso: source.todayIso } : {}),
         tier2ByItem: tier2.evidenceByItem,
+        retrievalByItem,
         ...(source.provenanceByItem ? { provenanceByItem: source.provenanceByItem } : {}),
       },
       {

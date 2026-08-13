@@ -27,6 +27,8 @@ import type { PromptParts } from './parts';
 export type ContractCheckPromptOptions = {
   participantLine?: string;
   tier2Evidence?: string;
+  /** Already-formatted block from the retrieval seam. Absent (the default) changes nothing. */
+  retrievedContext?: string;
   /** Source confidence in [0,1]; below LOW_PROVENANCE_NOTE it is surfaced to the read. */
   provenance?: number | null;
 };
@@ -41,6 +43,7 @@ export function buildContractCheckerPrompt(
   opts: ContractCheckPromptOptions = {}
 ): PromptParts {
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
+  const retrievedBlock = opts.retrievedContext ?? '';
   const roster = roleRosterBlock();
 
   const provNote =
@@ -231,6 +234,7 @@ export function buildContractCheckerPrompt(
     '══════════════════════════════════════════════════════════════════════',
     itemBlock,
     ...(tier2Block ? ['', tier2Block] : []),
+    ...(retrievedBlock ? ['', retrievedBlock] : []),
   ].join('\n');
 
   return { system, user };

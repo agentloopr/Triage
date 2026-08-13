@@ -88,8 +88,23 @@ export function makeGithubClient(opts: SourceClientOptions = {}): SourceClient<R
       // GitHub reports both primary and secondary rate limits as 403 with a remaining count of 0,
       // which is NOT the same as a permissions 403 — resending the latter never succeeds.
       if (res.status === 429 || (res.status === 403 && res.headers.get('x-ratelimit-remaining') === '0')) {
+        // `Retry-After` first, then the reset window. GitHub's own guidance is in that order, and
+        // the two describe different limits: `Retry-After` comes with a *secondary* limit and is the
+        // only accurate number for it, while `x-ratelimit-reset` describes the hourly primary quota.
+        //
+        // An earlier version read only the reset header, so a 429 carrying `Retry-After: 1` fell
+        // through `Number(null) === 0` to the 5s default and waited five times too long. Nothing
+        // failed — the retry still happened and the test still passed. Only the elapsed time in the
+        // test report gave it away, which is why the assertion below is on the delay and not just on
+        // the fact that a retry occurred.
+        const after = Number(res.headers.get('retry-after'));
         const reset = Number(res.headers.get('x-ratelimit-reset'));
-        const waitMs = Number.isFinite(reset) ? Math.max(0, reset * 1_000 - Date.now()) : 5_000;
+        const waitMs =
+          Number.isFinite(after) && after > 0
+            ? after * 1_000
+            : Number.isFinite(reset) && reset > 0
+              ? Math.max(0, reset * 1_000 - Date.now())
+              : 5_000;
         throw new ModelError('rate limited', Math.min(waitMs, 60_000) || 5_000);
       }
       if (!res.ok) {

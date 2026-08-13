@@ -17,8 +17,12 @@
  *   npm run correct -- not-duplicate --title "Add export endpoint" --existing t-a1b2
  *   npm run correct -- show
  *
- * `--by` names the human making the call and defaults to `$USER`. It is stored with every entry
- * because a correction with no author is impossible to question later.
+ * `--by` names the human making the call and defaults to `$USER`. **Only `note` and
+ * `not-duplicate` store it** — those are the two kinds `CorrectionsStore` records as timestamped
+ * entries. `assignee` / `unassignee` / `list-alias` / `name-alias` write into bare maps
+ * (`validAssigneeAdditions`, `listAliases`, `nameAliases`) that carry no per-entry metadata at all;
+ * that shape predates this CLI and changing it would break the shipped `corrections.json` fixture.
+ * The command still accepts `--by` for those kinds — for a uniform interface — and says so.
  */
 import { CORRECTIONS_PATH } from '../config';
 import { loadCorrections, recordCorrection, recordNotDuplicate } from '../state/corrections';
@@ -27,6 +31,8 @@ function arg(argv: string[], name: string): string | undefined {
   const i = argv.indexOf(`--${name}`);
   return i >= 0 ? argv[i + 1] : undefined;
 }
+
+const UNATTRIBUTED_KINDS = new Set(['assignee', 'unassignee', 'list-alias', 'name-alias']);
 
 /** Fail on a missing value rather than writing a correction with `undefined` in it. */
 function required(argv: string[], name: string): string {
@@ -51,6 +57,13 @@ async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const cmd = argv[0];
   const by = arg(argv, 'by') ?? process.env.USER ?? 'unknown';
+
+  // Warn rather than silently accept: a flag that appears to work but writes nothing is worse than
+  // no flag at all, and it is exactly the "configured but doing nothing" failure this repo elsewhere
+  // treats as a blocker.
+  if (cmd && UNATTRIBUTED_KINDS.has(cmd) && arg(argv, 'by')) {
+    console.warn(`note: --by is ignored for '${cmd}' — this correction kind stores no per-entry author`);
+  }
 
   switch (cmd) {
     case 'note': {

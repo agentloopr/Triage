@@ -1,0 +1,8 @@
+ITEM: 1
+TITLE: Merge token-bucket rate limiting to public endpoints
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t900
+STATUS: in review
+FINAL_DESC: PR #412 merged, applying a per-key token-bucket rate limiter to all public endpoints. This ships the limiter itself only; the dashboard for monitoring it is not part of this change.
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t900 — no comments on this card] There is no prior progress logged, so the merge of PR #412 is genuinely new status information on the existing "Add rate limiting to the public API" card, not a separate deliverable.

@@ -3,4 +3,4 @@ MATCH_TASK_ID: t400
 WORTH_A_CARD: not_a_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t400 — no comments recorded] This relates to the existing Nightly build monitoring card, but the substance is a bare status-check: Sky will check if it's the flaky auth test and report back Wednesday, with nothing built/fixed/shipped as part of this item itself. It ends at "I told them the status" — not board-trackable work beyond the existing monitoring card.
+RATIONALE: [Tier-2: task-comments on t400 — no comments] t400 is "Nightly build monitoring," and this is Sky reporting an investigation into alert noise tied to that exact system — same card, no matching activity yet logged. However, the substance is a bare status-check: "I'll check whether it's the flaky auth test and report back Wednesday" — pure monitoring-and-reporting with no build/fix committed yet, so it's not independently a trackable deliverable beyond the existing card.

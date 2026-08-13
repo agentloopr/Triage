@@ -1,0 +1,6 @@
+NOTE: Existing card t901 already tracks this exact PR/effort; description is thin but consistent with card.
+DESC: PR #419 (branch chore/settings-tidy) opened: renames and splits one long file in settings module, no behaviour change intended. Left: review and merge.
+CATEGORY: KEEP
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

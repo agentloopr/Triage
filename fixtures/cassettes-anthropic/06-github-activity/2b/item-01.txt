@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t900
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t900 — no comments recorded] The PR merge is direct progress on t900 "Add rate limiting to the public API," same deliverable (token-bucket per-key limiting on public endpoints), not previously logged on the card.

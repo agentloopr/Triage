@@ -5,7 +5,7 @@ LIST: backend
 ASSIGNEE: Rowan Diaz
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: The billing invoice API endpoint returns totals in the wrong field, causing rendered PDFs to have overlapping columns. Rowan Diaz agreed to fix the endpoint.
+FINAL_DESC: The billing invoice API endpoint returns totals in the wrong field, causing generated PDFs to render with overlapping columns. Rowan Diaz will fix the endpoint.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: Per the note, this invoice API endpoint bug is explicitly a separate workstream from billing webhook retry (t900), which covers webhook retry/backoff, not invoice field rendering. No card in the snapshot covers this deliverable, so it is NEW_TASK; a human previously confirmed this is distinct from t900.
+RATIONALE: Per learned facts, "Fix the invoice API endpoint" was explicitly confirmed by a human as NOT the same work as t900 (billing webhook retry), which covers webhook retry logic, not the API field bug. No other card matches this deliverable, so it is a NEW_TASK; no duplicate/subtask/update evidence applies.

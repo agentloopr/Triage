@@ -1,0 +1,16 @@
+--- ACTION INVENTORY ---
+1. Build rate limit usage dashboard | quote: "the dashboard for it is not in this change"
+   DESC: Rate limiting itself shipped in PR #412, but the associated dashboard for monitoring/visualizing it was not included and remains outstanding.
+   TIMESTAMP: [09:12]
+   POSSIBLE_MATCH_HINT: Add rate limiting to the public API | id:t900
+
+2. Fix export endpoint timeout on large row counts | quote: "Reproduced on staging with a 60k-row account. The request hangs and eventually 504s. Needs pagination or a streaming response before the next client onboarding."
+   DESC: Export endpoint times out above 50k rows, reproduced on staging with 60k rows. Needs pagination or streaming response fix, and there's a deadline tied to the next client onboarding.
+   TIMESTAMP: [10:05]
+   POSSIBLE_MATCH_HINT: (none)
+
+3. Refactor settings module | quote: "PR #419 opened: Refactor the settings module (branch: chore/settings-tidy)"
+   DESC: Opened a PR renaming items and splitting one long file in the settings module, with no behaviour change intended.
+   TIMESTAMP: [11:20]
+   POSSIBLE_MATCH_HINT: Settings module cleanup | id:t901
+--- END ACTION INVENTORY ---

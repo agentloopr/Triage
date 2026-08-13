@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: This is a distinct deliverable (writing a runbook doc for the recurring 502/pool exhaustion issue), owned by Sky Patel, with no existing board card covering it — t800 is unrelated (search relevance tuning). No match found on the board, so it's genuinely new, concrete, and trackable.
+RATIONALE: Concrete deliverable (runbook doc) with a named owner (Sky) requested by Jules, distinct from the search relevance card on the board. No existing card covers documentation/runbook work, so this is a new trackable task.

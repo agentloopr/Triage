@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing card covers staging infra/pool exhaustion — t800 is unrelated (search relevance). Concrete deliverable (raise pool size, add alert) with an owner (Avery), so it's a real trackable task and clearly new.
+RATIONALE: No existing board card covers staging 502s or connection pool sizing; t800 is unrelated (search relevance). This is a concrete fix + monitoring deliverable owned by Avery Chen, distinct from the search relevance task — a genuinely new, trackable item.

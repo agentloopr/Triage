@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: No existing card covers export/pagination work — t900/t901 are rate limiting and settings cleanup respectively, unrelated deliverables. This is a distinct bug with a concrete fix (pagination/streaming) and a business deadline (client onboarding), so it warrants its own card. No match found after scanning the board.

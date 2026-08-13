@@ -1,11 +1,10 @@
 ITEM: 6
-TITLE: Write billing spec
+TITLE: Write spec for usage-based billing idea
 CATEGORY: NEW_TASK
 LIST: product
 ASSIGNEE: Jules Kim
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Write a spec for the proposed usage-based billing model, requested by Wren, to be reviewed before any commitment is made.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Wren requested a written spec for the usage-based billing idea before the team commits to building it; Jules agreed to draft this spec.
 CONFIDENCE: high
-RATIONALE: No existing card covers billing or a billing spec in the snapshot; this is a net-new deliverable assigned to Jules Kim as directed by Wren.
+RATIONALE: No card in the snapshot covers billing or a billing spec. This is a net-new deliverable explicitly assigned to Jules Kim; no evidence needed for NEW_TASK.

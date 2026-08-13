@@ -1,9 +1,8 @@
 ITEM: 1
-TITLE: Rate limiting awaiting sign-off
+TITLE: Rate limiting sign-off pending
 CATEGORY: UPDATE
 EXISTING_TASK_ID: t200
 STATUS: in review
-FINAL_DESC: Token bucket implementation for public API rate limiting is complete and now in review pending Sky's sign-off; expected to ship Friday.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Token bucket implementation for public API rate limiting is complete and now in review awaiting Sky Patel's sign-off; targeted to ship Friday.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t200 — no comments logged] The card t200 currently shows no history of this progress, and the snapshot lists it as "in progress" not review, so the report that it's finished and in review pending Sky's approval is genuinely new status information, not a new deliverable.
+RATIONALE: [Tier-2: task-comments on t200 — no comments on this card] There is no prior activity logged, so the "in review, awaiting sign-off, targeted Friday" status is genuinely new information for this existing card, matching the same deliverable (public API rate limiting).

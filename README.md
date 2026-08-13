@@ -105,10 +105,10 @@ The replayed replies are real: recorded from `deepseek-v4-pro` against these exa
 cassette is a loud error, never an empty reply — an empty reply is indistinguishable from a pass that
 legitimately found nothing, which would make the demo go green having done nothing at all.
 
-Both providers have been run live and both recordings ship, but **not over the same set**: Claude has
-scenarios 01–05, DeepSeek has all eight. `--provider anthropic` names the three it skips rather than
-replaying them into an empty result that would read as a disagreement. See
-[PROVIDERS.md](PROVIDERS.md) for the measured cost and where the two models disagree.
+Both providers have been run live across all eight scenarios and both recordings ship. They agree on
+three and disagree on five — and **every disagreement is at Pass 1, the extraction**, never in a gate,
+a plan or a write. See [PROVIDERS.md](PROVIDERS.md) for the measured cost and the pattern in where
+they part company.
 
 ## The eight scenarios
 

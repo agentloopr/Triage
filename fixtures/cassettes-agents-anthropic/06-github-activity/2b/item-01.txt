@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: [Tier-2: task-comments on t900 — no comments] t900 covers building the rate limiter itself, which PR #412 already shipped (per source); the dashboard is explicitly called out as not included. This is a distinct deliverable that would not close when t900 closes (t900 is effectively done), so containment/duplicate fails — it's a new trackable task for the monitoring dashboard.

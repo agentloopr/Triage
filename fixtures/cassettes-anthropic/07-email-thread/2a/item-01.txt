@@ -1,0 +1,11 @@
+ITEM: 1
+TITLE: Add pagination to export endpoint
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Export endpoint times out above roughly 50k rows. Add pagination to the export endpoint to fix this backend bug.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No card in the snapshot covers the export endpoint or pagination; t910 is Northwind onboarding scoped to migration/cutover, and closing it would not close this separate backend bug fix. Net-new deliverable, so NEW_TASK.

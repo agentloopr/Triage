@@ -1,0 +1,12 @@
+ITEM: 4
+TITLE: Fix off-by-one in the retry backoff
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t900
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: normal
+STATUS: done
+FINAL_DESC: Fixed an off-by-one error in the retry backoff logic, part of the rate limiting work on the public API.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: med
+RATIONALE: [Tier-2: task-comments/commit history] The retry backoff fix is a direct sub-step of the rate limiting PR (#412) tracked under t900 — closing the rate limiting card would encompass this fix, satisfying containment; same assignee and clearly nested scope.

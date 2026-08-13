@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t901
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t901 — no comments] PR #419 "Refactor the settings module" matches the existing card "Settings module cleanup" (t901) exactly by title/description; this is new progress (PR opened + positive review) not previously logged on the card, so it's an UPDATE rather than a duplicate.

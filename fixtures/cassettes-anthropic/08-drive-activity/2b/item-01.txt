@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: SUBTASK
+MATCH_TASK_ID: t920
+WORTH_A_CARD: real_task
+GROUNDED: yes
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t920 — none listed] Adding error state screens is a specific piece of work needed to complete the checkout spec before engineering pickup; it closes when the parent spec (t920) is completed, making it containment (subtask) rather than a separate deliverable or duplicate.

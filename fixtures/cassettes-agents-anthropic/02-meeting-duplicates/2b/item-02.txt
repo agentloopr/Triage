@@ -3,4 +3,4 @@ MATCH_TASK_ID: t600
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t600 — no comments] t600 "Deploy pipeline hardening" is described as making the pipeline resilient to partial failures, exactly matching this item's deliverable (handling partial deploy failures). Same deliverable, no evidence of divergence, so this is a duplicate rather than new work.
+RATIONALE: [Tier-2: task-comments on t600 — no comments] t600 "Deploy pipeline hardening" is described as making the deploy pipeline resilient to partial failures, which is exactly the deliverable Sky Patel describes (deploys failing halfway, pipeline needs partial-failure handling). Same deliverable, no evidence it's already resolved, so this is a duplicate report rather than new work.

@@ -3,4 +3,4 @@ MATCH_TASK_ID: t200
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t200 — no comments present] Directly reports progress on the existing "Public API rate limiting" card (t200): implementation done, awaiting Sky's sign-off, expected Friday. No prior comment recorded this status, so it's new progress info, not already logged — an UPDATE, not a duplicate.
+RATIONALE: [Tier-2: task-comments on t200 — no comments present] t200 is "Public API rate limiting, in progress" and this item reports concrete new progress (token bucket done, in review, awaiting Sky's sign-off, Friday ship target) not already reflected in the card's empty comment log — a genuine status update on the same deliverable, not a duplicate creation or new card.

@@ -1,3 +1,0 @@
-NOTE: Checked t200; matches existing card, adding sign-off/review status detail.
-DESC: Token bucket rate limiting implementation complete; PR in review pending Sky's sign-off. Expected to merge/ship Friday. Blocked on sign-off, not effort.
-OWNERSHIP: OK

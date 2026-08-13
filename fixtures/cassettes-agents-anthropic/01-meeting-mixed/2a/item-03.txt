@@ -6,7 +6,6 @@ LIST: design
 ASSIGNEE: Rowan Diaz
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Write the welcome email copy as part of the onboarding flow redesign; ships together with that revamp.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Write the welcome email copy as part of the onboarding flow redesign; ships alongside the parent revamp.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t100 — no comments] shows no conflicting history; the source explicitly states this "sits inside the onboarding revamp, it ships when that ships," confirming containment with parent t100, same assignee Rowan Diaz.
+RATIONALE: [Tier-2: task-comments on t100 — no comments logged] Source explicitly states the welcome email copy "sits inside the onboarding revamp, it ships when that ships," confirming containment with the same assignee (Rowan Diaz) as the open parent card t100.

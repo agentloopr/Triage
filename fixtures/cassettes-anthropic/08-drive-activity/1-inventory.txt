@@ -1,0 +1,6 @@
+--- ACTION INVENTORY ---
+1. Add error state screens to checkout spec | quote: "I'll add the error state screens to the spec by Tuesday."
+   DESC: Jules Kim noted the spec was missing designs for the declined-card and expired-session error states, needed before engineering can pick it up. Rowan Diaz agreed to add error state screens to the spec.
+   TIMESTAMP: [09:30]–[09:44]
+   POSSIBLE_MATCH_HINT: Checkout redesign spec | id:t920
+--- END ACTION INVENTORY ---

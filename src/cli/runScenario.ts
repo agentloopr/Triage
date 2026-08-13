@@ -86,14 +86,31 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
   // The alternative, gating it on an env var, means the instrumentation is only ever exercised by
   // people who already turned it on, and the first person to do that discovers whether it works.
   const untrace = traceEvents(emitter);
-  const model = traceModelClient(opts.model);
 
   let modelCalls = 0;
+
+  /**
+   * Counts EVERY completion, including the agent layer's.
+   *
+   * The counter used to live only inside `complete()` below, which passes 0 → 2d. Role agents get
+   * the client directly and call it themselves, so their turns were invisible: scenario 01 reported
+   * 16 calls with the agent layer on, and 16 with it off, while the agent recording held 21 replies.
+   * Five model calls that cost real money did not appear in the number this repo publishes as cost,
+   * and `--twice`'s "0 model calls" assertion was blind to exactly the path most likely to make one.
+   *
+   * Counting at the seam rather than at the call site fixes it for anything wired in later, too.
+   */
+  const model = traceModelClient({
+    name: opts.model.name,
+    complete: async (req) => {
+      modelCalls++;
+      return opts.model.complete(req);
+    },
+  });
   // `system` carries the half of the prompt that is identical for every item in a run. Passing it
   // through as a real system block is what lets the Anthropic adapter's cache breakpoint fire — it
   // has always set one, and the pipeline had never given it anything to sit on.
   const complete = async (key: string, prompt: string, system?: string): Promise<string> => {
-    modelCalls++;
     const r = await model.complete({
       key,
       ...(system ? { system } : {}),

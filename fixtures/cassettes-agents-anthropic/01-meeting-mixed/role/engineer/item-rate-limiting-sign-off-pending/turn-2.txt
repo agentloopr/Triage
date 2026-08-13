@@ -1,0 +1,6 @@
+NOTE: Checked t200; this is an update on the existing rate limiting card, blocked on Sky Patel's review, not new work.
+DESC: Token bucket implementation for public API rate limiting is complete; PR in review awaiting Sky Patel's sign-off, targeted to ship Friday. Blocked on reviewer approval, not on further engineering effort.
+CATEGORY: UPDATE
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

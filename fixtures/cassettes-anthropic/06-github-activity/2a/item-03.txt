@@ -1,0 +1,11 @@
+ITEM: 3
+TITLE: Fix export endpoint timeout above 50k rows
+CATEGORY: NEW_TASK
+LIST: backend
+ASSIGNEE: Avery Chen
+PRIORITY: high
+STATUS: not started
+FINAL_DESC: Export endpoint hangs and eventually 504s above 50k rows, reproduced on staging with a 60k-row account. Needs pagination or a streaming response before the next client onboarding.
+UNCERTAIN_FIELDS: NONE
+CONFIDENCE: high
+RATIONALE: No existing card covers the export endpoint; t900 (rate limiting) and t901 (settings cleanup) are unrelated deliverables. This is a distinct bug reported by Sky Patel with no open card tracking it, so NEW_TASK.

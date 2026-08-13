@@ -1,0 +1,8 @@
+ITEM: 1
+TITLE: Add error state screens to checkout spec
+CATEGORY: UPDATE
+EXISTING_TASK_ID: t920
+DUE_DATE: 2026-08-18
+FINAL_DESC: The checkout spec is missing declined-card and expired-session error state designs, needed before engineering can pick it up. Rowan Diaz will add these error state screens to the spec by Tuesday.
+CONFIDENCE: high
+RATIONALE: [Tier-2: task-comments on t920 — no comments logged] The card t920 has no activity history recorded, so this new detail (missing error states, committed Tuesday deadline) is genuinely new information to attach to the existing checkout spec card rather than a new deliverable or duplicate.

@@ -1,0 +1,6 @@
+NOTE: Checked parent card t900 (rate limiting on public API, owned by Avery Chen) — this fix is a subtask of that ongoing work.
+DESC: Fixed off-by-one error in the retry backoff calculation within the rate-limiting work on the public API (t900). Corrects incorrect delay interval on retries; no separate PR/service beyond that scope noted.
+CATEGORY: SUBTASK
+LIST: KEEP
+ASSIGNEE: KEEP
+OWNERSHIP: OK

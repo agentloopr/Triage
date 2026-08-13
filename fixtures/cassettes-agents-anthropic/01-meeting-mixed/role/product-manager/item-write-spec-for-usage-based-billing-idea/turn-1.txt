@@ -1,3 +1,0 @@
-NOTE: Description is clear and scoped appropriately for a PM deliverable; no search needed.
-DESC: Draft a spec for the usage-based billing idea requested by Wren, covering proposed pricing model, target use cases, and acceptance criteria. Explicitly excludes any implementation or engineering commitment — this spec is for review purposes only, to inform a go/no-go decision before work is scheduled.
-OWNERSHIP: OK

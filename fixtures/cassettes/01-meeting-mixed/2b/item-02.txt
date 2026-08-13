@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Board scan shows no existing card for a request-size cap on the upload endpoint; t200 covers API rate limiting, a distinct feature. Avery states a clear new commitment to add a hard limit, which is a concrete, trackable deliverable with a completion state. The routing to a backend engineering list is unambiguous.
+RATIONALE: Scanned the board — t200 is public API rate limiting/throttling, while this is a distinct upload-endpoint request-size cap Avery explicitly introduced as “separately though” in the source. No existing broader card contains it. Concrete deliverable with an owner and completion state.

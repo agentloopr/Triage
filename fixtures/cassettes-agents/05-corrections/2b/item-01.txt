@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Existing board only has t900 (billing webhook retry); the item is the invoice API endpoint returning totals in the wrong field, which the provided notes explicitly say is separate from t900 and a human confirmed is not the same work. No existing card contains this deliverable, so it is a new, concrete backend fix with a named owner.
+RATIONALE: Scanned the board snapshot; the only candidate, t900 Billing webhook retry, is explicitly a separate workstream from invoice API rendering, and the notes state a human confirmed they are not the same work. No existing card covers fixing the invoice endpoint, so this is a new, concrete backend deliverable with clear ownership.

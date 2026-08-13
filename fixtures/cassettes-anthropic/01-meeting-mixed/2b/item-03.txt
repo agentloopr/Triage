@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
+VERDICT_CATEGORY: SUBTASK
 MATCH_TASK_ID: t100
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t100 — no comments recorded] Rowan's report that the main onboarding flow is drafted is progress on the existing "Redesign the onboarding flow" card (t100); no prior comment logged this progress, so it's a genuine update rather than a duplicate or new card.
+RATIONALE: Rowan explicitly states the welcome email copy "sits inside the onboarding revamp, it ships when that ships" — explicit containment, closes with parent. [Tier-2: task-comments on t100 — none, but explicit statement in source establishes containment].

@@ -52,7 +52,7 @@ npm run demo -- --agents               # with the agent layer on (PRD §5), also
 ```
 
 ```
-▶ 01-meeting-mixed — A normal standup: four categories exercised, three cards created, one duplicate
+▶ 01-meeting-mixed — A normal standup: four categories exercised, four cards created, one duplicate
   skipped, and a post-write audit that confirms the board matches the plan.
   ✓ 0-cleanup            1ms
   ✓ 1-inventory          1ms
@@ -60,13 +60,13 @@ npm run demo -- --agents               # with the agent layer on (PRD §5), also
   ✓ 1.7-consolidator     1ms
   ✓ evidence             2ms
   ✓ 2a-categorization    10ms
-[pass2b] item 4: existing-card dispute (2a=DUPLICATE vs blind=UPDATE) — trusting 2a, not holding
-  ✓ 2b-contract-check    7ms
+[pass2b] item 5: existing-card dispute (2a=SUBTASK vs blind=UPDATE) — trusting 2a, not holding
+  ✓ 2b-contract-check    8ms
   ✓ 2c-execute           1ms
-  → 3 created · 2 commented · 1 skipped · 0 failed
+  → 4 created · 1 commented · 1 skipped · 0 failed
   ✓ 2d-audit             1ms
   ✓ audit: 6 passed, 0 mismatched
-  ✓ 6 items · 3 created · 0 held · 0 skipped — matches expected.json
+  ✓ 6 items · 4 created · 0 held · 0 skipped — matches expected.json
 ```
 
 The replayed replies are real: recorded from `deepseek-v4-pro` against these exact prompts. A missing
@@ -80,7 +80,7 @@ Both providers have been run live against the same fixtures and both recordings 
 
 | | What it demonstrates |
 |---|---|
-| `01-meeting-mixed` | A normal standup. Four categories exercised, three cards created, one duplicate skipped. |
+| `01-meeting-mixed` | A normal standup. Four categories exercised, four cards created, one duplicate skipped. |
 | `02-meeting-duplicates` | Both deliverables already on the board under different wording. **The run writes nothing at all.** |
 | `03-meeting-noise` | Pure discussion. Nothing is extracted — the pipeline does not invent work to look useful. |
 | `04-channel-messages` | A channel log through the identical 1 → 2d chain. The pipeline is source-agnostic. |
@@ -128,7 +128,7 @@ taxonomy is tracker-blind because of it.
 ## Development
 
 ```bash
-npm test              # 637 tests
+npm test              # 651 tests
 npx tsc --noEmit      # tests included in typecheck
 npm run lint
 npm run eval          # score the shipped runs on six dimensions, offline

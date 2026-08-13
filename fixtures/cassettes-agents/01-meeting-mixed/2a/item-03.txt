@@ -1,8 +1,11 @@
 ITEM: 3
-TITLE: Onboarding main flow drafted
-CATEGORY: UPDATE
-EXISTING_TASK_ID: t100
-FINAL_DESC: Rowan reported that the main onboarding flow is drafted; the onboarding revamp remains in progress.
+TITLE: Write welcome email copy for onboarding revamp
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t100
+LIST: design
+ASSIGNEE: Rowan Diaz
+PRIORITY: normal
+FINAL_DESC: Write the welcome email copy as part of the onboarding revamp; it ships when the revamp ships.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t100 — no comments on this card] The open card t100 is in progress, but its history does not yet mention the main flow being drafted, so this progress update is genuinely new.
+RATIONALE: [Tier-2: task-comments on t100 — no comments on the card] The source explicitly scopes the welcome email copy inside the onboarding revamp and Jules directs to keep it under that card. Closing t100 would close this deliverable, and Rowan Diaz is the assignee on both.

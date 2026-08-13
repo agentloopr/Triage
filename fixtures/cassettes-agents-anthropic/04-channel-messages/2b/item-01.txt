@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing card covers staging 502s/connection pool — t800 is about search relevance, an unrelated deliverable. This is a concrete fix (raise pool size + add alert) with a clear owner (Avery), distinct from the search work, so it warrants its own card as NEW_TASK.
+RATIONALE: No existing card covers staging infra/pool exhaustion — t800 is unrelated (search relevance). Concrete deliverable (raise pool size, add alert) with an owner (Avery), so it's a real trackable task and clearly new.

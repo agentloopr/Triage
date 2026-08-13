@@ -1,3 +1,3 @@
-NOTE: Checked t200; matches Avery's rate limiting work, description was vague so tightened it to name the artifact and blocker.
-DESC: Token bucket rate limiting implementation for public API endpoints is complete; PR in review awaiting Sky's sign-off. Targeting Friday ship, blocked on sign-off approval, not effort.
+NOTE: Checked t200; matches existing card, adding sign-off/review status detail.
+DESC: Token bucket rate limiting implementation complete; PR in review pending Sky's sign-off. Expected to merge/ship Friday. Blocked on sign-off, not effort.
 OWNERSHIP: OK

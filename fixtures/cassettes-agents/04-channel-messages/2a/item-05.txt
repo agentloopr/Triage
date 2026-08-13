@@ -1,11 +1,10 @@
 ITEM: 5
-TITLE: Report staging 502s since about 8am
+TITLE: Report staging 502s since 8am
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
-PRIORITY: high
-STATUS: in progress
-FINAL_DESC: Sky Patel reported that staging has been returning 502s since about 8am. Avery Chen confirmed connection-pool exhaustion as the cause and will raise the pool size and add an alert so the team catches it before users do.
-UNCERTAIN_FIELDS: NONE
+PRIORITY: normal
+STATUS: not started
+FINAL_DESC: Staging has been returning 502 errors since about 8am and needs investigation and resolution.
 CONFIDENCE: high
-RATIONALE: No open card in the snapshot covers the staging 502 incident; t800 is unrelated search relevance tuning. This is a new backend task.
+RATIONALE: No existing board card covers the staging 502 incident; the only backend card is search relevance tuning. Net-new incident task, so no evidence read is needed for NEW_TASK.

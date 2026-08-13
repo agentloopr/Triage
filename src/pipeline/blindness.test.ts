@@ -6,6 +6,7 @@ import { setCorrectionsPath } from '../state/corrections';
 import type { CategorizationItem } from './parsing/categorizationManifest';
 import { buildContractCheckerPrompt } from './prompts/contractCheck';
 import type { EnrichedInventoryItem } from './types';
+import { joinPrompt } from './prompts/parts';
 
 const DIR = join(tmpdir(), `blindness-test-${process.pid}`);
 
@@ -53,8 +54,15 @@ const MANIFEST_2A: CategorizationItem = {
 
 const BOARD = ['t100 | Ship the onboarding revamp | design | Rowan Diaz | in progress | Rework first-run.'].join('\n');
 
+/**
+ * Joined on purpose. The prompt is split into a cacheable `system` half and a per-item `user` half,
+ * and blindness is a property of everything the model is sent — checking one half would let a
+ * 2a-derived field evade every assertion below simply by moving across the boundary.
+ */
 const render = () =>
-  buildContractCheckerPrompt(INVENTORY, BOARD, 'The team discussed API stability.', 'Avery: the API fell over again.');
+  joinPrompt(
+    buildContractCheckerPrompt(INVENTORY, BOARD, 'The team discussed API stability.', 'Avery: the API fell over again.')
+  );
 
 describe('Pass 2b blindness', () => {
   /**
@@ -131,22 +139,24 @@ describe('Pass 2b blindness', () => {
   const hasProvenanceValue = (p: string) => /SOURCE_CONFIDENCE:\s*[\d.]+/.test(p);
 
   it('surfaces a low-confidence source but stays quiet about a good one', () => {
-    const low = buildContractCheckerPrompt(INVENTORY, BOARD, '', '', { provenance: 0.4 });
+    const low = joinPrompt(buildContractCheckerPrompt(INVENTORY, BOARD, '', '', { provenance: 0.4 }));
     expect(low).toContain('SOURCE_CONFIDENCE: 0.40');
     expect(low).toContain('LOW');
 
-    expect(hasProvenanceValue(buildContractCheckerPrompt(INVENTORY, BOARD, '', '', { provenance: 0.95 }))).toBe(false);
+    expect(hasProvenanceValue(joinPrompt(buildContractCheckerPrompt(INVENTORY, BOARD, '', '', { provenance: 0.95 })))).toBe(false);
   });
 
   it('treats unknown provenance as nothing to report', () => {
-    expect(hasProvenanceValue(buildContractCheckerPrompt(INVENTORY, BOARD, '', '', { provenance: null }))).toBe(false);
+    expect(hasProvenanceValue(joinPrompt(buildContractCheckerPrompt(INVENTORY, BOARD, '', '', { provenance: null })))).toBe(false);
     expect(hasProvenanceValue(render())).toBe(false);
   });
 
   it('includes supplied evidence, screened, rather than asking the model to fetch it', () => {
-    const prompt = buildContractCheckerPrompt(INVENTORY, BOARD, '', '', {
-      tier2Evidence: '• Card t100 — history:\nstill blocked on review',
-    });
+    const prompt = joinPrompt(
+      buildContractCheckerPrompt(INVENTORY, BOARD, '', '', {
+        tier2Evidence: '• Card t100 — history:\nstill blocked on review',
+      })
+    );
     expect(prompt).toContain('still blocked on review');
     expect(prompt).toContain('[SECURITY:'); // the evidence is framed as data, not instructions
   });

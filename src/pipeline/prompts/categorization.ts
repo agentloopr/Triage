@@ -20,6 +20,7 @@ import { getMembers, getRoutes } from '../../registry/opsRegistry';
 import { roleRosterBlock } from '../../registry/roleProfiles';
 import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
 import type { EnrichedInventoryItem } from '../types';
+import type { PromptParts } from './parts';
 
 export type CategorizationPromptOptions = {
   participantLine?: string;
@@ -34,7 +35,7 @@ export function buildCategorizationPrompt(
   sourceSummary: string,
   sourceText: string,
   opts: CategorizationPromptOptions = {}
-): string {
+): PromptParts {
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
   const routes = getRoutes();
   const listKeys = routes.map((r) => r.key);
@@ -49,7 +50,7 @@ export function buildCategorizationPrompt(
     `POSSIBLE_MATCH_HINT: ${item.possibleMatchHint || '(none)'}`,
   ].join('\n');
 
-  return [
+  const system = [
     '══════════════════════════════════════════════════════════════════════',
     'CATEGORIZATION PASS — READ-ONLY ANALYSIS RUN',
     '══════════════════════════════════════════════════════════════════════',
@@ -264,11 +265,17 @@ export function buildCategorizationPrompt(
     '--- SOURCE SUMMARY ---',
     sourceSummary || '(none)',
     ...(sourceText ? ['', '--- FULL SOURCE ---', sourceText, '--- END SOURCE ---'] : []),
-    '',
+  ].join('\n');
+
+  // Everything above is identical for every item in a run; everything below varies per item. That
+  // boundary is the whole point — see PromptParts.
+  const user = [
     '══════════════════════════════════════════════════════════════════════',
     'THE SINGLE ITEM TO CATEGORIZE (output one CATEGORIZATION block)',
     '══════════════════════════════════════════════════════════════════════',
     itemBlock,
     ...(tier2Block ? ['', tier2Block] : []),
   ].join('\n');
+
+  return { system, user };
 }

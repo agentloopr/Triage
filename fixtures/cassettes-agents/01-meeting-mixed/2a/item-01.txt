@@ -1,10 +1,8 @@
 ITEM: 1
-TITLE: Ship rate limiting after Sky’s sign-off
+TITLE: Ship rate limiting after Sky signs off
 CATEGORY: UPDATE
 EXISTING_TASK_ID: t200
 STATUS: in review
-DUE_DATE: 2026-08-14
-FINAL_DESC: Avery reported the token bucket is finished and rate limiting is now in review, waiting for Sky to sign off, with a target ship date of Friday.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Implementation is complete and the token bucket is finished; the work is waiting on Sky to sign off and is expected to ship Friday.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t200 — no comments on this card] Existing card t200 tracks public API rate limiting; the source adds newly reported progress that it is done, in review, and expected to ship Friday.
+RATIONALE: [Tier-2: task-comments on t200 — no comments on card] The snapshot shows the rate limiting card as in progress; the source's "done and in review" is new progress, so the status is updated.

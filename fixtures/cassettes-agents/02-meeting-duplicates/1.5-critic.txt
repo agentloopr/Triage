@@ -1,1 +1,4 @@
-NONE
+3. Walk new signups through the first meaningful action instead of an empty dashboard | quote: "Walk them through the first meaningful action rather than dumping them on an empty dashboard."
+   DESC: Rowan committed to the onboarding revamp specifically guiding new users to their first meaningful action rather than leaving them on an empty dashboard.
+   TIMESTAMP: 00:00:40-00:01:18
+   POSSIBLE_MATCH_HINT: t500 | New-user first-run flow

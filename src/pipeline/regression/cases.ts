@@ -24,7 +24,15 @@ import type { BoardTask } from '../../trackers';
 import type { EnrichedInventoryItem } from '../types';
 
 /** The one seam — matches the categorization runner so it drops in unchanged. */
-export type RegressionRunner = (prompt: string, label: string) => Promise<string>;
+/**
+ * `system` is optional but must be THREADED, not dropped.
+ *
+ * Passes 2a/2b split their prompt into a cacheable `system` half — the taxonomy, the output contract,
+ * the board — and a small per-item `user` half. A runner that accepts only `(prompt, label)` silently
+ * sends the item with no instructions attached, and the model answers in whatever shape it invents.
+ * F4 caught exactly that: a reply in JSON instead of the ITEM/CATEGORY grammar, scored `(unparsed)`.
+ */
+export type RegressionRunner = (prompt: string, label: string, system?: string) => Promise<string>;
 
 export type RegressionCase = {
   id: string;

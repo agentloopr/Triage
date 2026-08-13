@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing card covers a runbook for pool exhaustion; t800 is unrelated (search relevance). This is a concrete deliverable (write documentation) with a named owner (Sky), distinct from the 502 incident fix itself. Worth tracking as a new task; nothing in the board snapshot matches or contains it.
+RATIONALE: This is a distinct deliverable (writing a runbook doc for the recurring 502/pool exhaustion issue), owned by Sky Patel, with no existing board card covering it — t800 is unrelated (search relevance tuning). No match found on the board, so it's genuinely new, concrete, and trackable.

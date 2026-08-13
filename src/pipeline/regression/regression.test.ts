@@ -26,8 +26,12 @@ const REGISTRY: OpsRegistry = {
 /** Replays a case's recorded replies. Keyed by case id so cases cannot borrow each other's. */
 function cassetteRunner(caseId: string, dir = REGRESSION_CASSETTES): RegressionRunner {
   const client = cassetteClient(join(dir, caseId));
-  return async (prompt, label) => {
-    const r = await client.complete({ key: label.replace(/:/g, '-'), messages: [{ role: 'user', content: prompt }] });
+  return async (prompt, label, system) => {
+    const r = await client.complete({
+      key: label.replace(/:/g, '-'),
+      ...(system ? { system } : {}),
+      messages: [{ role: 'user', content: prompt }],
+    });
     return r.text;
   };
 }

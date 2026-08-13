@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
-MATCH_TASK_ID: t400
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t400 — no comments] The item reports progress on existing card t400 "Nightly build monitoring": Sky says the nightly build alerts are noisy and will check whether the flaky auth test is the cause, reporting back Wednesday. That is new status/progress on the existing alerting card, not a separate deliverable.
+ROUTING_OK: yes
+RATIONALE: Scanned the board; closest candidate t300 is Noor’s Q3 pricing copy refresh, not a written usage-based billing spec. The source has Wren requesting the spec and Jules committing to write it — a distinct, trackable PM deliverable not contained by or updating any existing board card.

@@ -3,7 +3,7 @@ TITLE: Review search relevance work
 CATEGORY: UPDATE
 EXISTING_TASK_ID: t800
 STATUS: in review
-FINAL_DESC: Avery Chen reported that the search relevance work is now in review and ready for a look; no specific reviewer was named.
+FINAL_DESC: Avery reported the search relevance tuning work is now in review and ready for someone to look at.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t800 — no comments on this card] The card is still marked in progress and no review status is logged; the source's "now in review" is a genuinely new status change.
+RATIONALE: [Tier-2: task-comments on t800 — no comments on card] The snapshot lists t800 as in progress, so the source reporting it is now in review is genuinely new status information.

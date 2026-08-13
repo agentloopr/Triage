@@ -138,10 +138,15 @@ of five scenarios. Neither is wrong, and this repo has no ground truth to say ot
 recordings ship side by side and the portability test asserts the layers match while explicitly
 tolerating the extraction difference.
 
-One thing that comparison exposed: the Anthropic adapter sets a prompt-cache breakpoint on the last
-system block, and the pipeline sends no system block at all — so it never fires, and every call
-re-sends the whole board snapshot at full price. Cache-hit rate across 46 calls was zero. The caching
-code is decorative until the stable prefix moves into `system`.
+One thing that comparison exposed: the Anthropic adapter set a prompt-cache breakpoint on the last
+system block, and the pipeline sent no system block at all — so it never fired, and every call
+re-sent the whole board snapshot at full price. Cache-hit rate across 46 calls was zero.
+
+**Fixed by moving the prompt, not by writing caching code** — the caching logic was already there and
+already correct. Passes 2a/2b now split at the line where the prompt stops being identical for every
+item, which puts 97.9% of the 2a prompt in the cacheable half and measures at 87.6% of prompt tokens
+served from cache. The lesson is the one this repo keeps relearning: a control can be correctly
+implemented, correctly configured, and doing nothing, and only a measurement says which.
 
 ## What the adapters have been proven against
 

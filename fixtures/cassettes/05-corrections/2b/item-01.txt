@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The only board card, t900 (Billing webhook retry), is a separate workstream per the learned fact that invoice rendering and billing webhooks are distinct. No other card covers fixing the invoice API endpoint. The source clearly reports a concrete bug (totals in wrong field, PDF rendering issue) and Rowan Diaz commits to fixing it; that is a trackable deliverable. All key terms trace directly to the source. Routing to a backend list owned by engineering is appropriate, even though Rowan is a designer, because the prompt explicitly states Rowan may own backend work.
+RATIONALE: Source clearly states a concrete bug: invoice API endpoint returns totals in the wrong field, breaking PDF rendering, and Rowan commits to fixing it. Board scan shows only t900 “Billing webhook retry,” but supplied context explicitly confirms the invoice API endpoint is not the same work as t900, so no existing card matches/contains this deliverable.

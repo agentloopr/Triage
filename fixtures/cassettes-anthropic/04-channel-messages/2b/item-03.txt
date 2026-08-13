@@ -3,4 +3,4 @@ MATCH_TASK_ID: t800
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t800 — no comments logged] Item reports a status change (in progress → ready for review) on the existing "Search relevance tuning" card, matching by exact deliverable. No prior record of this progress exists on the card, so it's genuine new progress, not a duplicate creation.
+RATIONALE: [Tier-2: task-comments on t800 — no comments] The card t800 tracks search relevance tuning by Avery Chen, currently "in progress". Source shows Avery reporting it's now in review, a genuine status progression not reflected in the card's empty history, so this is a legitimate UPDATE.

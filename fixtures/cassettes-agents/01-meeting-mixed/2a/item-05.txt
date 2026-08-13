@@ -1,7 +1,13 @@
 ITEM: 5
-TITLE: Refresh pricing page copy
-CATEGORY: DUPLICATE
-EXISTING_TASK_ID: t300
+TITLE: Investigate noisy nightly build alerts and report back Wednesday
+CATEGORY: SUBTASK
+PARENT_TASK_ID: t400
+LIST: platform
+ASSIGNEE: Sky Patel
+PRIORITY: normal
+DUE_DATE: 2026-08-12
+STATUS: not started
+FINAL_DESC: Investigate whether the flaky auth test is causing the noise in nightly build alerts and report back on Wednesday.
 UNCERTAIN_FIELDS: NONE
-CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t300 — no comments on this card] The board already has t300 "Q3 pricing page refresh" scoped as updating pricing copy after the tier change. Noor's standup note describes the same deliverable and adds no new scope, status, or field direction beyond what is already tracked.
+CONFIDENCE: med
+RATIONALE: [Tier-2: task-comments on t400 — no comments; snapshot description is "Alerting for failed nightly builds"] The noisy-alert investigation is a discrete step inside the existing nightly build monitoring/alerting card, same assignee Sky Patel, and would be closed when that parent card completes.

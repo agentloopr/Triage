@@ -1,6 +1,6 @@
 --- ACTION INVENTORY ---
-1. Fix invoice API endpoint returning totals in wrong field | quote: "I can take that — I wrote the original endpoint."
-   DESC: The billing invoice API endpoint returns totals in the wrong field, causing PDFs to render with overlapping columns. Rowan Diaz volunteered to fix it.
-   TIMESTAMP: 00:00:00-00:01:32
+1. Fix billing invoice API endpoint field bug | quote: "I can take that — I wrote the original endpoint."
+   DESC: The billing invoice API endpoint returns totals in the wrong field, causing PDFs to render with overlapping columns. Rowan Diaz agreed to fix this issue.
+   TIMESTAMP: [00:00:00-00:01:32]
    POSSIBLE_MATCH_HINT: (none)
 --- END ACTION INVENTORY ---

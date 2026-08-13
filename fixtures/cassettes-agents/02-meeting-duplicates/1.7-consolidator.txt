@@ -1,3 +1,7 @@
 --- CONSOLIDATED INVENTORY ---
-MERGED_PAIRS: 0
+MERGED_PAIRS: 1
+1. Own the onboarding revamp for new signups (guiding first meaningful action) | merged_from: 1, 3
+   DESC: Rowan committed to the onboarding revamp for new signups, specifically guiding new users to their first meaningful action rather than leaving them on an empty dashboard. Jules said new signups do not know what to do first and asked Rowan to own shipping the onboarding revamp; Rowan accepted ownership.
+   TIMESTAMP: 00:00:40-00:01:18
+   POSSIBLE_MATCH_HINT: t500 | New-user first-run flow
 --- END CONSOLIDATED INVENTORY ---

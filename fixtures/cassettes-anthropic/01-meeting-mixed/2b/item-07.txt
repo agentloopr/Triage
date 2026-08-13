@@ -1,6 +1,0 @@
-VERDICT_CATEGORY: NEW_TASK
-MATCH_TASK_ID: (none)
-WORTH_A_CARD: real_task
-GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: No existing card covers billing spec work; this is a distinct new deliverable (a written spec) requested by Wren and owned by Jules, with a clear completion state. Nothing on the board relates to usage-based billing, so no duplicate/subtask/update applies.

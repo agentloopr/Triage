@@ -1,3 +1,0 @@
-NOTE: Checked existing card t400 ("Nightly build monitoring," assigned to Sky Patel, in progress, no comments) — the supplied description is already specific about scope and deadline and is consistent with the card and its owner.
-DESC: KEEP
-OWNERSHIP: OK

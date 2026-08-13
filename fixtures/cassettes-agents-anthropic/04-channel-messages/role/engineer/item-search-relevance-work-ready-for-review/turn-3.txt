@@ -1,0 +1,3 @@
+NOTE: Checked existing card t800 (Search relevance tuning, in progress); no comments giving PR/endpoint detail, so tightened phrasing to name the artifact needed rather than status language.
+DESC: Search relevance tuning (short-query result ordering) is ready for review. Needs: link to the PR, affected search endpoint/service, and any remaining follow-up work before merge.
+OWNERSHIP: OK

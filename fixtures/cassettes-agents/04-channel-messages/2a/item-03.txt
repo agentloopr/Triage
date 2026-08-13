@@ -1,11 +1,10 @@
 ITEM: 3
-TITLE: Write runbook for staging 502 / pool exhaustion
+TITLE: Document the runbook for the 502/pool exhaustion issue
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Sky Patel
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Document the runbook for diagnosing and resolving staging 502s caused by connection pool exhaustion so the team can respond faster next time. Include the confirmed cause, raising pool size, and adding an alert.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Write up the runbook for diagnosing and resolving the staging 502s caused by connection pool exhaustion, so the team can respond faster when it recurs.
 CONFIDENCE: high
-RATIONALE: No open board card covers a staging 502/pool exhaustion runbook. The only board card, t800, tracks search relevance tuning, which is unrelated. Net-new deliverable; no evidence read needed for NEW_TASK.
+RATIONALE: The only open board card is search relevance tuning, which does not cover incident runbook documentation. Net-new deliverable; no evidence read needed for NEW.

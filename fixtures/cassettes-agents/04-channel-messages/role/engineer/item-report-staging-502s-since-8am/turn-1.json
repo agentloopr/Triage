@@ -1,0 +1,12 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_UpGxnP0Fqs8F0nOtuD2J0814",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "staging 502"
+      }
+    }
+  ]
+}

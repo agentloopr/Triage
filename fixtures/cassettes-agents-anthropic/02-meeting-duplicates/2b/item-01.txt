@@ -3,4 +3,4 @@ MATCH_TASK_ID: t500
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t500 — no comments recorded] t500 "New-user first-run flow" already covers building the first-run experience for new signups (welcome, setup, first action), which is the same deliverable described here (onboarding revamp walking new signups through the first meaningful action). Same scope, same target user, no evidence it's a different effort — this is the same card, not a new one.
+RATIONALE: [Tier-2: task-comments on t500 — no comments, but title/description "Build the first-run experience for new signups: welcome, setup, first action" matches exactly the discussed onboarding revamp walking new users through their first meaningful action, now with Rowan Diaz confirmed as owner]. Same deliverable already tracked as t500; this is not a new card, just confirming ownership.

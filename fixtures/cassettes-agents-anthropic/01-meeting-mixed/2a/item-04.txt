@@ -3,4 +3,4 @@ TITLE: Refresh pricing page copy
 CATEGORY: DUPLICATE
 EXISTING_TASK_ID: t300
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t300 — no comments] t300 already covers "Q3 pricing page refresh" with the description of updating copy after the tier change, matching Noor's plan to replace the outdated three-tier display. No new scope or status was added beyond what the card already tracks.
+RATIONALE: [Tier-2: task-comments on t300 — no comments, empty history] Card t300 "Q3 pricing page refresh" already covers updating the copy after the tier change, same assignee Noor Haddad, same deliverable; nothing new was added beyond confirming she'll do it this week.

@@ -1,11 +1,10 @@
 ITEM: 2
-TITLE: Write runbook documentation
+TITLE: Write runbook for pool exhaustion issue
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Sky Patel
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Document a runbook for the recurring staging 502/connection-pool-exhaustion issue, which has now occurred twice, so the team can respond quickly next time.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Document a runbook for the recurring connection pool exhaustion issue that has caused staging outages twice, so it can be diagnosed and fixed faster next time.
 CONFIDENCE: high
-RATIONALE: No existing card covers documentation of this runbook; the only related card (t800, search relevance) is unrelated in scope. This is a net-new deliverable explicitly committed to by Sky Patel.
+RATIONALE: No card in the snapshot covers documentation/runbooks; the only related card is search relevance tuning (t800), unrelated to this pool exhaustion incident. Net-new deliverable, no evidence needed for NEW_TASK.

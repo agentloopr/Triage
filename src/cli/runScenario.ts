@@ -74,9 +74,17 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
   const model = traceModelClient(opts.model);
 
   let modelCalls = 0;
-  const complete = async (key: string, prompt: string): Promise<string> => {
+  // `system` carries the half of the prompt that is identical for every item in a run. Passing it
+  // through as a real system block is what lets the Anthropic adapter's cache breakpoint fire — it
+  // has always set one, and the pipeline had never given it anything to sit on.
+  const complete = async (key: string, prompt: string, system?: string): Promise<string> => {
     modelCalls++;
-    const r = await model.complete({ key, messages: [{ role: 'user', content: prompt }], determinism: 'strict' });
+    const r = await model.complete({
+      key,
+      ...(system ? { system } : {}),
+      messages: [{ role: 'user', content: prompt }],
+      determinism: 'strict',
+    });
     if (r.truncated) throw new Error(`[${key}] reply was truncated`);
     return r.text;
   };
@@ -108,8 +116,8 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
       : {}),
     events: emitter,
     runPass: async ({ prompt, label }) => ({ text: await complete(passKey(label), prompt) }),
-    runCategorization: (prompt, label) => complete(`2a/${itemKey(label)}`, prompt),
-    runContractCheck: (prompt, label) => complete(`2b/${itemKey(label)}`, prompt),
+    runCategorization: (prompt, label, system) => complete(`2a/${itemKey(label)}`, prompt, system),
+    runContractCheck: (prompt, label, system) => complete(`2b/${itemKey(label)}`, prompt, system),
     warmDelayMs: 0,
   });
 

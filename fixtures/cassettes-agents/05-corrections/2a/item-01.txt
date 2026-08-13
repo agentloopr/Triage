@@ -1,11 +1,11 @@
 ITEM: 1
-TITLE: Fix billing invoice API endpoint totals field
+TITLE: Fix billing invoice API endpoint
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Rowan Diaz
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: The billing invoice API endpoint returns invoice totals in the wrong field, causing PDF columns to overlap. Rowan Diaz will fix the endpoint so totals are returned in the correct field.
+FINAL_DESC: Fix the billing invoice API endpoint so totals are returned in the correct field and PDF invoices no longer render with overlapping columns.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: The snapshot contains no open card for the invoice API endpoint totals field. t900 covers billing webhook retry, and learned facts confirm the invoice endpoint fix is not the same work as t900, so this is net-new.
+RATIONALE: No open card covers the invoice API endpoint. The only billing card, t900, is retry logic for billing webhooks, a separate workstream per the learned facts, so this is a net-new deliverable.

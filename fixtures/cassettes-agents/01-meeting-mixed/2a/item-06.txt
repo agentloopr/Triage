@@ -1,13 +1,10 @@
 ITEM: 6
-TITLE: Investigate flaky auth test as cause of noisy nightly build alerts
-CATEGORY: SUBTASK
-PARENT_TASK_ID: t400
-LIST: platform
-ASSIGNEE: Sky Patel
+TITLE: Write usage-based billing spec
+CATEGORY: NEW_TASK
+LIST: product
+ASSIGNEE: Jules Kim
 PRIORITY: normal
-DUE_DATE: 2026-08-12
 STATUS: not started
-FINAL_DESC: Investigate whether the flaky auth test is causing the noisy nightly build alerts and report findings by Wednesday.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Write a written spec for the usage-based billing idea before committing to any build work. Jules agreed to write it up.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t400 — no comments on card] The open Nightly build monitoring card covers alerting for failed nightly builds; this investigation lives inside that scope and would close with the parent. Same assignee and list as the parent.
+RATIONALE: No open board card covers a usage-based billing spec; this is a new deliverable raised by Wren and assigned in conversation to Jules. No evidence read needed for NEW_TASK.

@@ -27,7 +27,7 @@ success.
 
 ## What the test suite covers
 
-523 tests, and they cover the **deterministic layers**: prompt construction, parsers, gates, the
+651 tests, and they cover the **deterministic layers**: prompt construction, parsers, gates, the
 plan, the writes, the audit, the idempotency layers. Cassettes freeze the model's replies, which is
 what makes CI free and reproducible — and is exactly why:
 
@@ -83,17 +83,20 @@ would be unfalsifiable. Better an obvious hole than a number nobody checked.
 
 ## Model behaviour
 
-**Prompt caching does not fire.** The Anthropic adapter sets a cache breakpoint on the last system
-block; the pipeline sends everything as a single user message and no system prompt. Measured
-cache-hit rate across 46 calls: **zero**. The board snapshot, taxonomy and worked examples are
-re-sent at full price on every call. The caching code is decorative until the stable prefix moves
-into `system`.
+**Prompt caching fires, but only on the repeated half.** Passes 2a and 2b split their prompt into a
+cacheable `system` prefix and a per-item `user` tail; measured hit rate on a full scenario is **87.6%
+of prompt tokens**, up from zero. What it does *not* do: cache entries are ephemeral, so a cold run
+still pays full price for the first call of each pass, and passes 0–1.7 are one call each so there is
+no prefix for them to share. **DeepSeek reports no hit rate at all** — its caching is server-side and
+automatic, so the figure above is an Anthropic number and does not generalize. See
+[PROVIDERS.md](PROVIDERS.md).
 
 **Token counts are not comparable between providers.** Claude reports **1.7×** the input tokens for
 byte-identical prompts — a tokenizer difference, not a bigger prompt. Any per-token cost comparison
 across vendors that skips this step is wrong by whatever the tokenizer ratio happens to be.
 
-**The two providers disagree about what counts as an action item**, on two of five scenarios. Every
+**The two providers disagree about what counts as an action item** — on one of five scenarios in the
+current recordings, and which scenarios differ moves whenever anything is re-recorded. Every
 downstream layer behaves identically given each provider's own replies — the pipeline is portable.
 Extraction is not, and this repo has no ground truth to say which model is right. See
 [PROVIDERS.md](PROVIDERS.md).

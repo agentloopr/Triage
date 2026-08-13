@@ -38,8 +38,13 @@ async function main(): Promise<void> {
 
   for (const c of REGRESSION_CASES) {
     const client = cassetteClient(join(OUT, c.id), { record: makeModelClient({ provider }) });
-    const runner = async (prompt: string, label: string): Promise<string> => {
-      const r = await client.complete({ key: label.replace(/:/g, '-'), messages: [{ role: 'user', content: prompt }], determinism: 'strict' });
+    const runner = async (prompt: string, label: string, system?: string): Promise<string> => {
+      const r = await client.complete({
+        key: label.replace(/:/g, '-'),
+        ...(system ? { system } : {}),
+        messages: [{ role: 'user', content: prompt }],
+        determinism: 'strict',
+      });
       return r.text;
     };
 

@@ -1,6 +1,6 @@
 VERDICT_CATEGORY: UPDATE
-MATCH_TASK_ID: t300
-WORTH_A_CARD: real_task
+MATCH_TASK_ID: t400
+WORTH_A_CARD: not_a_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t300 — no comments logged] t300 "Q3 pricing page refresh" is exactly this deliverable (update pricing copy after tier change, currently "not started"). Noor's statement that she'll refresh the pricing page copy this week due to stale tier info is new progress/status on the same card, not a duplicate creation — she's actioning the existing not-started task.
+RATIONALE: [Tier-2: task-comments on t400 — no comments] This relates to the existing nightly build monitoring card, but the substance is a bare status-check ("I'll check whether it's the flaky auth test and report back Wednesday") with no build/fix tied to it yet — checking and reporting is the entire scope, so not independently card-worthy beyond the existing t400 card.

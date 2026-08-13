@@ -7,6 +7,7 @@ import { setCorrectionsPath } from '../../state/corrections';
 import type { EnrichedInventoryItem } from '../types';
 import { buildCategorizationPrompt } from './categorization';
 import { buildContractCheckerPrompt } from './contractCheck';
+import { joinPrompt } from './parts';
 
 const DIR = join(tmpdir(), `scaffolding-test-${process.pid}`);
 
@@ -37,8 +38,8 @@ afterEach(() => {
 });
 
 const PROMPTS: Array<[string, () => string]> = [
-  ['2a categorization', () => buildCategorizationPrompt(ITEM, 't1 | Existing | backend | Avery Chen | to do | x', 'summary', 'source')],
-  ['2b contract check', () => buildContractCheckerPrompt(ITEM, 't1 | Existing | backend | Avery Chen | to do | x', 'summary', 'source')],
+  ['2a categorization', () => joinPrompt(buildCategorizationPrompt(ITEM, 't1 | Existing | backend | Avery Chen | to do | x', 'summary', 'source'))],
+  ['2b contract check', () => joinPrompt(buildContractCheckerPrompt(ITEM, 't1 | Existing | backend | Avery Chen | to do | x', 'summary', 'source'))],
 ];
 
 /**
@@ -108,7 +109,7 @@ describe('worked examples use only invented card ids', () => {
 
 /** The taxonomy is the most load-bearing text in the repo and must survive any de-tuning edit. */
 describe('2a categorization prompt keeps the load-bearing taxonomy', () => {
-  const p = (): string => buildCategorizationPrompt(ITEM, '', '', '');
+  const p = (): string => joinPrompt(buildCategorizationPrompt(ITEM, '', '', ''));
 
   it.each([
     ['all five categories', /NEW_TASK[\s\S]*DUPLICATE[\s\S]*SUBTASK[\s\S]*UPDATE[\s\S]*RELATE/],

@@ -1,6 +1,0 @@
-VERDICT_CATEGORY: NEW_TASK
-MATCH_TASK_ID: (none)
-WORTH_A_CARD: not_a_task
-GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: This is a process-policy suggestion explicitly flagged by Jules as something to "discuss separately," not a concrete deliverable with an owner or completion state. No existing card (e.g. t400 nightly build monitoring) covers a release-process policy change, and it doesn't rise to a trackable task — it's a discussion item a PM would table rather than board.

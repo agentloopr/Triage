@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing board card covers a usage‑based billing spec — the closest is the pricing page refresh (t300), which is copy, not a billing spec. Jules committed to writing the spec, making it a concrete, trackable deliverable. The task is clearly internal product work for the PM, with no unrecognized entity.
+RATIONALE: Looked across the board snapshot for any billing/spec/pricing-strategy card; none exists. The closest card, t300, covers pricing page refresh copy, not a written usage-based billing spec. Source explicitly has Wren requesting the spec and Jules committing to write it, so it is a concrete, trackable deliverable.

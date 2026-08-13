@@ -49,6 +49,9 @@ Measured over one full pass — all five scenarios, 46 model calls:
 | Cost | **$0.48** | not computed |
 | Cached input | **0** | n/a |
 
+Those figures predate the system/user split described below, and are kept as the *before* they are
+compared against. They were taken on the pre-split prompt, so they are a baseline, not current cost.
+
 **The DeepSeek column is an estimate and is marked as one.** Its recordings were made before usage
 capture was wired in, so those figures are derived from character counts at ~4 chars/token rather
 than read from the API. They are here for rough scale, not for a cost ratio.
@@ -59,22 +62,52 @@ Two things in that table matter more than the totals:
 byte-identical prompts — different tokenizer, not a bigger prompt. Any per-token price comparison
 between vendors that skips this step is wrong by whatever the tokenizer ratio happens to be.
 
-**`cached: 0` is a finding, not a footnote.** The Anthropic adapter sets a cache breakpoint on the
-last system block, but the pipeline sends everything as a single user message and no system prompt —
-so the breakpoint never fires and the board snapshot, taxonomy and worked examples are re-sent at
-full price on all 46 calls. The caching code is currently decorative. Moving the stable prefix into
-`system` is the single largest cost lever available here and has not been done, because it changes
-the prompt and therefore needs a re-record.
+**Prompt caching now fires, and that took a prompt change rather than new caching code.** The
+Anthropic adapter always set a cache breakpoint on the last system block; the pipeline always sent
+everything as a single user message and no system prompt, so the breakpoint had nothing to sit on.
+Measured cache-hit rate across a full run: **zero**. The caching code was decorative.
+
+Passes 2a and 2b now split their prompt at the line where it stops being the same for every item —
+the taxonomy, the rules, the roster, the board snapshot and the source text go in `system`; the item
+and its evidence stay in `user`. That is **97.9%** of the 2a prompt in the cacheable half.
+
+Measured on `01-meeting-mixed`, 18 calls:
+
+| | before | after |
+|---|---|---|
+| Prompt tokens served from cache | **0** | **73,290 of 83,710 — 87.6%** |
+| Calls with a cache hit | 0 of 18 | **12 of 18** |
+
+The six misses are correct rather than missed opportunities: passes 0–1.7 are one call each, so
+there is no prefix to share, and the first 2a and first 2b call each *write* the cache the rest read.
+
+```
+2a/item-01   in 420  cached     0     ← writes the prefix
+2a/item-02   in 193  cached 6,339     ← reads it
+2b/item-01   in 416  cached     0     ← a different prefix, writes
+2b/item-02   in 189  cached 5,873     ← reads it
+```
+
+**The split is behaviourally neutral, and that was checked rather than assumed.** The same 2a prompt
+sent split versus joined returned the same verdict on three consecutive paired runs. Where a fixture
+did move, the cause was located instead of accepted: Pass 1's prompt fingerprint is byte-identical
+across the change (`ced7582a8aee` on both sides) while its reply differed, which is the model, not
+the edit.
+
+Two things the split does not fix. Cache entries are ephemeral, so a cold run still pays full price
+for the first call of each pass. And **DeepSeek is unaffected** — it takes the system block happily,
+but its caching is server-side and automatic, so there is no breakpoint to place and no hit rate to
+report here.
 
 ## What the agent layer costs
 
 Turning agents on adds calls; it does not change what the gates decide. Measured over the same five
 scenarios:
 
-| | calls, agents off | calls, agents on | of those, tool turns |
-|---|---|---|---|
-| DeepSeek | 44 | **71** (+61%) | 13 |
-| Claude | 46 | **51** (+11%) | 4 |
+| | calls, agents off | calls, agents on |
+|---|---|---|
+| DeepSeek | 44 | **65** (+48%) |
+| Claude | 42 | **53** (+26%) |
 
 **The two models delegate very differently**, and that gap is the interesting number. Both were
 offered the same items and the same read-only tools; DeepSeek went and looked far more often. Neither

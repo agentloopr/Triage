@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Scanned the full board snapshot; the only open card is t800 Search relevance tuning, which is a different deliverable. The source directly records Avery Chen committing to add an alert for connection pool exhaustion, so this is a concrete, trackable task with a completion state.
+RATIONALE: Scanned the board; only t800 Search relevance tuning exists and it is unrelated to staging 502s / pool exhaustion. Source shows Avery explicitly committing to add an alert, so this is a concrete, trackable deliverable with no existing card.

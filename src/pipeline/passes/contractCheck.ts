@@ -56,7 +56,7 @@ export type ContractCheckResult = {
   flags: ContractFlag[];
 };
 
-export type ContractCheckerRunner = (prompt: string, label: string) => Promise<string>;
+export type ContractCheckerRunner = (prompt: string, label: string, system?: string) => Promise<string>;
 
 export type ContractCheckInput = {
   manifestItems: CategorizationItem[];
@@ -139,14 +139,12 @@ export async function runContractCheck(
     // ── Check 1 — blind disconfirming re-verification ────────────────────────
     if (inv) {
       try {
-        const reply = await opts.runAgent(
-          buildContractCheckerPrompt(inv, input.boardSnapshot, input.sourceSummary, input.sourceText, {
-            ...(input.participantLine ? { participantLine: input.participantLine } : {}),
-            ...(input.tier2ByItem?.get(inv.number) ? { tier2Evidence: input.tier2ByItem.get(inv.number)! } : {}),
-            provenance,
-          }),
-          `pass2b:item${m.item}`
-        );
+        const parts = buildContractCheckerPrompt(inv, input.boardSnapshot, input.sourceSummary, input.sourceText, {
+          ...(input.participantLine ? { participantLine: input.participantLine } : {}),
+          ...(input.tier2ByItem?.get(inv.number) ? { tier2Evidence: input.tier2ByItem.get(inv.number)! } : {}),
+          provenance,
+        });
+        const reply = await opts.runAgent(parts.user, `pass2b:item${m.item}`, parts.system);
         const verdict = parseContractVerdict(reply);
 
         if (categoryDisputeHolds(m.category, verdict.category)) {

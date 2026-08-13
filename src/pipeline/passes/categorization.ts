@@ -15,7 +15,7 @@ import { buildCategorizationPrompt } from '../prompts/categorization';
 import type { EnrichedInventoryItem } from '../types';
 
 /** Runs one categorization prompt and returns the model's raw reply. */
-export type CategorizationAgentRunner = (prompt: string, label: string) => Promise<string>;
+export type CategorizationAgentRunner = (prompt: string, label: string, system?: string) => Promise<string>;
 
 export type CategorizationPassInput = {
   items: EnrichedInventoryItem[];
@@ -58,7 +58,7 @@ export async function runCategorizationPass(
 
   const processOne = async (i: number): Promise<void> => {
     const inv = items[i]!;
-    const prompt = buildCategorizationPrompt(inv, input.boardSnapshot, input.sourceSummary, input.sourceText, {
+    const parts = buildCategorizationPrompt(inv, input.boardSnapshot, input.sourceSummary, input.sourceText, {
       ...(input.participantLine ? { participantLine: input.participantLine } : {}),
       totalItems: items.length,
       ...(input.todayIso ? { todayIso: input.todayIso } : {}),
@@ -66,7 +66,7 @@ export async function runCategorizationPass(
     });
 
     try {
-      const reply = await opts.runAgent(prompt, `pass2a:item${inv.number}`);
+      const reply = await opts.runAgent(parts.user, `pass2a:item${inv.number}`, parts.system);
       rawByItem.set(inv.number, reply);
 
       const item = reply.trim() ? parseCategorizationItem(reply, inv.number) : null;

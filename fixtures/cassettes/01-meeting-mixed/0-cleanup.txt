@@ -3,7 +3,7 @@
 [00:00:48-00:01:10] Jules Kim: Good. Anything blocking?
 [00:01:10-00:01:36] Avery Chen: No. Separately though — we have no request-size cap on the upload endpoint. Someone posted a 400 meg payload last week and it took the workers down. I'll add a hard limit.
 [00:01:36-00:01:58] Jules Kim: Yes please, that one bit us. Rowan, onboarding?
-[00:01:58-00:02:30] Rowan Diaz: Main flow is drafted. I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships.
+[00:01:58-00:02:30] Rowan Diaz: Now that the main flow is drafted, I'm also going to write the welcome email copy — that sits inside the onboarding revamp, it ships when that ships.
 [00:02:30-00:02:52] Jules Kim: Good, keep it under that card. Noor, pricing?
 [00:02:52-00:03:34] Noor Haddad: I'm going to refresh the pricing page copy this week. It's stale — still shows the old three tiers.
 [00:03:34-00:03:56] Jules Kim: Sounds right, go ahead.

@@ -117,6 +117,12 @@ tracker adapters were before their smoke: a contract suite against hand-written 
 the same reading of the vendor docs as the clients they test. Endpoint paths, field names and auth
 headers are unverified.
 
+`npm run pull` is the command that would settle it — it joins the client to the normalizer to the
+pipeline, and needs only a read-scoped credential. It exists because without it the clients had
+**zero call sites outside their own tests**, which is this repo's recurring failure shape and not
+something to ship a third time. But an available path is not an exercised one: **nobody has run it
+against a real account**, so everything in the paragraph above still stands.
+
 **All three normalizers now run end-to-end** — `06-github-activity`, `07-email-thread` and
 `08-drive-activity` each go through the full 1 → 2d chain offline, so "the pipeline does not care
 which source produced it" is demonstrated for all five kinds rather than argued for three of them.

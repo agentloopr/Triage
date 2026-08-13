@@ -16,9 +16,12 @@ npm run demo -- --provider anthropic  # replays the Claude recording — informa
 Same fixtures, same prompts, same gates. Recorded 2026-08-12 against `deepseek-v4-pro` and
 `claude-sonnet-5`.
 
+Every row below is what `npm run demo` prints today, not what it printed when the paragraph was
+written. Re-derive it with `npm run demo` and `npm run demo -- --provider anthropic`.
+
 | Scenario | DeepSeek | Claude | |
 |---|---|---|---|
-| `01-meeting-mixed` | 6 items · 3 created | **8 items · 3 created**, 1 auto-skipped as not-a-task | differs |
+| `01-meeting-mixed` | 6 items · 4 created | 6 items · **3 created** (UPDATE 2 / SUBTASK 1 vs 1 / 2) | differs |
 | `02-meeting-duplicates` | 2 items · 0 created | 2 items · 0 created | identical |
 | `03-meeting-noise` | 0 items | 0 items | identical |
 | `04-channel-messages` | 4 items · 3 created | **3 items · 2 created** | differs |
@@ -30,9 +33,11 @@ writes, same audit result. That is the portability claim, and it has a test
 (`providerPortability.test.ts`) that asserts it directly while deliberately *not* asserting the two
 providers agree.
 
-The disagreement is not a bug in either model. Claude reads a meeting transcript more liberally
-(8 items where DeepSeek found 6, one of which the gates then correctly auto-skipped as not a task)
-and a channel log more conservatively (3 where DeepSeek found 4). Scenario 03 is the useful control:
+The disagreement is not a bug in either model. On `01` the two extract the *same* six items and
+categorize one differently — Claude reads it as an UPDATE where DeepSeek reads a SUBTASK, which is
+one fewer card created. On `04` Claude reads a channel log more conservatively (3 where DeepSeek
+found 4). Which scenarios differ moves whenever anything is re-recorded; that instability is the
+finding, not a footnote to it. Scenario 03 is the useful control:
 on pure discussion with no commitments, **both extract nothing** — neither invents work to look busy.
 
 Which is better is exactly the question this repo declines to answer, because answering it needs
@@ -40,7 +45,7 @@ hand-labelled ground truth that does not exist here. See `EVAL.md`.
 
 ## Cost
 
-Measured over one full pass — all five scenarios, 46 model calls:
+Measured over one full pass — all five scenarios, 44 DeepSeek / 42 Claude model calls:
 
 | | Claude Sonnet 5 | DeepSeek v4-pro |
 |---|---|---|
@@ -117,13 +122,15 @@ budget is not portable between providers even when the prompts are byte-identica
 Agent cost is bounded by two caps rather than by hope: `AGENT_MAX_DELEGATIONS` (default 8) and
 `TOOL_LOOP_MAX_ITERATIONS` (default 6).
 
-**The dispositions did not move.** Claude's agent run matches four of five goldens exactly, and its
-one divergence — `04-channel-messages`, 3 items where the golden has 4 — is the *same* Pass 1
-divergence this document already records for Claude with agents off. DeepSeek's agent run diverges on
-two scenarios, both traced to earlier passes: scenario 01's Pass 1 extracted 7 items rather than 6,
-and scenario 04's Pass 1.5 critic raised an item it had previously passed on. **The agent layer runs
-after every gate, so it cannot change an inventory count** — those are re-record variance, the same
-phenomenon `EXTRACTION.md` documents.
+**The agent layer changed no disposition it is capable of changing.** Observed today: DeepSeek with
+agents matches four of five goldens and diverges on `04-channel-messages` (5 items · 4 created vs the
+golden's 4 · 3). Claude with agents diverges on `01` (7 items) and `04` (3 items · 2 created).
+
+Every one of those is an **inventory count**, and **the agent layer runs after every gate, so it
+cannot change an inventory count** — the divergences trace to Pass 1 and Pass 1.5 in a separately
+recorded set, exactly the re-record variance `EXTRACTION.md` documents. What agents provably do not
+move is category, list, assignee, or the decision to write, and that has a test
+(`agents.test.ts`) rather than a sentence.
 
 ## Provider differences worth knowing
 

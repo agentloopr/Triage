@@ -125,10 +125,6 @@ export function isKnownNotDuplicate(proposedTitle: string, existingId: string): 
   );
 }
 
-export function listNotDuplicatePairs(limit = 40): NotDuplicatePair[] {
-  return loadCorrections().notDuplicatePairs.slice(-limit).reverse();
-}
-
 export function listLearnedNotes(limit = 40): LearnedNote[] {
   return loadCorrections().notes.slice(-limit).reverse();
 }

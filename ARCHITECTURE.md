@@ -140,6 +140,13 @@ A hold is a question, and questions outlive processes. Held items are persisted 
 [`PendingHumanStore`](src/state/pendingHuman.ts) **before** the hold is announced — a lost
 notification is recoverable, a lost question is not.
 
+**Persistence is an injection, not a default.** Pass `pendingHuman` to `runPipeline` (or
+`pendingHumanPath` to `runScenario`) and holds survive a restart; omit it and a hold exists only in
+the returned result and the `items:held` event. The demo omits it deliberately — a fixture replay has
+nobody to answer — so *out of the box, holds are announced and not stored*. That is stated here
+rather than left for you to discover, because the ordering guarantee above is worth nothing if the
+store is absent.
+
 Answering replays the *stored decision* through `planOperations` → `executeOperations` with **no
 model call**. A second inference would mean the human approved one thing and something else was
 written. Approving a hold that has no per-item decision behind it (the registry-degraded batch hold)

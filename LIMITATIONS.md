@@ -27,7 +27,7 @@ success.
 
 ## What the test suite covers
 
-651 tests, and they cover the **deterministic layers**: prompt construction, parsers, gates, the
+The test suite covers the **deterministic layers**: prompt construction, parsers, gates, the
 plan, the writes, the audit, the idempotency layers. Cassettes freeze the model's replies, which is
 what makes CI free and reproducible — and is exactly why:
 
@@ -35,6 +35,14 @@ what makes CI free and reproducible — and is exactly why:
 stay green while the model quietly gets worse at the judgement the prompt asks for. Detecting that
 needs a re-record and an eval diff, which is the workflow [EVAL.md](EVAL.md) prescribes. Do not read
 a green run as "that prompt change was safe."
+
+**Two cross-item flags compute and never block.** The pipeline raises `over_subtask` (more than two
+subtasks proposed under one parent) and `near_dup_pair` (two near-identical `NEW_TASK`s on the same
+list in one run) as *flags* — they are emitted as events and printed by the runner, and they stop
+nothing. Only `missed_dup` was promoted to a hold that actually drops the item. So a run can print a
+near-duplicate warning and create both cards anyway. This is named here because the alternative is
+finding it on your own board: a flag that reaches a log and not a human is the failure mode the
+`missed_dup` fix exists to correct, and two siblings still have it.
 
 **No scenario asserts a human hold.** Whether two independent reads disagree about one genuinely
 ambiguous item varies run to run — three consecutive re-recordings of one identical fixture gave

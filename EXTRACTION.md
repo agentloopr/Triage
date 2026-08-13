@@ -140,7 +140,7 @@ tolerating the extraction difference.
 
 One thing that comparison exposed: the Anthropic adapter set a prompt-cache breakpoint on the last
 system block, and the pipeline sent no system block at all — so it never fired, and every call
-re-sent the whole board snapshot at full price. Cache-hit rate across 46 calls was zero.
+re-sent the whole board snapshot at full price. Cache-hit rate across every call was zero.
 
 **Fixed by moving the prompt, not by writing caching code** — the caching logic was already there and
 already correct. Passes 2a/2b now split at the line where the prompt stops being identical for every

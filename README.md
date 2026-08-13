@@ -8,9 +8,11 @@ items: **14.5 items per run, 62.6% applied automatically, 27.3% held for a human
 duplicate, 2.0% failed.** Company context: 14 people, 13 client workstreams, founder coordination
 time down to roughly 4 hours a day.
 
-Those four dispositions partition every item, so they sum to 100% — a fifth outcome would show up
-as a gap. *Applied* counts everything the pipeline did without a human: creates, status changes and
-comments. Creates alone are 44.4%.
+Those four dispositions partition every item — 445 + 194 + 58 + 14 = 711, so a fifth outcome would
+show up as a gap. (The rounded percentages sum to 100.1; the counts are the claim.)
+
+*Applied* counts everything the pipeline did without a human: creates, status changes and comments.
+Creates alone are 44.4%.
 
 **That 27.3% is the number to look at.** A pipeline that writes to a real board is only useful if it
 knows what it does not know, and better than a quarter of everything it sees goes to a human instead
@@ -133,7 +135,7 @@ taxonomy is tracker-blind because of it.
 ## Development
 
 ```bash
-npm test              # 651 tests
+npm test              # the full suite; count deliberately not quoted here
 npx tsc --noEmit      # tests included in typecheck
 npm run lint
 npm run eval          # score the shipped runs on six dimensions, offline

@@ -47,10 +47,6 @@ export function redactSecretsInText(s: string): string {
   return t;
 }
 
-export function textContainsRedactableSecret(s: string): boolean {
-  return redactSecretsInText(s) !== s;
-}
-
 const PROMPT_INJECTION_PATTERNS: RegExp[] = [
   /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
   /disregard\s+(all\s+)?(previous|prior|above)\s+instructions?/i,

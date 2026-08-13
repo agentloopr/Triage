@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { jsonFileStore } from '../idempotency/jsonFile';
 import { memoryStore } from '../idempotency/memory';
+import { pendingHumanStore } from '../state/pendingHuman';
 import { type Scenario, diffExpected } from '../fixtures';
 import { traceEvents, traceModelClient } from '../observability/otel';
 import { PipelineEvents, type PipelineEvent } from '../pipeline/events';
@@ -20,7 +21,7 @@ import { setOpsRegistryPath } from '../registry/opsRegistry';
 import { setCorrectionsPath } from '../state/corrections';
 import { fileRoleStateStore, setRoleStateDir } from '../state/roleState';
 import { delegateToRoleAgents } from '../agents/boardAgent';
-import { AGENT_MAX_DELEGATIONS } from '../config';
+import { AGENT_MAX_DELEGATIONS, AGENTS_ENABLED } from '../config';
 import { memoryTracker } from '../trackers/memory';
 import { categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
 
@@ -28,8 +29,22 @@ export type RunScenarioOptions = {
   model: ModelClient;
   /** Persisted across runs when set — this is how `--twice` proves idempotency. */
   idempotencyPath?: string;
+  /**
+   * Where held items are written so a human can answer them after the process exits.
+   *
+   * Optional and off in the demo, because a fixture replay has nobody to answer. Passing a path is
+   * the whole wiring — `resumeHold` reads the same file. Without it a hold exists only in the
+   * returned result, which is a real limitation and is stated as one in ARCHITECTURE.md.
+   */
+  pendingHumanPath?: string;
   quiet?: boolean;
-  /** Run the agent layer (PRD §5). Off by default — see AGENTS_ENABLED in config. */
+  /**
+   * Run the agent layer (PRD §5). Defaults to `AGENTS_ENABLED`, which is false.
+   *
+   * Passing the flag explicitly overrides the environment in both directions, so `--agents` works on
+   * a machine that has never heard of the variable and the demo can force it off regardless of what
+   * a developer left in their `.env`.
+   */
   agents?: boolean;
 };
 
@@ -95,9 +110,10 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
     tracker,
     idempotency: opts.idempotencyPath ? jsonFileStore(opts.idempotencyPath) : memoryStore(),
     roleState: fileRoleStateStore(roleStateDir),
+    ...(opts.pendingHumanPath ? { pendingHuman: pendingHumanStore(opts.pendingHumanPath) } : {}),
     // Same `model` and `tracker` the pipeline uses, so the agent path is the real thing behind the
     // same seams rather than a parallel implementation that could drift from it.
-    ...(opts.agents
+    ...(opts.agents ?? AGENTS_ENABLED
       ? {
           agents: {
             delegate: (items) =>

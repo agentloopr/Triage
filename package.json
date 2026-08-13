@@ -16,7 +16,8 @@
     "demo": "tsx src/cli/demo.ts",
     "record": "tsx src/cli/record.ts",
     "record:regression": "tsx src/cli/recordRegression.ts",
-    "eval": "tsx src/cli/eval.ts"
+    "eval": "tsx src/cli/eval.ts",
+    "board": "tsx src/cli/board.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",
@@ -31,6 +32,6 @@
     "tsx": "^4.19.0",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.66.0",
-    "vitest": "^2.1.9"
+    "vitest": "^3.2.7"
   }
 }

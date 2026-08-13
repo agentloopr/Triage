@@ -180,12 +180,28 @@ or log is tracked, because a committed smoke needs credentials to mean anything.
 above as testimony rather than evidence. What you *can* run is `npm run board`, which reaches a real
 tracker through the same adapter — read-only.
 
-### The source clients have had no live call at all
+### The source clients: GitHub verified live, Gmail and Drive not
 
-`github`, `gmail` and `drive` in [`src/sources/`](src/sources) are at the stage the two adapters were
-*before* 2026-08-12: contract suite green against fakes, and nothing beyond that. Everything in the
-first paragraph of this section applies to them and none of the testimony does. Concretely, the
-things a fake cannot check and nobody has: that the GitHub issues endpoint really does return pull
-requests alongside issues, that Gmail's `internalDate` is present on every message, and that Drive
-rejects an unprojected `fields` request the way the client assumes. Each is a documented behaviour
-the client was written from, and a documented behaviour is a claim, not a measurement.
+**GitHub: live-verified, 2026-08-13.** Two reads through the real client, no script standing in for
+it. Against `agentloopr/ops-agent-reference`: 11 commits, every author resolved, every timestamp ISO,
+merged chronologically. Against `vitest-dev/vitest` over one day: **109 events — 85 pull requests, 15
+issues and 9 commits.**
+
+That second read is the one that mattered. The `/issues` endpoint returns pull requests *and* issues
+in one stream, distinguishable only by a `pull_request` key on the payload, and the repo's own
+activity contains neither — so the riskiest mapping in the client was reachable only against a busy
+public repo. It separated all 100 correctly, and distinguished `merged` from `closed` (both arrive as
+`state: closed`) via `pull_request.merged_at`. Also confirmed: the auth header shape, server-side
+`since` filtering on both endpoints, short-read pagination, and no field falling back to `unknown`.
+
+**Not verified even so:** rate-limit handling, because the smoke never hit a 429.
+
+**Gmail and Drive have had no live call at all.** They remain where the tracker adapters were before
+their own smoke: contract suite green against fakes, nothing beyond it. Specifically unchecked —
+whether Gmail's `internalDate` is present on every message, and whether Drive really returns an empty
+projection without an explicit `fields` argument. Both are documented behaviours the clients were
+written from, and a documented behaviour is a claim, not a measurement.
+
+**None of this is reproducible from the repo**, for the same reason the tracker smokes are not: it
+needs a credential to mean anything. Treat it as testimony. What you *can* run is
+`npm run pull -- --source github --repo <any repo you can read>`, which is the same code path.

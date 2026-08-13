@@ -11,7 +11,34 @@ import { resolve } from 'node:path';
 
 loadDotenv();
 
-const str = (k: string, dflt: string): string => process.env[k]?.trim() || dflt;
+/**
+ * Surrounding backticks and quotes are stripped, and saying so.
+ *
+ * A credential pasted out of a chat window or a markdown code fence arrives as `` `sk-ant-...` ``,
+ * and every symptom of that points somewhere else: the API returns a flat
+ * `401 authentication_error: API key is invalid`, which is indistinguishable from a revoked key, a
+ * key from the wrong workspace, or a typo. One stray character in this file cost a real half-hour of
+ * this project's time and produced a confident wrong diagnosis ("the key must have been revoked")
+ * before anyone counted the characters — the value was 109 long where the vendor's are 108.
+ *
+ * `dotenv` already handles matched `"` and `'` pairs; backticks and one-sided quotes it does not.
+ * Stripping silently would hide the mistake, so the warning names the variable.
+ */
+const stripWrapping = (k: string, v: string): string => {
+  const cleaned = v.replace(/^[`'"\s]+/, '').replace(/[`'"\s]+$/, '');
+  if (cleaned !== v) {
+    console.warn(
+      `[config] ${k} was wrapped in quotes or backticks — stripped ${v.length - cleaned.length} character(s). ` +
+        'Left in place this reads as an invalid credential, not as a formatting slip.'
+    );
+  }
+  return cleaned;
+};
+
+const str = (k: string, dflt: string): string => {
+  const raw = process.env[k];
+  return (raw === undefined ? '' : stripWrapping(k, raw)) || dflt;
+};
 const int = (k: string, dflt: number): number => {
   const n = Number.parseInt(process.env[k] ?? '', 10);
   return Number.isFinite(n) && n > 0 ? n : dflt;

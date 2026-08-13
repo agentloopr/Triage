@@ -119,16 +119,21 @@ entirely" was written once and then cited as though it were a requirement, and t
 sources on the strength of it — which is how a source-agnostic pipeline came to look like a meeting
 pipeline with a second entry point.
 
-**The three source clients have never made a live call.** They are proven exactly as far as the
-tracker adapters were before their smoke: a contract suite against hand-written fakes, written from
-the same reading of the vendor docs as the clients they test. Endpoint paths, field names and auth
-headers are unverified.
+**GitHub is live-verified; Gmail and Drive are not.** The GitHub client made real reads on
+2026-08-13, including one against a busy public repo that returned **85 pull requests, 15 issues and
+9 commits** — which is the only way to exercise the mapping that matters, since the `/issues`
+endpoint returns PRs and issues in one stream and this repo's own history contains neither. See
+[ADAPTERS.md](ADAPTERS.md#the-source-clients-github-verified-live-gmail-and-drive-not).
 
-`npm run pull` is the command that would settle it — it joins the client to the normalizer to the
-pipeline, and needs only a read-scoped credential. It exists because without it the clients had
-**zero call sites outside their own tests**, which is this repo's recurring failure shape and not
-something to ship a third time. But an available path is not an exercised one: **nobody has run it
-against a real account**, so everything in the paragraph above still stands.
+**Gmail and Drive remain fake-tested only.** Contract suite against hand-written fakes, written from
+the same reading of the vendor docs as the clients they test, so their endpoint paths, field names
+and auth headers are unverified. Rate-limit handling is unverified for all three — no smoke hit a 429.
+
+`npm run pull` is the command that settles it — client → normalizer → pipeline, needing only a
+read-scoped credential. It exists because without it the clients had **zero call sites outside their
+own tests**, which is this repo's recurring failure shape and not something to ship a third time.
+Point it at a repo you can read and the GitHub half of this section is reproducible on your own
+credential; the Gmail and Drive halves are waiting for someone to do the same.
 
 **All three normalizers now run end-to-end** — `06-github-activity`, `07-email-thread` and
 `08-drive-activity` each go through the full 1 → 2d chain offline, so "the pipeline does not care

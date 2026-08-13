@@ -207,20 +207,21 @@ with a reply on the resolved one. File metadata, revisions and comments all conf
 resolves, revisions carry an author and an ISO `modifiedTime`, and the comment came back with author,
 content and timestamp intact.
 
-**The resolved-comment filter was proven by counting.** Drive held two comments; the client returned
-one. The resolved conversation was dropped, which is the point — turning a closed thread into a card
-reopens by robot what a human decided was finished.
+**Filtering and flattening were proven together, by counting.** The file held **four conversation
+nodes** — two comments, each with one reply, one thread resolved. The client returned **two events**:
+the open comment and its reply, each as its own event. The resolved comment *and its reply* were both
+dropped.
 
-Two things that smoke corrected or left open, both worth stating:
+That single count settles two things at once. Dropping a resolved thread is the point — turning a
+closed conversation into a card reopens by robot what a human decided was finished. And the reply
+arrived carrying **its own author**, not the parent's, which is the whole of what flattening has to
+get right: the reply came from a different account, and the event says so.
 
-- **`fields` is required, not merely advisable.** This client's own comment used to claim that
-  omitting it returned a *stripped* projection — comments with no author, content or timestamp behind
-  a 200, the silent failure this repo keeps naming. Drive actually answers
-  `400 — The 'fields' parameter is required for this method.` It fails loudly. The comment described
-  a trap that does not exist, and has been corrected.
-- **Reply flattening is still unverified.** The only reply in the account sits on the *resolved*
-  comment, so the filter correctly dropped it before the flattening code could run. Closing it needs
-  a reply on an open comment.
+**One thing the smoke corrected: `fields` is required, not merely advisable.** This client's own
+comment used to claim that omitting it returned a *stripped* projection — comments with no author,
+content or timestamp behind a 200, the silent failure this repo keeps naming. Drive actually answers
+`400 — The 'fields' parameter is required for this method.` It fails loudly. The comment described a
+trap that does not exist and dressed a required argument as a defence against it. Corrected.
 
 **None of this is reproducible from the repo**, for the same reason the tracker smokes are not: it
 needs a credential to mean anything. Treat it as testimony. What you *can* run is

@@ -147,8 +147,8 @@ deliberately separate interface with **no write method on it at all**. That is t
 by a wrapper that has to remember to refuse.
 
 Those clients are held to the standard below just as the adapters are: proven against hand-written
-wire fakes, and **no live call has been made against any of the three**. Where the tracker adapters
-have a smoke to point at, the source clients have none — see the last section, and
+wire fakes first, then smoked live. **GitHub and Gmail are verified; Drive is half** — see the last
+section, and
 [LIMITATIONS.md](LIMITATIONS.md#integrations).
 
 ## What the suite cannot prove
@@ -180,7 +180,7 @@ or log is tracked, because a committed smoke needs credentials to mean anything.
 above as testimony rather than evidence. What you *can* run is `npm run board`, which reaches a real
 tracker through the same adapter — read-only.
 
-### The source clients: GitHub verified live, Gmail and Drive not
+### The source clients: GitHub and Gmail verified live, Drive half
 
 **GitHub: live-verified, 2026-08-13.** Two reads through the real client, no script standing in for
 it. Against `agentloopr/ops-agent-reference`: 11 commits, every author resolved, every timestamp ISO,
@@ -196,11 +196,22 @@ public repo. It separated all 100 correctly, and distinguished `merged` from `cl
 
 **Not verified even so:** rate-limit handling, because the smoke never hit a 429.
 
-**Gmail and Drive have had no live call at all.** They remain where the tracker adapters were before
-their own smoke: contract suite green against fakes, nothing beyond it. Specifically unchecked —
-whether Gmail's `internalDate` is present on every message, and whether Drive really returns an empty
-projection without an explicit `fields` argument. Both are documented behaviours the clients were
-written from, and a documented behaviour is a claim, not a measurement.
+**Gmail: live-verified, 2026-08-13.** A real thread, six messages. Every `from` resolved, every
+timestamp ISO and none of them epoch-zero — which is the check that matters, because it proves
+`internalDate` was present and parsed rather than silently defaulting. **All six bodies extracted**,
+which exercises the multipart walk and the base64url decode against mail a person actually sent
+rather than a fixture built to be walkable.
+
+**Drive: half-verified.** The file-metadata and revisions endpoints are confirmed — the name
+resolves, and every revision carries an author and an ISO `modifiedTime` through the explicit
+`fields` projection. **The comments half is not.** Every file in the smoke account returned zero
+comments, so three pieces of logic never ran: the claim that Drive returns an empty projection
+without an explicit `fields` argument, the resolved-comment filter, and reply flattening. An empty
+200 confirms the path and the auth and nothing about the mapping — the same trap the GitHub smoke
+fell into against this repo's own history, and the reason that one moved to a busy public repo.
+
+Closing it needs a document with at least one comment and one resolved comment on it, and nobody has
+run that. It is a read-only client, so the only cost of trying is finding such a file.
 
 **None of this is reproducible from the repo**, for the same reason the tracker smokes are not: it
 needs a credential to mean anything. Treat it as testimony. What you *can* run is

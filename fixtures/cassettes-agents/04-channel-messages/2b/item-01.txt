@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: Scanned board snapshot; only t800 exists and it covers search relevance, not the staging connection pool. The source confirms Avery committed to raising the pool size after diagnosing pool exhaustion, so this is a concrete, trackable backend fix and no existing card matches it.
+RATIONALE: Source shows Avery confirmed pool exhaustion and committed to raising the pool size. The only board card, t800, is unrelated search relevance work, so this is a new concrete infrastructure fix.

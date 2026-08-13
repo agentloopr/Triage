@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: NEW_TASK
-MATCH_TASK_ID: (none)
+VERDICT_CATEGORY: UPDATE
+MATCH_TASK_ID: t800
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: Board snapshot contains only t800 (search relevance tuning), which is unrelated. No existing card covers runbook documentation for connection pool exhaustion; this is a new, concrete deliverable Sky Patel committed to produce. A competent PM would track a recurring-issue runbook as a card, and the assignee is clear (Sky/QA), so routing is straightforward.
+ROUTING_OK: n/a
+RATIONALE: [Tier-2: task-comments on t800 — no comments] Source reports the existing search relevance tuning work is now in review and ready for a look; that is genuine new progress on t800, not already reflected in its activity log.

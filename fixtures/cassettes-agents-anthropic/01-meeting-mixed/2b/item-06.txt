@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing board card covers usage-based billing spec work; this is a distinct new deliverable owned by Jules Kim (writing a spec), a concrete trackable output, not contained by or duplicating any listed card. Routing to product/PM concern is clear from the source.
+RATIONALE: No existing card covers usage-based billing spec; this is a concrete deliverable (write a spec) with a clear owner (Jules) requested by Wren, distinct from all board cards. Worth tracking as new.

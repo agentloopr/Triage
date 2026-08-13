@@ -1,11 +1,10 @@
 ITEM: 1
-TITLE: Raise staging connection pool size
+TITLE: Raise connection pool size
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Staging 502s were traced to connection pool exhaustion; raise the staging connection pool size to resolve the errors.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Avery diagnosed the staging 502s as connection pool exhaustion and will raise the pool size to resolve the failures.
 CONFIDENCE: high
-RATIONALE: No open card on the board covers staging connection pool configuration; the only card, t800, is search relevance tuning, so this is a net-new task.
+RATIONALE: No open board card covers the staging connection pool issue; the only related card is t800 for search relevance tuning, which is a different deliverable.

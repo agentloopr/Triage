@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
-MATCH_TASK_ID: t400
-WORTH_A_CARD: not_a_task
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t400 — no comments] This relates to nightly build monitoring (t400), but the scope described is purely a check-and-report ("check whether it's the flaky auth test and report back Wednesday") with no build/fix/deploy attached — a bare status check. Per the test, resolving this just ends at "I told them the status" unless the auth test issue is confirmed, so it's not independently board-trackable beyond the existing monitoring card; flagging as an update rather than a new deliverable.
+ROUTING_OK: yes
+RATIONALE: No existing card covers usage-based billing spec work; this is a distinct new deliverable Jules committed to producing. Concrete artifact (written spec) with an owner, so it warrants tracking. Fits under product/PM scope, not tied to any listed card.

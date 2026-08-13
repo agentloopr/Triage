@@ -6,7 +6,6 @@ LIST: design
 ASSIGNEE: Rowan Diaz
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Draft the welcome email copy as part of the onboarding revamp; this ships when the parent redesign ships.
-UNCERTAIN_FIELDS: NONE
+FINAL_DESC: Draft the welcome email copy as part of the onboarding revamp; it will ship with the redesigned first-run experience.
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t100 — no comments, so no conflicting history] The source explicitly states the welcome email copy sits inside the onboarding revamp and will ship with it. The parent card t100 covers the broader onboarding flow redesign; containment is clear. No existing subtask for this copy, so SUBTASK.
+RATIONALE: [Tier-2: task-comments on t100 — no comments, but the parent card is open/in progress and owned by Rowan Diaz. The source explicitly places the welcome email copy inside the onboarding revamp and says it ships when that ships, which satisfies containment.]

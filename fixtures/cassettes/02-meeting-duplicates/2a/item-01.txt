@@ -1,6 +1,6 @@
 ITEM: 1
-TITLE: Own the onboarding revamp
+TITLE: Ship an onboarding revamp
 CATEGORY: DUPLICATE
 EXISTING_TASK_ID: t500
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t500 — no comments] Card t500 ("New-user first-run flow") already covers the onboarding revamp deliverable and is assigned to Rowan Diaz; the source merely confirms that assignment and adds no new scope, status, or info.
+RATIONALE: [Tier-2: task-comments on t500 — no comments] The existing t500 card already covers the same deliverable: building the first-run/new-signup onboarding experience with Rowan Diaz as assignee and in progress. The source adds no new scope, status, or info beyond what that card already tracks.

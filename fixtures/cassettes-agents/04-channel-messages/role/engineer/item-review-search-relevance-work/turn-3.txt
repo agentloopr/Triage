@@ -1,3 +1,3 @@
-NOTE: Checked existing card t800 and its comment history; it is Avery Chen's search relevance implementation, assigned to her, with no comments, so this item reads as a status update on that work.
-DESC: Search relevance tuning (t800) is now in review and ready for a look. No specific reviewer has been named.
+NOTE: Checked t800 and its comment history — assigned to Avery Chen, no PR or artifact recorded; the item is an update to that existing card.
+DESC: Search relevance tuning for short queries. Implementation is complete and in review; awaiting reviewer feedback.
 OWNERSHIP: OK

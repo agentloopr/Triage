@@ -1,10 +1,10 @@
 --- ACTION INVENTORY ---
-1. Own the onboarding revamp | quote: "Yes, I can take it."
-   DESC: Rowan Diaz committed to own the onboarding revamp that Jules Kim proposed, aiming to guide new signups through their first meaningful action instead of an empty dashboard.
-   TIMESTAMP: 00:01:18-00:01:56
-   POSSIBLE_MATCH_HINT: t500
-2. Partial-failure handling in deploys still needs doing | quote: "The partial-failure handling still needs doing."
-   DESC: Sky Patel reported that deploys are still failing halfway and leaving the cluster in a weird state, and the work to make the pipeline handle partial failure properly remains unfinished.
-   TIMESTAMP: 00:02:56-00:03:16
-   POSSIBLE_MATCH_HINT: t600
+1. Ship an onboarding revamp | quote: "Yes, I can take it."
+   DESC: Jules said new signups don’t know what to do first and proposed shipping an onboarding revamp. Rowan agreed and accepted ownership.
+   TIMESTAMP: [00:01:18-00:01:56]
+   POSSIBLE_MATCH_HINT: New-user first-run flow | id:t500
+2. Make the deploy pipeline handle partial failure properly | quote: "We need to make the pipeline handle partial failure properly."
+   DESC: Sky reported that deploys are still failing halfway and leaving the cluster in a weird state, and said the partial-failure handling still needs doing.
+   TIMESTAMP: [00:01:56-00:03:16]
+   POSSIBLE_MATCH_HINT: Deploy pipeline hardening | id:t600
 --- END ACTION INVENTORY ---

@@ -1,0 +1,3 @@
+NOTE: Checked for existing open usage-based billing work; none found, so this is not a duplicate and the description is clear enough to act on.
+DESC: Produce a written spec for the usage-based billing idea before any build work is committed. The spec covers scope, requirements, and acceptance criteria only — no implementation. Jules is the author.
+OWNERSHIP: OK

@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
+VERDICT_CATEGORY: DUPLICATE
 MATCH_TASK_ID: t600
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: The item describes work that is exactly the scope of t600 (“Deploy pipeline hardening” / “make the deploy pipeline resilient to partial failures”) and reports it still needs doing. The source explicitly says “partial-failure handling still needs doing.” This is a genuine progress/status update on an existing card, not a new task. [Tier-2: task-comments on t600 — no comments recorded, so this is newly reported status.]
+RATIONALE: The item describes the same deliverable as t600 “Deploy pipeline hardening” — making the deploy pipeline handle partial failures instead of leaving the cluster in a bad state. [Tier-2: task-comments on t600 — no comments on this card] The source adds no new progress beyond “still needs doing,” so this is a duplicate of the already-open card, not a new task or update.

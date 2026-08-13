@@ -1,6 +1,0 @@
-VERDICT_CATEGORY: NEW_TASK
-MATCH_TASK_ID: (none)
-WORTH_A_CARD: real_task
-GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: Scanned the full board snapshot — existing cards cover onboarding, API rate limiting, pricing refresh, and nightly builds; none covers a usage-based billing spec. The source clearly records Wren requesting a written spec and Jules committing to write it, making this a concrete, trackable deliverable.

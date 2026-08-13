@@ -1,7 +1,7 @@
 ITEM: 4
-TITLE: Refresh pricing page copy
+TITLE: Refresh pricing page copy this week
 CATEGORY: DUPLICATE
 EXISTING_TASK_ID: t300
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t300 — no comments, indicating no prior activity]. The open card t300 (“Q3 pricing page refresh”) already tracks the same deliverable: updating the stale pricing copy after the tier change. Noor’s statement reiterates her intent but adds no new scope, status, or field correction, so the work is already fully captured.
+RATIONALE: [Tier-2: task-comments on t300 — no comments on this card] The existing t300 card already covers updating the pricing page copy after the tier change, and Noor's statement adds the same deliverable with no new status or scope information.

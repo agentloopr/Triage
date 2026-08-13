@@ -1,10 +1,10 @@
 ITEM: 2
-TITLE: Add alert for connection pool exhaustion
+TITLE: Write runbook for the connection pool issue
 CATEGORY: NEW_TASK
 LIST: backend
-ASSIGNEE: Avery Chen
+ASSIGNEE: Sky Patel
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Create a monitoring alert that triggers on connection pool exhaustion so the team gets notified before users experience 502 errors.
+FINAL_DESC: Document a runbook for the staging connection pool exhaustion issue that has caused 502s; include recovery steps such as raising the pool size and adding alerting so the team catches it before users do.
 CONFIDENCE: high
-RATIONALE: No card in the snapshot covers connection pool monitoring or alerting. Net-new deliverable; no evidence read needed for NEW.
+RATIONALE: No existing board card covers a connection-pool runbook. Net-new deliverable; no evidence read needed for NEW_TASK.

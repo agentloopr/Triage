@@ -1,0 +1,12 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_GO5rUrecBR18YOectBad1832",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "502"
+      }
+    }
+  ]
+}

@@ -1,10 +1,10 @@
 ITEM: 1
-TITLE: Raise connection pool size
+TITLE: Raise connection pool size and add an alert
 CATEGORY: NEW_TASK
 LIST: backend
 ASSIGNEE: Avery Chen
 PRIORITY: normal
-STATUS: not started
-FINAL_DESC: Avery diagnosed the staging 502 errors as connection pool exhaustion. He plans to increase the pool size and add an alert to catch the problem before users see it.
+FINAL_DESC: Raise the staging connection pool size and add an alert to catch pool exhaustion before users are affected.
+UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: The board snapshot contains only one task (t800, search relevance). No open card covers the staging connection pool fix; this is a net-new deliverable requiring no evidence read.
+RATIONALE: No open card covers connection pool sizing or alerting; the only board task is search relevance tuning, which is a different deliverable. No evidence read needed for NEW_TASK.

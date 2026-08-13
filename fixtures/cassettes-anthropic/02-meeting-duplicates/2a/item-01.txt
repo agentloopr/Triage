@@ -3,4 +3,4 @@ TITLE: Own onboarding revamp
 CATEGORY: DUPLICATE
 EXISTING_TASK_ID: t500
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t500 — no comments] t500 "New-user first-run flow" already covers building the first-run experience (welcome, setup, first action) with same assignee Rowan Diaz, in progress. The source describes the same deliverable and adds no new scope, status, or info beyond what's already captured.
+RATIONALE: [Tier-2: task-comments on t500 — no comments] t500 "New-user first-run flow" already covers building the onboarding experience for new signups (welcome, setup, first action) and is assigned to Rowan Diaz, matching this item's deliverable and owner exactly; no new scope or status was added beyond what the card already describes.

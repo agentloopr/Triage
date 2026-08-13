@@ -3,4 +3,4 @@ MATCH_TASK_ID: t100
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: The source explicitly states the welcome email copy is part of the onboarding revamp and will ship with it; Jules instructs to keep it under that card (t100). Therefore it is a subtask of the existing onboarding redesign card, not a new standalone deliverable.
+RATIONALE: [Tier-2: task-comments on t100 — no comments] Source explicitly says the welcome email copy “sits inside the onboarding revamp, it ships when that ships” and Jules says keep it under that card; this is contained child work under the broader onboarding redesign, not a duplicate of t100.

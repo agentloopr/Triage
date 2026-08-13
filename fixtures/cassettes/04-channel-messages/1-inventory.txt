@@ -1,18 +1,18 @@
 --- ACTION INVENTORY ---
-1. Raise connection pool size | quote: "Confirmed, pool exhaustion. I'll raise the pool size and add an alert so we catch it before users do."
-   DESC: Avery diagnosed the staging 502s as connection pool exhaustion and committed to increasing the pool size as part of the fix. This is a concrete change to the service configuration.
+1. Address staging 502s | quote: "staging has been returning 502s since about 8am."
+   DESC: Sky reported that staging has been returning 502 errors since about 08:00.
+   TIMESTAMP: [09:02]
+   POSSIBLE_MATCH_HINT: (none)
+2. Raise connection pool size and add an alert | quote: "I'll raise the pool size and add an alert so we catch it before users do."
+   DESC: Avery confirmed the staging 502s were caused by connection pool exhaustion and committed to raising the pool size and adding an alert to catch the issue before users do.
    TIMESTAMP: [09:31]
    POSSIBLE_MATCH_HINT: (none)
-2. Add alert for connection pool exhaustion | quote: "Confirmed, pool exhaustion. I'll raise the pool size and add an alert so we catch it before users do."
-   DESC: Avery also committed to creating a monitoring alert for the connection pool, so the team is notified before users experience it.
-   TIMESTAMP: [09:31]
-   POSSIBLE_MATCH_HINT: (none)
-3. Document the runbook for connection pool exhaustion | quote: "I'll write it up."
-   DESC: Sky Patel committed to writing up the runbook for this recurring issue, after Jules Kim noted it has happened twice before.
+3. Write runbook for the connection pool issue | quote: "I'll write it up."
+   DESC: Jules asked someone to document the runbook after noting the issue has bitten the team twice; Sky committed to writing it up.
    TIMESTAMP: [09:42]
    POSSIBLE_MATCH_HINT: (none)
-4. Search relevance work is in review | quote: "Search relevance work is now in review by the way, ready for a look."
-   DESC: Avery Chen reported that the search relevance tuning work has moved from in-progress to in-review, and is ready for a code review.
+4. Review search relevance work | quote: "Search relevance work is now in review by the way, ready for a look."
+   DESC: Avery reported that the search relevance work is now in review and ready for someone to look at.
    TIMESTAMP: [11:15]
-   POSSIBLE_MATCH_HINT: t800 | Search relevance tuning
+   POSSIBLE_MATCH_HINT: Search relevance tuning | id:t800
 --- END ACTION INVENTORY ---

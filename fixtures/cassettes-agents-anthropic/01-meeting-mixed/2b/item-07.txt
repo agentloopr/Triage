@@ -1,0 +1,6 @@
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
+WORTH_A_CARD: not_a_task
+GROUNDED: yes
+ROUTING_OK: yes
+RATIONALE: This is a process-policy suggestion explicitly deferred by Jules Kim ("that's a process thing — let's discuss separately"), not a concrete deliverable with an owner or completion state. No existing card covers release-process policy, and a PM would treat this as a discussion item to revisit rather than a trackable task.

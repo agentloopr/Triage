@@ -1,3 +1,0 @@
-NOTE: Checked t200 — it is Avery Chen's backend card already in progress; the board description is stale relative to the reported status.
-DESC: Token bucket implementation for public API rate limiting is complete and in review. Waiting on Sky's sign-off. Target ship date: Friday.
-OWNERSHIP: OK

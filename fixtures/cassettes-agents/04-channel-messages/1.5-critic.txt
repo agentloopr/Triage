@@ -1,4 +1,4 @@
-5. Report staging 502s since about 8am | quote: "staging has been returning 502s since about 8am"
-   DESC: Sky Patel reported that staging had been returning 502s since about 8am.
-   TIMESTAMP: 09:02
+5. Report staging 502s since 8am | quote: "Heads up — staging has been returning 502s since about 8am."
+   DESC: Sky reported that staging had been returning 502 errors since about 8am.
+   TIMESTAMP: [09:02]
    POSSIBLE_MATCH_HINT: (none)

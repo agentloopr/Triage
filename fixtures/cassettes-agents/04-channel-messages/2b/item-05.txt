@@ -3,4 +3,4 @@ MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: yes
-RATIONALE: No existing board card covers a staging 502/pool-exhaustion incident; t800 is unrelated search relevance work. The source confirms the report and shows concrete follow-up work (raise pool size, add alert, document runbook), so this is trackable incident work, not mere chatter.
+RATIONALE: Scanned the board; only t800 exists and it is unrelated search relevance work. The source reports a concrete staging 502 incident that leads to real follow-up work (pool fix, alert, runbook), so a PM would track it.

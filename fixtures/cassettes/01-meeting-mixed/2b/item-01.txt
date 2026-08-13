@@ -3,4 +3,4 @@ MATCH_TASK_ID: t200
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: The item reports status on the existing rate-limiting card t200. Tier-2 evidence shows no prior comments on t200; the details (token bucket done, awaiting Sky's sign-off, ship Friday) are new progress and all appear in the source.
+RATIONALE: [Tier-2: task-comments on t200 — no comments on this card] The source reports new progress on the existing "Public API rate limiting" card: token bucket finished, work in review, waiting on Sky to sign off and expected to ship Friday. This is an update to t200, not a new or duplicate card.

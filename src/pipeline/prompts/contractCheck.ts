@@ -22,6 +22,7 @@ import { roleRosterBlock } from '../../registry/roleProfiles';
 import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
 import type { EnrichedInventoryItem } from '../types';
 import { WORTH_A_CARD_RUBRIC } from '../worthACardRubric';
+import type { PromptParts } from './parts';
 
 export type ContractCheckPromptOptions = {
   participantLine?: string;
@@ -38,7 +39,7 @@ export function buildContractCheckerPrompt(
   sourceSummary: string,
   sourceText: string,
   opts: ContractCheckPromptOptions = {}
-): string {
+): PromptParts {
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
   const roster = roleRosterBlock();
 
@@ -57,7 +58,7 @@ export function buildContractCheckerPrompt(
     ...(provNote ? [provNote] : []),
   ].join('\n');
 
-  return [
+  const system = [
     '══════════════════════════════════════════════════════════════════════',
     'INDEPENDENT VERIFICATION PASS — READ-ONLY',
     '══════════════════════════════════════════════════════════════════════',
@@ -220,11 +221,17 @@ export function buildContractCheckerPrompt(
     '--- SOURCE SUMMARY ---',
     sourceSummary || '(none)',
     ...(sourceText ? ['', '--- FULL SOURCE ---', sourceText, '--- END SOURCE ---'] : []),
-    '',
+  ].join('\n');
+
+  // The per-item half. Still built from the INVENTORY item only — moving the split here changes
+  // WHERE the item is sent, never WHAT this pass is allowed to see.
+  const user = [
     '══════════════════════════════════════════════════════════════════════',
     'THE SINGLE ITEM TO RE-VERIFY (output one VERDICT block)',
     '══════════════════════════════════════════════════════════════════════',
     itemBlock,
     ...(tier2Block ? ['', tier2Block] : []),
   ].join('\n');
+
+  return { system, user };
 }

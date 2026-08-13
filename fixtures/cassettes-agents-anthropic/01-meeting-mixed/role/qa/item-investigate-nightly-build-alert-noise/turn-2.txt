@@ -1,0 +1,3 @@
+NOTE: Checked t400 — it's the broader nightly build monitoring/alerting card; this item is a scoped investigation task within that work, phrasing needs to reflect an investigation with a reportable outcome.
+DESC: Investigate whether noisy nightly build alerts are caused by a flaky auth test. Deliverable: findings on root cause (confirmed flaky test, other cause, or inconclusive) and evidence (failure logs/rerun patterns reviewed), reported back Wednesday.
+OWNERSHIP: OK

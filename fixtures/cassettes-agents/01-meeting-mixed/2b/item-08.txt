@@ -1,6 +1,0 @@
-VERDICT_CATEGORY: NEW_TASK
-MATCH_TASK_ID: (none)
-WORTH_A_CARD: not_a_task
-GROUNDED: yes
-ROUTING_OK: yes
-RATIONALE: No existing board card covers a release-process discussion; t400 is about nightly build alerting, not the full-suite-before-release proposal. The source only records Sky’s suggestion and Jules saying “let’s discuss separately” — no concrete deliverable, owner, or tracked outcome, so a PM would likely treat it as a discussion item rather than open a board card.

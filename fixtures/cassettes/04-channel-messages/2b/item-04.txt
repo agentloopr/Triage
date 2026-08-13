@@ -1,6 +1,6 @@
-VERDICT_CATEGORY: UPDATE
-MATCH_TASK_ID: t800
+VERDICT_CATEGORY: NEW_TASK
+MATCH_TASK_ID: (none)
 WORTH_A_CARD: real_task
 GROUNDED: yes
-ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t800 — no existing comments] Avery's message reports a status change from in-progress to in-review for the existing search relevance card; this is new progress not yet logged, making it an UPDATE.
+ROUTING_OK: yes
+RATIONALE: Scanned the full board snapshot; the only open card is t800 “Search relevance tuning,” which is a different deliverable and does not contain or report progress on the staging 502/connection-pool incident. The source confirms Sky’s 502 report and Avery’s connection-pool investigation, and the follow-up fix/alert/runbook work is concrete and trackable.

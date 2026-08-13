@@ -1,3 +1,0 @@
-NOTE: Checked t800; description is vague ("ready for review") without naming the PR or what changed — improved to name concrete artifact status.
-DESC: Search relevance tuning (short-query result ordering) implementation complete; PR open for review. No blockers currently — awaiting reviewer.
-OWNERSHIP: OK

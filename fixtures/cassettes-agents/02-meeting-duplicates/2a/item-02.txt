@@ -1,6 +1,6 @@
 ITEM: 2
-TITLE: Handle deploy pipeline partial failure
+TITLE: Own the onboarding revamp for new signups (guiding first meaningful action)
 CATEGORY: DUPLICATE
-EXISTING_TASK_ID: t600
+EXISTING_TASK_ID: t500
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t600 — no comments]. The open card t600 already scopes making the deploy pipeline resilient to partial failures, and this item adds no new scope, status, or information beyond that same deliverable.
+RATIONALE: [Tier-2: task-comments on t500 — no comments] The t500 card already covers the new-user first-run flow for new signups, including welcome, setup, and first action, and is assigned to Rowan Diaz. The source adds no new scope, status, or assignment; same deliverable.

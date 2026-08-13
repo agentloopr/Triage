@@ -1,7 +1,6 @@
 ITEM: 1
-TITLE: Own the onboarding revamp
+TITLE: Make the deploy pipeline handle partial failure
 CATEGORY: DUPLICATE
-EXISTING_TASK_ID: t500
-UNCERTAIN_FIELDS: NONE
+EXISTING_TASK_ID: t600
 CONFIDENCE: high
-RATIONALE: [Tier-2: task-comments on t500 — no comments on this card] The existing card already tracks the new-user first-run onboarding revamp, is assigned to Rowan Diaz, and its description covers the same first-run experience. The source adds no new scope, status, or info beyond what is already on the card.
+RATIONALE: [Tier-2: task-comments on t600 — no comments] The existing open card t600 already scopes deploy pipeline hardening to be resilient to partial failures, which matches this deliverable exactly, and Sky added no new scope or status beyond that.

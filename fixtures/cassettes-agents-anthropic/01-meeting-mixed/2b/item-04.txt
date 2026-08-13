@@ -3,4 +3,4 @@ MATCH_TASK_ID: t300
 WORTH_A_CARD: real_task
 GROUNDED: yes
 ROUTING_OK: n/a
-RATIONALE: [Tier-2: task-comments on t300 — no comments logged] Same deliverable as "Q3 pricing page refresh" (updating stale tier copy on the pricing page); Noor confirming she's starting this week is new progress on the existing card, not a separate task.
+RATIONALE: [Tier-2: task-comments on t300 — no comments logged] Item matches existing card t300 "Q3 pricing page refresh" exactly — same deliverable (pricing page copy update due to stale tiers), now with a concrete owner/timeline (Noor, this week) not previously logged, so this is progress on the existing card rather than a new one.

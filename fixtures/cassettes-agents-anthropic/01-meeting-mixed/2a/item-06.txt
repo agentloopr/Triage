@@ -1,11 +1,11 @@
 ITEM: 6
-TITLE: Write spec for usage-based billing idea
+TITLE: Write billing spec
 CATEGORY: NEW_TASK
 LIST: product
 ASSIGNEE: Jules Kim
 PRIORITY: normal
 STATUS: not started
-FINAL_DESC: Write a spec for the usage-based billing idea, requested by Wren, to be reviewed before any commitment is made.
+FINAL_DESC: Write a spec for the proposed usage-based billing model, requested by Wren, to be reviewed before any commitment is made.
 UNCERTAIN_FIELDS: NONE
 CONFIDENCE: high
-RATIONALE: No existing card covers billing or pricing strategy spec work; t300 is about pricing page copy refresh, a different deliverable. This is a net-new task with Jules explicitly named as owner.
+RATIONALE: No existing card covers billing or a billing spec in the snapshot; this is a net-new deliverable assigned to Jules Kim as directed by Wren.

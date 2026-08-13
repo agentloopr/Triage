@@ -249,3 +249,104 @@ describe('drive', () => {
     expect(out.fileName).toBe('API spec');
   });
 });
+
+/**
+ * Rate limiting — the branch that only runs on a bad day.
+ *
+ * Untested until now, in every client and in both tracker adapters. It is the classic gap: the code
+ * is unreachable in normal operation, so nothing exercises it, and the first time it runs is under
+ * load in production when nobody is watching the logs.
+ *
+ * These use fakes deliberately. Provoking a real 429 means hammering a third party's API thousands
+ * of times to prove a code path — slow, abusive, and it tests their throttle rather than our
+ * handling of it. What a fake cannot tell us is whether the *shape* is right: whether GitHub really
+ * signals a secondary limit the way this client assumes. That stays unverified and is stated so.
+ */
+describe('rate limiting', () => {
+  /** Fails `failures` times with the given response, then succeeds. Counts attempts. */
+  function flaky(failures: number, status: number, headers: Record<string, string>, ok: unknown) {
+    let calls = 0;
+    const impl = (async (): Promise<Response> => {
+      calls++;
+      if (calls <= failures) return new Response('slow down', { status, headers });
+      return new Response(JSON.stringify(ok), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }) as unknown as FetchImpl;
+    return { impl, calls: () => calls };
+  }
+
+  /**
+   * Asserts the **delay**, not merely that a retry happened.
+   *
+   * The first version checked only `calls > 1`, and passed against a client that ignored
+   * `Retry-After` entirely and fell through to a 5s default. Nothing failed — the retry did occur.
+   * The only symptom was this test taking 5003ms where its siblings took 1002ms, and no assertion
+   * was watching. A rate-limit test that does not measure the wait is a test that a loop exists.
+   */
+  it('github honours Retry-After rather than its own default', async () => {
+    const f = flaky(1, 429, { 'retry-after': '1' }, []);
+    const started = Date.now();
+    const out = await makeGithubClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ repo: 'a/b' });
+    const elapsed = Date.now() - started;
+
+    expect(out.events).toEqual([]);
+    expect(f.calls()).toBeGreaterThan(1); // it came back rather than giving up on the first refusal
+    expect(elapsed).toBeGreaterThanOrEqual(900); // it actually waited
+    expect(elapsed).toBeLessThan(3_000); // ...the header's one second, not the five-second fallback
+  }, 20_000);
+
+  it('github falls back to the reset window when Retry-After is absent', async () => {
+    // The primary hourly quota reports `x-ratelimit-reset` and no `Retry-After`. Both paths matter:
+    // the header describes a secondary limit, the window describes the hourly one.
+    const reset = String(Math.floor(Date.now() / 1000) + 1);
+    const f = flaky(1, 429, { 'x-ratelimit-reset': reset }, []);
+    const started = Date.now();
+    await makeGithubClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ repo: 'a/b' });
+
+    expect(f.calls()).toBeGreaterThan(1);
+    expect(Date.now() - started).toBeLessThan(3_000); // the reset window, not the blind default
+  }, 20_000);
+
+  /**
+   * The distinction worth having a test for. GitHub reports a rate limit as **403** with
+   * `x-ratelimit-remaining: 0`, and reports "you may not read this repo" as 403 with no such header.
+   * Treat the first as fatal and a busy hour looks like a permissions bug; treat the second as
+   * retryable and every forbidden request burns the whole retry budget arriving at the same answer.
+   */
+  it('github treats a 403 with remaining=0 as a rate limit, and retries it', async () => {
+    const reset = String(Math.floor(Date.now() / 1000) + 1);
+    const f = flaky(1, 403, { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': reset }, []);
+    await makeGithubClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ repo: 'a/b' });
+    expect(f.calls()).toBeGreaterThan(1);
+  }, 20_000);
+
+  it('github treats a plain 403 as permissions, and does NOT retry it', async () => {
+    const f = flaky(99, 403, {}, []);
+    await expect(
+      makeGithubClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ repo: 'a/b' })
+    ).rejects.toThrow(/403/);
+    // Both endpoints are requested concurrently, so one attempt each — and no retry of either.
+    expect(f.calls()).toBeLessThanOrEqual(2);
+  }, 20_000);
+
+  it('does not retry a 404, which no amount of waiting will fix', async () => {
+    const f = flaky(99, 404, {}, {});
+    await expect(
+      makeGmailClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ threadId: 'nope' })
+    ).rejects.toThrow(/404/);
+    expect(f.calls()).toBe(1);
+  }, 20_000);
+
+  it('gmail retries a 429', async () => {
+    const f = flaky(1, 429, { 'retry-after': '1' }, { id: 't-1', messages: [] });
+    const out = await makeGmailClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ threadId: 't-1' });
+    expect(out.threadId).toBe('t-1');
+    expect(f.calls()).toBe(2);
+  }, 20_000);
+
+  it('drive retries a 429', async () => {
+    const f = flaky(1, 429, { 'retry-after': '1' }, { name: 'Spec' });
+    const out = await makeDriveClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ fileId: 'f-1' });
+    expect(out.fileName).toBe('Spec');
+    expect(f.calls()).toBeGreaterThan(1);
+  }, 20_000);
+});

@@ -139,7 +139,16 @@ parameter returned a stripped projection behind a 200 — the silent failure thi
 Drive actually returns `400 — The 'fields' parameter is required for this method`. It fails loudly,
 and the comment described a trap that does not exist.
 
-**Rate-limit handling is unverified for all three** — no smoke hit a 429.
+**Rate-limit handling is tested against fakes and has never been observed live.** No smoke hit a real
+429, and provoking one would mean hammering a third party's API to test their throttle rather than
+our handling of it. The tests cover the wait itself, both of GitHub's signals, and the 403 that must
+*not* be retried.
+
+Worth recording how the first version of those tests failed. They asserted only that a retry
+happened, and passed against a client that ignored `Retry-After` entirely and waited a blind five
+seconds instead of the one the header asked for. Nothing failed — the retry did occur. The only
+symptom was one test reporting 5003ms where its siblings reported 1002ms. **A rate-limit test that
+does not measure the wait is a test that a loop exists**, and the assertions now measure it.
 
 `npm run pull` is the command that settles it — client → normalizer → pipeline, needing only a
 read-scoped credential. It exists because without it the clients had **zero call sites outside their

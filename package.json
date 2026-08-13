@@ -17,7 +17,8 @@
     "record": "tsx src/cli/record.ts",
     "record:regression": "tsx src/cli/recordRegression.ts",
     "eval": "tsx src/cli/eval.ts",
-    "board": "tsx src/cli/board.ts"
+    "board": "tsx src/cli/board.ts",
+    "correct": "tsx src/cli/correct.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

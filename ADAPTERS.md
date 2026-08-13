@@ -151,3 +151,8 @@ itself afterward.
 
 Both smokes ran through the ops registry and the adapter, the same code path the pipeline uses — not
 a curl script standing in for the adapter.
+
+**Neither is reproducible from this repo**, and it is the only claim here you cannot check. No script
+or log is tracked, because a committed smoke needs credentials to mean anything. Treat the counts
+above as testimony rather than evidence. What you *can* run is `npm run board`, which reaches a real
+tracker through the same adapter — read-only.

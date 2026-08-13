@@ -162,3 +162,8 @@ through the ops registry and the real adapter code path, not a script standing i
 checks, including two assignees on one issue correctly reporting `unsupported` rather than silently
 keeping the first — the exact failure `OpOutcome` exists to name. Both test objects deleted
 themselves; both accounts were confirmed back to their starting state afterward.
+
+**Neither smoke is reproducible from this repo.** Both were run by hand against throwaway
+accounts and no script or log is tracked, because a committed smoke needs credentials to mean
+anything. Treat the counts above as testimony rather than evidence — everything else here can be
+re-run by a reader. See [LIMITATIONS.md](LIMITATIONS.md#integrations).

@@ -135,6 +135,9 @@ taxonomy is tracker-blind because of it.
 ## Development
 
 ```bash
+npm run board         # read the configured tracker (TRACKER=...) — read-only, needs credentials
+npm run correct       # record a human correction that later runs read back
+
 npm test              # the full suite; count deliberately not quoted here
 npx tsc --noEmit      # tests included in typecheck
 npm run lint

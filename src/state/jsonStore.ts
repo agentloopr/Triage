@@ -14,7 +14,7 @@
  *
  * **FIFO write lock.** Concurrent read-modify-write on one file is lost-update by construction.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 let onCorrupt: ((msg: string) => void) | null = null;
@@ -79,4 +79,161 @@ export function makeFifoLock(): <T>(fn: () => Promise<T>) => Promise<T> {
     );
     return run;
   };
+}
+
+/**
+ * Serialize a read-modify-write **across processes**, not just within one.
+ *
+ * `makeFifoLock` above orders work inside a single process, which is all the pipeline needs. The
+ * hold store needs more: `npm run answer` is a CLI, and two operators answering the same queue are
+ * two processes. Without a real lock, both read the holds file, both see the item unclaimed, and
+ * both write — measured, before this existed, as two cards on the board from one decision. An
+ * in-process lock cannot see the other process at all.
+ *
+ * `openSync(..., 'wx')` is the primitive: it creates the file or throws `EEXIST`, atomically, in one
+ * syscall. That is the only part that has to be atomic — everything inside the callback is protected
+ * by holding it.
+ *
+ * **A stale lock is broken after `staleMs`.** A process killed mid-write leaves its lock file behind,
+ * and a queue that can never be answered again is a worse failure than the double write this
+ * prevents. The lock records its pid so a human reading the directory can tell what left it.
+ *
+ * Deliberately synchronous, because the callers are. The wait is a bounded spin — this guards a
+ * few file operations, not a network call.
+ */
+export function withExclusiveFileLock<T>(
+  path: string,
+  fn: () => T,
+  opts: { staleMs?: number; timeoutMs?: number; now?: () => number } = {}
+): T {
+  const lockPath = `${path}.lock`;
+  const staleMs = opts.staleMs ?? 30_000;
+  const timeoutMs = opts.timeoutMs ?? 5_000;
+  const now = opts.now ?? Date.now;
+  const started = now();
+
+  // The lock lives beside the file it guards, so the directory has to exist before the first
+  // acquisition — not after the first write. Taking the lock ahead of `atomicWriteJson`'s own
+  // `mkdirSync` meant a first run on a fresh checkout threw ENOENT from the lock, before any of the
+  // code that creates the directory could run.
+  mkdirSync(dirname(lockPath), { recursive: true });
+
+  // A sync sleep without busy-burning a core. `Atomics.wait` on a private buffer is the standard
+  // idiom; the buffer is never shared, so nothing can notify it and it always times out.
+  const pause = (ms: number): void => {
+    try {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+    } catch {
+      const until = now() + ms;
+      while (now() < until) {
+        /* SharedArrayBuffer unavailable — spin, still bounded by timeoutMs */
+      }
+    }
+  };
+
+  const readHolder = (): string | null => {
+    try {
+      return readFileSync(lockPath, 'utf8');
+    } catch {
+      return null;
+    }
+  };
+
+  for (;;) {
+    const token = `${process.pid}:${now()}:${Math.random().toString(36).slice(2, 10)}`;
+
+    // ── ACQUIRE ────────────────────────────────────────────────────────────────────────────────
+    //
+    // **Only `openSync` is inside this try.** It used to wrap the callback too, so a callback that
+    // itself threw an `EEXIST` — any code creating a file that already exists — was mistaken for
+    // lock contention, retried, and retried: measured at **2,442 executions of the callback**, with
+    // the real error swallowed and replaced by a misleading "timed out waiting for lock". For a
+    // callback that writes to a tracker that is not a slow failure, it is thousands of writes.
+    //
+    // The fix is structural rather than a check on the error's shape: the catch cannot see anything
+    // but the acquisition, so it cannot misread anything else.
+    let fd: number;
+    try {
+      fd = openSync(lockPath, 'wx');
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException)?.code !== 'EEXIST') throw err;
+
+      // ── Breaking a stale lock, safely ────────────────────────────────────────────────────────
+      //
+      // An earlier version unlinked whatever was at `lockPath` once it looked old. That let a third
+      // process in: A holds, B judges it stale and replaces it, C — which had judged the SAME old
+      // lock stale — unlinks B's brand-new lock and takes its own. Two live holders, from two
+      // individually correct stale judgements about different files.
+      //
+      // So the identity observed when judging must be the identity deleted. Re-acquisition is `wx`,
+      // which is atomic, so even when two processes both break the same stale lock only one gets it.
+      //
+      // *Residual, stated rather than papered over:* between the identity re-read and the `unlink`
+      // there is still a window in which the holder could change. It is a few microseconds against a
+      // 30-second staleness threshold, and closing it properly needs an OS-level advisory lock —
+      // reasonable for a service, disproportionate for a CLI answering a queue.
+      const holder = readHolder();
+      let age = 0;
+      let vanished = false;
+      try {
+        age = now() - statSync(lockPath).mtimeMs;
+      } catch {
+        vanished = true; // gone between the open and the stat
+      }
+
+      // The timeout is checked on EVERY path out of here, including the ones that retry immediately.
+      // It used to sit below the stale handling, so both `continue`s skipped it — and a lock whose
+      // holder kept changing spun forever. Found by a test written for a different bug, which is the
+      // usual way liveness failures surface.
+      const expired = now() - started > timeoutMs;
+      const giveUp = (): never => {
+        throw new Error(
+          `timed out after ${timeoutMs}ms waiting for ${lockPath} (held ${Math.round(age)}ms by ${holder ?? 'an unknown process'}). ` +
+            'Another process is answering this queue; retry, or remove the lock file if it is orphaned.'
+        );
+      };
+
+      if (vanished) {
+        if (expired) giveUp();
+        continue;
+      }
+
+      // An empty lock is one that was created moments ago and has not written its token yet.
+      if (holder !== null && holder !== '' && age > staleMs) {
+        try {
+          if (readHolder() === holder) unlinkSync(lockPath);
+        } catch {
+          /* someone else broke it first */
+        }
+        if (expired) giveUp();
+        continue;
+      }
+
+      if (expired) giveUp();
+      pause(25);
+      continue;
+    }
+
+    // ── HELD. Anything the callback throws is the CALLBACK's, and propagates untouched. ─────────
+    try {
+      try {
+        // Written immediately, because the identity is what makes stale-breaking safe above. A
+        // reader catching the file in the gap sees empty and treats it as fresh, which is right: a
+        // file created microseconds ago cannot be stale.
+        writeFileSync(fd, token);
+      } catch {
+        /* best effort; the worst case is that a future stale-break cannot verify us */
+      }
+      return fn();
+    } finally {
+      closeSync(fd);
+      try {
+        // Only remove OUR lock. If a stale-breaker already took it, the file belongs to someone else
+        // and deleting it would drop them out of the critical section.
+        if (readHolder() === token) unlinkSync(lockPath);
+      } catch {
+        /* already gone */
+      }
+    }
+  }
 }

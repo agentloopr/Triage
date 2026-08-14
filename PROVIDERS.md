@@ -81,9 +81,21 @@ Measured over one full pass of the **five** scenarios that existed when this was
 Those figures predate the system/user split described below, and are kept as the *before* they are
 compared against. They were taken on the pre-split prompt, so they are a baseline, not current cost.
 
-**The DeepSeek column is an estimate and is marked as one.** Its recordings were made before usage
-capture was wired in, so those figures are derived from character counts at ~4 chars/token rather
-than read from the API. They are here for rough scale, not for a cost ratio.
+**The DeepSeek column is an estimate, and no DeepSeek dollar figure is published at all.** Its
+recordings were made before usage capture was wired in, so those token figures come from character
+counts at ~4 chars/token rather than from the API. They are here for rough scale, not for a ratio.
+
+**This is a partial answer to what the PRD asks for**, and saying so is cheaper than the alternatives.
+PRD §8 asks us to "publish what each costs at our volume". Half of that is published and measured;
+half is not. The two ways to close it are to re-record all eight scenarios against a live DeepSeek key
+with usage capture on — which risks cassette drift across a repo that is otherwise stable — or to
+multiply an estimate by a list price, which would produce a number with a currency symbol and no more
+truth in it than the estimate it came from. **A cost comparison that is precise on one side and
+invented on the other is worse than one that says which side is which.**
+
+The finding that survives either way is the one worth having: **token counts are not comparable across
+providers**, so any per-token price comparison that skips the tokenizer ratio is wrong by whatever
+that ratio happens to be.
 
 Two things in that table matter more than the totals:
 

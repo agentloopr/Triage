@@ -66,7 +66,7 @@ source (transcript | channel | github | gmail | drive)
      Pass 1.5  critic           ─ what the inventory got wrong
      Pass 1.7  consolidator     ─ merge, dedupe, anchor
      Pass 2a   categorization   ─ NEW_TASK | DUPLICATE | SUBTASK | UPDATE, against the live board
-     Pass 2b   contract check   ─ a BLIND re-derivation; disagreement becomes a human hold
+     Pass 2b   contract check   ─ a BLIND re-derivation; new-vs-existing disagreement holds
      Pass 2c   execute          ─ the only writer. Deterministic. No model in the write path.
      Pass 2d   audit            ─ did the board end up how 2c said it would?
 ```

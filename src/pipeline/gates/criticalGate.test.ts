@@ -88,28 +88,37 @@ describe('criticalGate — the patterns are not reachable from input', () => {
     expect(criticalRules()).toHaveLength(4);
   });
 
-  it('freezes each RULE, not just the array holding them', () => {
-    // The first version of this file froze only the array, and the first version of THIS test
-    // asserted only that. `Object.freeze([...])` leaves every object inside writable, so
-    // `criticalRules()[0].re = /never/` disarmed the credentials category while `isFrozen(rules)`
-    // still returned true. An outside audit ran exactly that mutation and watched a matching string
-    // stop matching. Every field a caller could reach is checked now, not just the container.
+  it('never hands out the pattern itself — there is no reference to mutate', () => {
+    // Two earlier versions tried to make a leaked reference safe instead of not leaking it.
+    //   1. `Object.freeze([...])` froze the array and left the rules writable: setting
+    //      `criticalRules()[0].re` disarmed a category while `isFrozen(rules)` still said true —
+    //      which is exactly what this test used to assert.
+    //   2. Freezing each rule stopped the assignment and not the problem: `RegExp` has a legacy
+    //      in-place mutator, `re.compile(...)`, which needs no assignment at all. An outside audit
+    //      ran it and watched a matching string stop matching.
+    // The reference was the bug, so callers now get data.
     for (const rule of criticalRules()) {
+      expect(Object.keys(rule).sort()).toEqual(['category', 'label']);
+      expect((rule as { re?: RegExp }).re).toBeUndefined();
       expect(Object.isFrozen(rule)).toBe(true);
-      expect(() => { (rule as { re: RegExp }).re = /never-matches/; }).toThrow();
-      expect(() => { (rule as { category: string }).category = 'harmless'; }).toThrow();
-      expect(() => { (rule as { label: string }).label = ''; }).toThrow();
     }
+    expect(Object.keys(classifyCritical('rotate the api key')!).sort()).toEqual(['category', 'label']);
   });
 
-  it('still catches what it caught after a caller tries to overwrite the rules', () => {
-    // The property stated in the header — "whatever these patterns catch, no input can stop them
+  it('still catches what it caught after every mutation a caller could attempt', () => {
+    // The property from the header — "whatever these patterns catch, no input can stop them
     // catching it" — asserted as behaviour rather than as a frozen flag.
     const before = criticalGate(item({ title: 'Rotate the api key' }), true);
-    for (const rule of criticalRules()) {
-      try { (rule as { re: RegExp }).re = /never-matches/; } catch { /* strict mode throws; sloppy mode no-ops */ }
+
+    for (const rule of criticalRules() as unknown as Array<Record<string, unknown>>) {
+      try { rule.re = /never-matches/; } catch { /* frozen: throws in strict mode */ }
+      try { (rule.re as RegExp | undefined)?.compile('never-matches', 'i'); } catch { /* no reference to compile */ }
+      try { rule.category = 'harmless'; } catch { /* frozen */ }
+      try { rule.label = ''; } catch { /* frozen */ }
     }
+
     expect(criticalGate(item({ title: 'Rotate the api key' }), true)).toEqual(before);
+    expect(classifyCritical('rotate the api key')?.category).toBe('credentials');
   });
 
   it('ignores every environment variable that names it', () => {

@@ -334,16 +334,24 @@ describe('applyProposals copies named fields onto a copy', () => {
   });
 
   it('a valid category proposal changes the category and reaches the writer', () => {
-    // NEW_TASK → UPDATE against a card that really exists, so the gates have something to check.
-    const snap = new Map([['t100', { id: 't100', title: 'Add rate limiting', status: 'open', list: 'backend' }]]);
+    // `res.clean[0]?.category ?? res.held[0]?.category` was the first assertion here, and it passes
+    // whether the item is written or held — so it proved the copy and not the "reaches the writer"
+    // in its own name. An outside audit caught it. The item must be in `clean`.
+    //
+    // NEW_TASK → DUPLICATE against a card that really exists: the gates have something to check, and
+    // a DUPLICATE needs no assignee or list to survive them.
+    const snap = new Map([
+      ['t100', { id: 't100', title: 'Add rate limiting', status: 'open', listKey: 'backend', assignees: ['Avery Chen'] }],
+    ]);
     const proposed = applyProposals(
-      [item({ category: 'NEW_TASK', list: 'backend' })],
-      [delegation({ proposedCategory: 'UPDATE' })]
+      [item({ category: 'NEW_TASK', list: 'backend', existingTaskId: 't100', tier2Cited: true })],
+      [delegation({ proposedCategory: 'DUPLICATE' })]
     );
-    expect(proposed[0]!.category).toBe('UPDATE');
+    expect(proposed[0]!.category).toBe('DUPLICATE');
 
     const res = applyGates(proposed, snap as never, { criticalGateEnabled: false });
-    expect(res.clean[0]?.category ?? res.held[0]?.category).toBe('UPDATE');
+    expect(res.held, `held instead of written: ${res.held[0]?.gate}`).toEqual([]);
+    expect(res.clean.map((c) => c.category)).toEqual(['DUPLICATE']);
   });
 
   it('a proposal that makes an item critical is held, not written', () => {

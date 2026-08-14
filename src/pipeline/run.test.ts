@@ -15,6 +15,7 @@ import type { CategorizationItem } from './parsing/categorizationManifest';
 import type { RoleEnrichment } from '../agents/roleAgent';
 import { PipelineEvents, type PipelineEvent } from './events';
 import { INVENTORY_END, INVENTORY_START } from './parsing/inventory';
+import { VERIFICATION_UNAVAILABLE_GATE } from './passes/contractCheck';
 import { type PipelineDeps, runPipeline } from './run';
 
 const DIR = join(tmpdir(), `run-test-${process.pid}`);
@@ -22,8 +23,11 @@ const REGISTRY_PATH = join(DIR, 'ops-registry.json');
 
 const REGISTRY: OpsRegistry = {
   version: 1, updatedAt: '2026-01-01T00:00:00.000Z',
-  members: [{ name: 'Avery Chen', externalIds: { clickup: '1' }, email: 'a@x.com', role: 'engineer', defaultProjects: [] }],
-  routes: [{ key: 'backend', externalIds: {}, pattern: 'backend|api|rate limit', defaultAssignee: 'Avery Chen', validAssignees: ['Avery Chen'], status: 'active' }],
+  members: [
+    { name: 'Avery Chen', externalIds: { clickup: '1' }, email: 'a@x.com', role: 'engineer', defaultProjects: [] },
+    { name: 'Rowan Diaz', externalIds: { clickup: '2' }, email: 'r@x.com', role: 'designer', defaultProjects: [] },
+  ],
+  routes: [{ key: 'backend', externalIds: {}, pattern: 'backend|api|rate limit', defaultAssignee: 'Avery Chen', validAssignees: ['Avery Chen', 'Rowan Diaz'], status: 'active' }],
   log: [],
 };
 
@@ -225,11 +229,102 @@ describe('degraded paths', () => {
     expect(events.find((e) => e.type === 'items:uncategorized')).toBeDefined();
   });
 
-  // A flaky verification call must not silently block well-formed work.
-  it('fails open to the deterministic gates when the blind read errors', async () => {
+  /**
+   * This test previously asserted the OPPOSITE — "fails open to the deterministic gates" — on the
+   * argument that a flaky verification call must not silently block well-formed work.
+   *
+   * That argument is real and it loses to a simpler one. The repo's stated rule is *degrade toward
+   * doing less, never toward writing more*, and this was the single place the system broke it: an
+   * item written without its second read, indistinguishable in the output from one that had it. So
+   * the headline claim — two independent reads — was true except when it quietly was not.
+   *
+   * The work is not dropped. It becomes a question a human can approve once the provider recovers,
+   * under a gate that names the outage rather than implying a judgement about the item.
+   */
+  it('HOLDS rather than writing unverified when the blind read errors', async () => {
     const { deps } = makeDeps({ runContractCheck: async () => { throw new Error('provider down'); } });
     const out = await runPipeline(SOURCE, deps);
-    expect(out.clean).toHaveLength(1);
+
+    expect(out.clean).toHaveLength(0);
+    expect(out.exec?.created).toBe(0);
+    expect(out.held).toHaveLength(1);
+    expect(out.held[0]!.gate).toBe(VERIFICATION_UNAVAILABLE_GATE);
+    // The item survives intact, so approving it later replays the stored decision.
+    expect(out.held[0]!.originalItem).toBeDefined();
+    expect(out.held[0]!.question).toMatch(/provider down/);
+  });
+
+  it('runs the deterministic gates even when verification is unavailable', async () => {
+    // The hole the first fail-closed version left: raising the verification hold short-circuited the
+    // gates entirely, so an item with an unknown list key was held under "verification unavailable"
+    // carrying the RAW manifest item — and `npm run answer --approve` replayed it straight into
+    // `planOperations`. **A provider outage became a way to write work the gates would have refused.**
+    const badList = MANIFEST_2A.replace('LIST: backend', 'LIST: not-a-real-list');
+    const { deps } = makeDeps({
+      runCategorization: async () => badList,
+      runContractCheck: async () => { throw new Error('provider down'); },
+    });
+
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.clean).toHaveLength(0);
+    expect(out.exec?.created).toBe(0);
+    expect(out.held).toHaveLength(1);
+    // The GATE's question wins — specific and answerable beats "verification unavailable".
+    expect(out.held[0]!.gate).toBe('unknown list key');
+  });
+
+  it('carries the gap-filled item into a verification hold, not the raw manifest', async () => {
+    // So that approving it later replays something that HAS been through every deterministic check.
+    const { deps } = makeDeps({ runContractCheck: async () => { throw new Error('provider down'); } });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.held[0]!.gate).toBe(VERIFICATION_UNAVAILABLE_GATE);
+    const carried = out.held[0]!.originalItem!;
+
+    // **Fields the RAW manifest does not contain.** The first version asserted `list` and `assignee`,
+    // which `MANIFEST_2A` already sets — so it passed whether the carried item was gap-filled or the
+    // raw one, proving nothing it was named for. These three exist only after `fillFieldGaps` runs.
+    expect(carried.priority).toBe('normal');
+    expect(carried.status).toBe('not started');
+    expect(carried.dueDate).toBe('2026-08-11');
+    expect(out.held[0]!.question).toMatch(/Every deterministic gate passed/);
+  });
+
+  // ── Silence is not agreement ──────────────────────────────────────────────────────────────────
+  //
+  // Every default on `ContractVerdict` is shaped to disagree with nothing, which is right for a
+  // partial reply and catastrophic for an empty one. A provider returning 200 with no body was read
+  // as "the second read concurred", and the item was written on one read. Closing the *throw* path
+  // and leaving the *silence* path open fixed the visible half of the same bug.
+  it.each([
+    ['an empty reply', ''],
+    ['whitespace', '   \n  \t '],
+    ['plain prose', 'Sure, that looks fine to me!'],
+    ['a truncated line', 'VERDICT_CATEGORY:'],
+    // Shaped like verdicts, stating no conclusion. `usable` first accepted any recognised label with
+    // text after it, which let all four through as agreement.
+    ['a rationale with no verdict', 'RATIONALE: looks fine'],
+    ['a match id with no verdict', 'MATCH_TASK_ID: none'],
+    ['an unparseable worth-a-card', 'WORTH_A_CARD: ???'],
+    ['a category outside the taxonomy', 'VERDICT_CATEGORY: PROBABLY_NEW'],
+  ])('holds rather than writing when the blind read returns %s', async (_what, reply) => {
+    const { deps } = makeDeps({ runContractCheck: async () => reply });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.clean).toHaveLength(0);
+    expect(out.exec?.created).toBe(0);
+    expect(out.held[0]!.gate).toBe(VERIFICATION_UNAVAILABLE_GATE);
+    expect(out.held[0]!.question).toMatch(/no usable verdict/);
+  });
+
+  it('still accepts a valid reply that simply omits optional fields', async () => {
+    // The flag must separate "answered and left fields out" from "did not answer". A reply with a
+    // category and nothing else is the former, and must not be treated as silence.
+    const { deps } = makeDeps({ runContractCheck: async () => 'VERDICT_CATEGORY: NEW_TASK' });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.held).toEqual([]);
     expect(out.exec?.created).toBe(1);
   });
 
@@ -287,6 +382,7 @@ describe('degraded paths', () => {
         get: () => null,
         claim: () => ({ status: 'unknown' }),
         finalize: () => false,
+        release: () => {},
         resolve: () => ({ status: 'unknown' }),
       },
       runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
@@ -422,5 +518,42 @@ describe('an agent proposal is re-gated, never applied on trust', () => {
     expect(out.held).toHaveLength(1);
     expect(seen).toEqual([[]]); // delegated nothing: there was nothing clean to delegate
     expect(out.exec?.created).toBe(0);
+  });
+});
+
+describe('role memory follows the FINAL owner, through the whole pipeline', () => {
+  /**
+   * The end-to-end regression for the bug that shipped: `recordExecutedWorkByRole` was handed
+   * `checked.clean`, the pre-agent list, while Pass 2c wrote `writable`. An accepted assignee
+   * proposal therefore put the new owner on the card and the OLD owner in role memory — a wrong
+   * memory, phrased confidently, in every later prompt.
+   *
+   * Fixed with a one-word change and covered only at the resume path, which does not exercise the
+   * agent re-gate at all. This drives the real thing: an agent proposes a different valid assignee,
+   * the gates accept it, and the memo must land under the role of the person who actually owns it.
+   */
+  it('records the proposed owner, not the one Pass 2a chose', async () => {
+    const recorded: Array<{ role: string; titles: string[] }> = [];
+    const { deps } = makeDeps({
+      roleState: { record: (role, items) => recorded.push({ role, titles: items.map((i) => i.title) }) },
+      agents: {
+        delegate: async (items) =>
+          items.map((it) => ({
+            item: it.item,
+            role: 'engineer',
+            owner: it.assignee ?? '',
+            // Avery Chen (engineer) → Rowan Diaz (designer). Both are valid for `backend`, so the
+            // re-gate accepts, and the two map to DIFFERENT roles — which is what makes the wrong
+            // answer visible rather than coincidentally right.
+            enrichment: { note: 'n', proposedAssignee: 'Rowan Diaz' },
+          })),
+      },
+    });
+
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.clean[0]?.assignee).toBe('Rowan Diaz');
+    expect(recorded.map((r) => r.role)).toEqual(['designer']);
+    expect(recorded[0]!.titles).toEqual(['Add rate limiting to the public API']);
   });
 });

@@ -97,6 +97,21 @@ two calls, and two concurrent deliveries of the same event both pass it.
 npm run demo -- --twice   # proves it: second run, zero model calls, $0.00
 ```
 
+**And the test-and-set is atomic across processes, which it was not for most of this repo's life.**
+The persistent store held an in-process lock — correct-looking, and the wrong primitive for a file
+whose entire reason to be on disk is that the next reader is a different process. Measured with 20
+workers racing one key: 2–4 accepted it as new against an empty file, and **20 of 20** against a
+75,000-record one, because the read-modify-write window scales with parse time. Every test in the
+suite passed throughout, because every test ran in one process, where the two locks are
+indistinguishable. `src/state/crossProcess.test.ts` starts real processes; it is the only test here
+that can see the difference.
+
+Two things came out of that, not one. The fix is a single lock — `withExclusiveFileLock` — now used
+by every file this repo writes: holds, idempotency, corrections, role memory, the roster. The second
+is that **`prune` was implemented, exported, unit-tested and called by nothing**, so expired records
+outlived the deployment and the race window grew with the file. It runs at startup now, in
+`buildLiveDeps`, under the same lock.
+
 ## Fail-open and fail-closed
 
 The asymmetry is deliberate, and it is the design. **Degrade toward doing less; never toward writing
@@ -246,6 +261,23 @@ The claim is taken under a **cross-process lock** — `openSync(..., 'wx')`, whi
 processes. An in-process lock cannot see the other one at all. The lock is broken after 30s as stale,
 for the same reason the claim expires: a queue nobody can ever answer again is worse than the race it
 prevents.
+
+It is the **only** lock here. There used to be a second, in-process one, and its existence was the
+problem: three stores held it, it read as protection in every review, and none of them were protected.
+A codebase with a cheap lock and an expensive one invites reaching for the cheap one.
+
+**Writing the ownership token is part of acquiring the lock, not a best effort afterwards.** Two
+rules that are each correct — a holder deletes only a lock it can identify as its own, and an empty
+lock is treated as fresh rather than stale, because a file created microseconds ago cannot be dead —
+combined into a permanent one if the token never landed. Nobody was entitled to remove it: not the
+holder, which could not recognise it, and not a passer-by, which saw an empty holder. One transient
+`ENOSPC` was enough to wedge a state file until a human deleted the lock by hand.
+
+Both halves are fixed, because they fail differently. A token write that **throws** unlinks and
+rethrows, and the callback does not run. A process **killed** between the two syscalls runs no
+cleanup at all, so the second rule had to give: an empty lock is judged by age like any other, and
+30 seconds between two adjacent syscalls is not a live process. That is the same inference already
+made about a stamped lock whose holder went quiet — an exemption removed, not an assumption added.
 
 **A live claim blocks either decision, not just another approve.** It once guarded approvals only, so
 a skip walked past an in-flight approval and deleted the hold — measured as one card written *and*

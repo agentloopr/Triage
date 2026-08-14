@@ -340,3 +340,29 @@ measured ceiling:
 
 Both are fine at fixture scale. Neither has been profiled, so the honest statement is that no ceiling
 is documented — not that none exists.
+
+### Concurrent writers: safe on the state, unproven on the throughput
+
+Every file this repo writes — holds, idempotency, corrections, role memory, the roster — is mutated
+under one cross-process lock, and `src/state/crossProcess.test.ts` asserts that by starting sixteen
+real processes. That is what makes two operators or two workers safe **against each other's state**.
+
+It is worth saying how that was found, because it is the failure mode this whole document exists for:
+three of those stores held an *in-process* lock, every test in the suite passed, and every test ran
+in one process — where an in-process lock and a cross-process one are indistinguishable. An outside
+audit spawned processes and measured twenty of twenty workers accepting the same delivery as new.
+Nothing in the suite could have caught it, and nothing in the suite was failing.
+
+What is *not* claimed is that this is service-grade synchronization:
+
+- The lock is a **bounded spin on a lock file**, with a 5s acquisition timeout and a 30s staleness
+  threshold. It suits a CLI holding it for a few file operations. It is not a queue, it has no
+  fairness guarantee, and a worker pool large enough to keep it permanently contended will start
+  seeing timeouts rather than waiting politely.
+- Breaking a stale lock re-reads the holder's identity before unlinking it, but **the re-read and the
+  unlink are not one atomic step**. The window is microseconds against a 30-second threshold; closing
+  it properly needs an OS-level advisory lock, which is right for a service and disproportionate here.
+- No throughput figure is published, because none has been measured.
+
+So: concurrent CLI processes will not lose each other's writes. A high-concurrency long-running
+service is a different engineering problem, and this repo has not solved it.

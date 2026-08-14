@@ -24,10 +24,10 @@
  * this calls it against a temp directory and asserts on the objects that come back. No credential,
  * no network, no live service.
  */
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PipelineEvents } from '../pipeline/events';
 import type { CompletionResult, ModelClient } from '../providers';
@@ -89,6 +89,73 @@ describe('a live run is given every store it needs', () => {
     expect(await build(false).deps.idempotency.checkAndMark('source', 'src-1')).toBeNull();
     // Seen in the PLAN namespace; the write namespace must not know about it.
     expect(await build(true).deps.idempotency.checkAndMark('source', 'src-1')).toBeNull();
+  });
+
+  /**
+   * `prune` existed, was unit-tested, and was called by nothing outside its own test.
+   *
+   * That is a third shape of the repo's recurring defect. It was not unreachable and it was not
+   * unsupplied — it was **implemented, exported, correct, and never invoked**, which no reachability
+   * check and no unit test can tell apart from working. Expiry is only consulted when the same key
+   * comes back, so a key seen once and never again outlived the deployment; the audit reproduced the
+   * consequence by growing the file until every one of twenty racing processes won.
+   *
+   * Asserted by effect: an expired record present before the build must be gone after it. A test
+   * that asserted `prune` appeared in `liveDeps.ts` would be the same mistake one layer up.
+   */
+  it('prunes expired records at startup, rather than leaving them forever', async () => {
+    const path = join(dir, 'idem.json');
+    const old = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(); // past every layer's TTL
+    writeFileSync(
+      path,
+      JSON.stringify({
+        'event:stale': { layer: 'event', key: 'stale', seenAt: old },
+        'source:fresh': { layer: 'source', key: 'fresh', seenAt: new Date().toISOString() },
+      })
+    );
+
+    buildLiveDeps({
+      tracker: memoryTracker({ tasks: [] }),
+      model: stub,
+      events: new PipelineEvents(),
+      write: true,
+      paths: { idempotency: path, idempotencyPlan: join(dir, 'p.json'), pendingHuman: join(dir, 'h.json'), roleStateDir: join(dir, 'r') },
+    });
+
+    // The call is not awaited, which is not the same as not blocking: `prune` has a synchronous
+    // body, so the work is usually finished by the time the build returns. `waitFor` is here because
+    // the *promise* settles later, not because the pruning happens later.
+    await vi.waitFor(() => {
+      const after = JSON.parse(readFileSync(path, 'utf8')) as Record<string, unknown>;
+      expect(Object.keys(after)).toEqual(['source:fresh']);
+    });
+  });
+
+  /**
+   * The bound on that prune, asserted rather than asserted-about.
+   *
+   * `prune` is `async` with a fully synchronous body, so `void store.prune()` runs the lock, the
+   * parse and the write before it returns — dropping the `await` moved nothing off the critical
+   * path. With the lock held by someone else, a build was measured at 5,020ms while its own comment
+   * said "deliberately not awaited". This holds the lock and requires the build back promptly.
+   */
+  it('gives up on the startup prune rather than blocking the run behind the lock', () => {
+    const path = join(dir, 'idem.json');
+    writeFileSync(path, JSON.stringify({}));
+    writeFileSync(`${path}.lock`, 'someone-else'); // a live holder, freshly stamped: never stale
+
+    const started = Date.now();
+    buildLiveDeps({
+      tracker: memoryTracker({ tasks: [] }),
+      model: stub,
+      events: new PipelineEvents(),
+      write: true,
+      paths: { idempotency: path, idempotencyPlan: join(dir, 'p.json'), pendingHuman: join(dir, 'h.json'), roleStateDir: join(dir, 'r') },
+    });
+
+    // Generous against the 250ms budget and still an order of magnitude under the 5s default the
+    // regression was measured at.
+    expect(Date.now() - started).toBeLessThan(1_500);
   });
 
   it('supplies a role-state store that writes where it says it does', () => {

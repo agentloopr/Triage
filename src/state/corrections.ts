@@ -15,7 +15,7 @@
  * is most of them.
  */
 import { CORRECTIONS_PATH } from '../config';
-import { atomicWriteJson, makeFifoLock, readJsonOrNull } from './jsonStore';
+import { atomicWriteJson, readJsonOrNull, withExclusiveFileLock } from './jsonStore';
 
 export interface NotDuplicatePair {
   /** Normalized proposed title that was wrongly matched. */
@@ -70,7 +70,6 @@ const emptyStore = (): CorrectionsStore => ({
 const MAX_PAIRS = 500;
 const MAX_NOTES = 500;
 
-const withLock = makeFifoLock();
 let overridePath: string | null = null;
 
 /** Point the store at a different file — for tests and for per-scenario fixtures. */
@@ -146,8 +145,17 @@ export function learnedFactsBlock(limit = 30): string[] {
   return lines.slice(0, limit);
 }
 
+/**
+ * Read, mutate, cap, write — under a lock held across processes.
+ *
+ * `npm run correct` is a CLI, so "two writers" means two people at two terminals, and the in-process
+ * FIFO lock this used to hold could not see the second one. Measured: eight simultaneous processes
+ * each recording a distinct correction left four on disk. **A correction the CLI acknowledged and
+ * then dropped is worse than one it refused** — the human believes the pipeline has been told, and
+ * the next run repeats the decision they overrode.
+ */
 async function mutate(fn: (s: CorrectionsStore) => void): Promise<void> {
-  await withLock(async () => {
+  withExclusiveFileLock(path(), () => {
     const store = loadCorrections();
     fn(store);
     if (store.notDuplicatePairs.length > MAX_PAIRS) {

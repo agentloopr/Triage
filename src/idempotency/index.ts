@@ -40,6 +40,13 @@ export interface StoreConfig {
   ttls?: Partial<Record<Layer, number>>;
   /** Injectable for tests; defaults to Date.now. */
   now?: () => number;
+  /**
+   * Cross-process lock tuning for the file-backed store — see `withExclusiveFileLock`.
+   *
+   * The defaults suit a CLI. The knob exists because contention scales with the number of workers
+   * and the size of the state file, and both are the caller's to know.
+   */
+  lock?: { staleMs?: number; timeoutMs?: number };
 }
 
 /** sha256, sliced — long enough that a collision is not a real concern, short enough to read in a log. */

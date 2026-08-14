@@ -20,7 +20,7 @@
  */
 import { existsSync, statSync, readFileSync } from 'node:fs';
 import { OPS_REGISTRY_PATH } from '../config';
-import { atomicWriteJson, makeFifoLock, readJsonOrNull } from '../state/jsonStore';
+import { atomicWriteJson, readJsonOrNull, withExclusiveFileLock } from '../state/jsonStore';
 
 // ── Serialized shape (mirrors the JSON on disk) ──────────────────────────────
 
@@ -331,8 +331,6 @@ export function externalId(
 
 // ── Write path ───────────────────────────────────────────────────────────────
 
-const withWriteLock = makeFifoLock();
-
 /**
  * Fresh read for a write — deliberately NOT falling back to the empty seed the way the read path
  * does. See the header: writing while degraded is what makes a transient outage permanent.
@@ -343,13 +341,21 @@ function readFreshForWrite(path: string): OpsRegistry | null {
   return null;
 }
 
+/**
+ * The roster's only mutator, under a lock held across processes.
+ *
+ * No shipped CLI calls this — it is an exported API for a consumer growing their own admin command,
+ * which is exactly the case that gets two writers. Eight simultaneous unique additions kept three
+ * under the in-process lock this replaced. An exported mutator that silently loses writes is a worse
+ * shape than one that refuses, so it locks rather than documenting a restriction nobody would read.
+ */
 export async function mutateRegistry(
   mutator: (reg: OpsRegistry) => string,
   actor: string,
   explicitPath?: string
 ): Promise<string> {
   const path = registryPath(explicitPath);
-  return withWriteLock(async () => {
+  return withExclusiveFileLock(path, () => {
     const reg = readFreshForWrite(path);
     if (!reg) {
       throw new OpsRegistryDegradedError(

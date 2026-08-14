@@ -7,7 +7,28 @@
 import { existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+/**
+ * The one thing here that cannot be arranged with real files: a write to the lock's own descriptor
+ * failing. `vi.spyOn` cannot touch an ESM namespace, so `node:fs` is wrapped instead — pass-through
+ * in every case except an fd write while the flag below is set. `atomicWriteJson` writes to a
+ * *path*, so nothing else in this file or in the code under test changes behaviour.
+ */
+const ctl = vi.hoisted(() => ({ failFdWrite: false }));
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  const write = actual.writeFileSync as (...args: unknown[]) => void;
+  return {
+    ...actual,
+    writeFileSync: (target: unknown, ...rest: unknown[]) => {
+      if (ctl.failFdWrite && typeof target === 'number') {
+        throw Object.assign(new Error('ENOSPC: no space left on device'), { code: 'ENOSPC' });
+      }
+      return write(target, ...rest);
+    },
+  };
+});
 
 import { withExclusiveFileLock } from './jsonStore';
 
@@ -103,12 +124,59 @@ describe('withExclusiveFileLock', () => {
     expect(existsSync(LOCK)).toBe(true); // still held by whoever last wrote it
   });
 
-  it('treats an empty lock as fresh, not as stale', () => {
+  it('treats a NEW empty lock as fresh, not as stale', () => {
     // There is a window between `openSync(wx)` and writing the token. A reader catching the file in
     // that gap must not conclude the holder is dead — it was created microseconds ago.
     writeFileSync(LOCK, '');
+    expect(() => withExclusiveFileLock(FILE, () => 'never', { staleMs: 1_000, timeoutMs: 60 })).toThrow(/timed out/);
+  });
+
+  /**
+   * ...and an OLD empty lock is a creator that died before it could stamp itself.
+   *
+   * **This test asserted the opposite for one round.** "Empty means freshly created" was treated as
+   * true at every age, which turned the microsecond gap above into a permanent one: kill a process
+   * between `openSync` and the token write, and the file it leaves behind is a lock nobody may
+   * remove — the creator is gone and every passer-by is forbidden to touch it. C-01 covered the
+   * token write *failing*; no cleanup code runs at all when the process is killed instead.
+   *
+   * Thirty seconds between two adjacent syscalls is not a live process. This is the same inference
+   * the stale-break already makes about a stamped lock whose holder went quiet, so it adds no new
+   * assumption — it removes an exemption.
+   */
+  it('breaks an empty lock once it is older than a live acquisition could be', () => {
+    writeFileSync(LOCK, '');
     const old = new Date(Date.now() - 60_000);
     utimesSync(LOCK, old, old);
-    expect(() => withExclusiveFileLock(FILE, () => 'never', { staleMs: 1_000, timeoutMs: 60 })).toThrow(/timed out/);
+    expect(withExclusiveFileLock(FILE, () => 'recovered', { staleMs: 1_000, timeoutMs: 200 })).toBe('recovered');
+    expect(existsSync(LOCK)).toBe(false);
+  });
+
+  /**
+   * The rule above, plus a best-effort token write, used to make a lock nobody could ever remove.
+   *
+   * A holder releases only what it can identify as its own (`readHolder() === token`), and the
+   * stale-break refuses to touch an empty holder — both correct in isolation. With the token write
+   * swallowed, the file stays empty forever: its owner will not delete it, and no one else is
+   * allowed to. One transient ENOSPC and every later mutation of that file times out until a human
+   * finds the lock file. The audit reproduced it under a zero-byte output limit; here the write is
+   * made to fail directly, which is the same event with less ceremony.
+   *
+   * Only the fd write is broken — `atomicWriteJson` passes a path — so this is about the lock alone.
+   */
+  it('fails acquisition, rather than the callback, when ownership cannot be recorded', () => {
+    let ran = false;
+    ctl.failFdWrite = true;
+    try {
+      expect(() => withExclusiveFileLock(FILE, () => { ran = true; return 'x'; })).toThrow(/ENOSPC/);
+    } finally {
+      ctl.failFdWrite = false;
+    }
+
+    // Nothing may run under a lock that cannot be released.
+    expect(ran, 'the callback ran while ownership was unrecorded').toBe(false);
+    // And the failure must be transient — no immortal empty lock left behind.
+    expect(existsSync(LOCK), 'an unreleasable empty lock survived the failure').toBe(false);
+    expect(withExclusiveFileLock(FILE, () => 'recovered')).toBe('recovered');
   });
 });

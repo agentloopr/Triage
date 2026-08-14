@@ -40,10 +40,10 @@ describe.skipIf(SETS.length === 0)('the agent path replays offline', () => {
       /**
        * A PARTIAL recording must fail loudly here, and nothing else in this file would catch it.
        *
-       * Pass 2b fails open on a missing cassette by design — a blind read that cannot run must not
-       * take down a batch. That is right for production and wrong for a replay test: run against a
-       * half-written recording, every invariant above still passes, because failing open is allowed.
-       * (Observed exactly that, replaying a recording while it was still being written.)
+       * Pass 2b now HOLDS when its blind read cannot run, rather than failing open — but a hold is
+       * still not a failure, so a half-written recording produces a run full of held items in which
+       * every invariant above passes. (Observed the fail-open version of exactly this, replaying a
+       * recording while it was still being written; holding changes the symptom, not the blind spot.)
        *
        * So this checks the files, not the behaviour: every categorized item must have a 2b cassette
        * on disk. The pipeline's tolerance cannot mask a recording that was never finished.

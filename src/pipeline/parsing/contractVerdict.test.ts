@@ -42,17 +42,42 @@ describe('parseContractVerdict', () => {
     expect(v.rationale).not.toContain('WORTH_A_CARD');
   });
 
-  // A flaky verdict must never be able to suppress genuine work or invent a dispute.
-  describe('fails open on anything missing or garbled', () => {
-    it('defaults an empty reply to entirely permissive', () => {
+  /**
+   * Individual judgement fields fail OPEN — a flaky verdict must never suppress genuine work or
+   * invent a dispute. **A reply with no verdict at all does not**, and this block used to conflate
+   * them: it asserted an empty reply parses to "entirely permissive" and stopped there, which was
+   * true and was exactly how a 200 with no body came to be read as agreement.
+   *
+   * The defaults are unchanged. What is added is `usable`, which the caller checks — so "answered
+   * and omitted fields" and "did not answer" stop being the same value.
+   */
+  describe('individual fields fail open; a missing verdict does not', () => {
+    it('defaults an empty reply permissively BUT marks it unusable', () => {
       expect(parseContractVerdict('')).toMatchObject({
         legitimacy: 'real_task', grounded: true, cardStillMatches: true, routingOk: true, category: 'UNKNOWN',
+        usable: false,
       });
     });
 
+    it.each([
+      ['whitespace', '   \n  '],
+      ['plain prose', 'Sure, that looks fine to me!'],
+      ['a truncated label', 'VERDICT_CATEGORY:'],
+      ['a rationale with no verdict', 'RATIONALE: looks fine'],
+      ['a match id with no verdict', 'MATCH_TASK_ID: none'],
+      ['an unparseable worth-a-card', 'WORTH_A_CARD: ???'],
+      ['a category outside the taxonomy', 'VERDICT_CATEGORY: PROBABLY_NEW'],
+    ])('marks %s unusable — shaped like a verdict, states no conclusion', (_what, raw) => {
+      expect(parseContractVerdict(raw).usable).toBe(false);
+    });
+
+    it('marks a reply usable as soon as it states a real category, however sparse', () => {
+      expect(parseContractVerdict('VERDICT_CATEGORY: NEW_TASK').usable).toBe(true);
+    });
+
     it('defaults garbage in the judgement fields to permissive', () => {
-      const v = verdict(['GROUNDED: probably?', 'ROUTING_OK: dunno', 'CARD_STILL_MATCHES: ¯\\_(ツ)_/¯', 'WORTH_A_CARD: ???']);
-      expect(v).toMatchObject({ grounded: true, routingOk: true, cardStillMatches: true, legitimacy: 'real_task' });
+      const v = verdict(['VERDICT_CATEGORY: NEW_TASK', 'GROUNDED: probably?', 'ROUTING_OK: dunno', 'CARD_STILL_MATCHES: ¯\\_(ツ)_/¯', 'WORTH_A_CARD: ???']);
+      expect(v).toMatchObject({ grounded: true, routingOk: true, cardStillMatches: true, legitimacy: 'real_task', usable: true });
     });
 
     it('honours an explicit no', () => {

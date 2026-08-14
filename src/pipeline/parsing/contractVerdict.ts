@@ -4,11 +4,17 @@
  * Pass 2b re-derives the categorization from the Pass-1 inventory item alone, without seeing what 2a
  * concluded. Its output is this small structured verdict, which the gates then compare against 2a's.
  *
- * **Every optional judgement here fails OPEN.** An absent or garbled field parses to the permissive
- * value — `real_task`, `grounded`, `cardStillMatches`, `routingOk` all default to "fine". That is
- * deliberate and worth defending: a flaky verdict must never be able to suppress genuine work or
- * invent a dispute out of nothing. The blind read's job is to *catch* problems, so its failure mode
- * has to be silence, not false alarms.
+ * **Every optional judgement here fails OPEN — within a reply that exists.** An absent or garbled
+ * field parses to the permissive value: `real_task`, `grounded`, `cardStillMatches`, `routingOk` all
+ * default to "fine". That is deliberate and worth defending: a flaky verdict must never suppress
+ * genuine work or invent a dispute out of nothing. The blind read's job is to *catch* problems, so
+ * its failure mode has to be silence, not false alarms.
+ *
+ * **But silence about a field and silence about everything are different things**, and this parser
+ * could not tell them apart. An empty string, whitespace, plain prose and a truncated line each
+ * produced a verdict that disagreed with nothing — so a provider returning 200 with no body read as
+ * "the second read concurred" and the item was written on one read. `usable` exists for exactly that
+ * distinction, and the caller treats an unusable verdict as a failed read rather than as agreement.
  */
 import { ASR_PROVENANCE_FLOOR, ASR_PROVENANCE_LOW } from '../../config';
 import type { MeetingCategory } from './categorizationManifest';
@@ -16,6 +22,21 @@ import type { MeetingCategory } from './categorizationManifest';
 export type Legitimacy = 'real_task' | 'not_a_task' | 'unsure';
 
 export type ContractVerdict = {
+  /**
+   * True when the reply actually states a category — the one field that IS the verdict.
+   *
+   * Every other field on this type has a safe-looking default — category `UNKNOWN`, legitimacy
+   * `real_task`, grounded `true` — which is right for a partial reply and catastrophic for an empty
+   * one. An empty string, whitespace, plain prose or a truncated line all parsed to a verdict that
+   * *disagreed with nothing*, so silence from the provider was indistinguishable from agreement:
+   * the item fell through and was written on one read. A 200 with no body is the most expensive
+   * kind of green.
+   *
+   * The defaults stay as they are — a reply that gives a category and omits `GROUNDED` should not be
+   * treated as ungrounded. This flag separates "the model answered and left fields out" from "there
+   * was no answer", which no combination of the other fields can express.
+   */
+  usable: boolean;
   category: MeetingCategory | 'UNKNOWN';
   /** Board ids the blind read matched (DUPLICATE/UPDATE existing, SUBTASK parent, RELATE pair). */
   matchIds: string[];
@@ -47,6 +68,7 @@ const CATEGORIES = new Set(['NEW_TASK', 'DUPLICATE', 'SUBTASK', 'UPDATE', 'RELAT
 
 export function parseContractVerdict(raw: string): ContractVerdict {
   const out: ContractVerdict = {
+    usable: false,
     category: 'UNKNOWN',
     matchIds: [],
     rationale: '',
@@ -79,6 +101,13 @@ export function parseContractVerdict(raw: string): ContractVerdict {
 
   out.rationale = (raw.match(/^\s*RATIONALE:\s*([\s\S]*?)(?=\n\s*[A-Z_]+:|\n*$)/im)?.[1] ?? '').trim();
   out.tier2Cited = /\b(list-tasks|task-comments)\b|comment history/i.test(out.rationale);
+
+  // **A parsed category, not merely a recognised label.** The first version accepted any known field
+  // with text after it, which let `RATIONALE: looks fine`, `MATCH_TASK_ID: none`, `WORTH_A_CARD: ???`
+  // and `VERDICT_CATEGORY: PROBABLY_NEW` all count as verdicts — none of which states what the blind
+  // read concluded. The category IS the verdict; everything else qualifies it. A reply without one
+  // re-derived nothing, however well-formed it looks.
+  out.usable = out.category !== 'UNKNOWN';
 
   return out;
 }

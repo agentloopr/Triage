@@ -90,18 +90,46 @@ async function main(): Promise<void> {
     case 'executed': {
       const e = outcome.exec;
       console.log(`\n✓ ${id} approved — ${e.created} created · ${e.commented} commented (tracker: ${TRACKER})`);
-      console.log(`  audit: ${outcome.audit.passed} passed, ${outcome.audit.mismatched} mismatched\n`);
-      // The write is reported from the executor's result, never from the fact that we asked for it.
-      if (outcome.audit.mismatched > 0) process.exit(1);
+      if (outcome.audit) {
+        console.log(`  audit: ${outcome.audit.passed} passed, ${outcome.audit.mismatched} mismatched\n`);
+        if (outcome.audit.mismatched > 0) process.exit(1);
+      } else {
+        // The write landed; only the verification of it did not. Say which, rather than printing a
+        // reassuring "0 mismatched" that was never actually checked.
+        console.log(`  ⚠ the write landed but could not be audited: ${outcome.auditError}\n`);
+      }
+      if (outcome.staleClaim) {
+        console.error(`  ! ${outcome.staleClaim}\n`);
+        process.exit(1);
+      }
       break;
     }
+    case 'partially_written':
+      // The board already changed, so the hold is closed — re-running would duplicate what worked.
+      console.error(`\n⚠ ${id} was PARTIALLY written — ${outcome.reason}`);
+      // The audit runs on a partial write and used to be computed and thrown away. It is the only
+      // statement of what the board actually looks like now, which is the thing a human is about to
+      // go and fix by hand.
+      if (outcome.audit) console.error(`  audit: ${outcome.audit.passed} passed, ${outcome.audit.mismatched} mismatched`);
+      else if (outcome.auditError) console.error(`  audit could not read the board: ${outcome.auditError}`);
+      if (outcome.staleClaim) console.error(`  ! ${outcome.staleClaim}`);
+      console.error(`  Some operations landed, so this is not retryable: re-running would repeat them.`);
+      console.error(`  The hold is closed. Finish the remainder on the board by hand.\n`);
+      process.exit(1);
+      break;
     case 'write_failed':
       // The hold is still open. Saying so is the whole point: the alternative was reporting an
       // approval that changed nothing, with the queue entry already deleted.
       console.error(`\n✗ ${id} was NOT written — ${outcome.reason}`);
-      console.error(`  The hold is still open. Fix the cause and re-run, or drop it with --skip.\n`);
+      console.error(`  Nothing reached the board, so the hold is still open. Fix the cause and`);
+      console.error(`  re-run, or drop it with --skip.\n`);
       process.exit(1);
       break;
+    case 'in_progress':
+      throw new Error(
+        `${id} is already being approved elsewhere (claimed ${outcome.since}). Nothing was written here. ` +
+          'Wait for that run to finish, or retry once its claim expires.'
+      );
     case 'skipped':
       console.log(`\n✓ ${id} skipped — nothing written\n`);
       break;

@@ -262,6 +262,19 @@ if one does. (This paragraph previously said agents "cannot change a category, a
 That was true before Part B and stopped being true when the re-gate shipped; an outside audit found
 it still standing here.) See [AGENTS.md](AGENTS.md).
 
+## What a provider outage costs you
+
+`Pass 2b` holds when its blind read cannot run, so an outage produces **a batch of questions rather
+than a batch of unverified writes**. That is the intended trade and it has a cost worth knowing
+before you point this at a busy queue: a sustained provider failure can hold an entire run, and every
+one of those holds says the same thing — `independent verification unavailable` — which is a gate
+about the pipeline, not about the item.
+
+`npm run answer -- <id> --approve` writes such an item on the first read alone, deliberately: the
+decision, the evidence and the gates are all intact, and only the disconfirming check is missing.
+Approving is a considered choice to accept one read, which is exactly what the earlier fail-open
+behaviour did **without asking**.
+
 ## What production has and this does not
 
 The PRD this repo was built to never asked for any of the four below, and their absence is a

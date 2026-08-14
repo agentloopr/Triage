@@ -89,26 +89,34 @@ const CRITICAL_RULES: readonly Readonly<CriticalRule>[] = Object.freeze([
   },
 ].map(Object.freeze) as readonly Readonly<CriticalRule>[]);
 
-/**
- * The rule table, for tests and for docs.
- *
- * **Deep-frozen, and the first version was not.** `Object.freeze([...])` freezes the array and
- * leaves every object inside it writable, so `criticalRules()[0].re = /never/` silently disarmed the
- * credentials category while `Object.isFrozen(rules)` still reported true — and the test asserted
- * exactly that, plus a `push` that throws. The guarantee in the header says no input can stop these
- * patterns catching what they catch; a caller holding a live reference to the rule object could stop
- * them in one line. Found by an outside audit, which produced the mutation and watched a matching
- * string stop matching.
- *
- * Each rule is frozen individually now. `RegExp` objects are still reference types — `lastIndex` is
- * writable on any regex — but every rule here is stateless (`test` with no `/g`), so there is no
- * cross-call state to corrupt.
- */
-export const criticalRules = (): readonly Readonly<CriticalRule>[] => CRITICAL_RULES;
+/** What a caller may see of a rule: everything except a live handle on the pattern. */
+export type CriticalRuleView = { category: CriticalCategory; label: string };
 
-/** First matching rule against title + description, or null. */
-export function classifyCritical(text: string): Readonly<CriticalRule> | null {
-  return CRITICAL_RULES.find((r) => r.re.test(text)) ?? null;
+/**
+ * The rule table, for tests and for docs — **as data, never as a live `RegExp`.**
+ *
+ * Two earlier versions of this leaked a mutable gate, and the second is the instructive one:
+ *
+ *   1. `Object.freeze([...])` froze the array and left every rule object writable, so
+ *      `criticalRules()[0].re = /never/` disarmed the credentials category while
+ *      `Object.isFrozen(rules)` still returned true.
+ *   2. Freezing each rule fixed that and **did not fix the actual problem.** `Object.freeze` makes a
+ *      property non-writable; it does nothing to the object the property points at. `RegExp` has a
+ *      legacy in-place mutator — `re.compile('never-matches', 'i')` — which needs no assignment at
+ *      all. Measured: gate matches, `compile()` runs without throwing, gate stops matching.
+ *
+ * Both fixes were patches on the same shape: hand out a reference and then try to make the reference
+ * safe. The reference is the bug. Callers get categories and labels; the patterns stay module-private
+ * and are reachable only through `classifyCritical`, which returns a description of a match rather
+ * than the thing that matched.
+ */
+export const criticalRules = (): readonly CriticalRuleView[] =>
+  Object.freeze(CRITICAL_RULES.map((r) => Object.freeze({ category: r.category, label: r.label })));
+
+/** First matching rule against title + description, or null. Returns a view, not the rule. */
+export function classifyCritical(text: string): CriticalRuleView | null {
+  const hit = CRITICAL_RULES.find((r) => r.re.test(text));
+  return hit ? Object.freeze({ category: hit.category, label: hit.label }) : null;
 }
 
 /**

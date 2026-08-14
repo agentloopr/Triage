@@ -20,7 +20,7 @@
  * Storage is the shared `jsonStore` primitive, so this inherits atomic writes and loud corruption
  * handling rather than reimplementing them.
  */
-import { atomicWriteJson, readJsonOrNull } from './jsonStore';
+import { atomicWriteJson, readJsonOrNull, withExclusiveFileLock } from './jsonStore';
 import type { HeldItem } from '../pipeline/gates/contractGates';
 import type { CategorizationItem } from '../pipeline/parsing/categorizationManifest';
 
@@ -36,14 +36,34 @@ export type PendingHold = {
   /** Absent when the gate held without a per-item decision — such a hold is not resumable. */
   originalItem?: CategorizationItem;
   heldAtIso: string;
+  /**
+   * Set while an approval is in flight, so a second one does not execute the same write.
+   *
+   * Without it, two concurrent `npm run answer -- <id> --approve` both read the hold, both execute,
+   * and **two cards land on the board from one decision** — observed, not theorised. The previous
+   * design happened to avoid this by deleting the hold first, which is why splitting claim from
+   * finalize reintroduced it: durability and exclusivity were being provided by the same delete.
+   */
+  claim?: { token: string; atIso: string };
 };
+
+/**
+ * How long a claim is honoured before another approval may take it.
+ *
+ * A process that dies mid-write leaves its claim behind; without an expiry the hold would be stuck
+ * forever, which is a worse failure than the double write. Long enough that a slow tracker call
+ * cannot be overtaken by an impatient second operator.
+ */
+export const CLAIM_TTL_MS = 5 * 60 * 1000;
 
 export type Resolution = 'approve' | 'skip';
 
 export type ResolveResult =
-  | { status: 'resolved'; decision: Resolution; hold: PendingHold }
+  | { status: 'resolved'; decision: Resolution; hold: PendingHold; /** Pass to `finalize`. */ claimToken: string }
   | { status: 'unknown' }
-  | { status: 'not_resumable'; hold: PendingHold };
+  | { status: 'not_resumable'; hold: PendingHold }
+  /** Someone else is mid-approval on this hold. Theirs will finish or release it. */
+  | { status: 'in_progress'; hold: PendingHold; since: string };
 
 type File = { version: 1; holds: PendingHold[] };
 
@@ -59,7 +79,9 @@ export interface PendingHumanStore {
    */
   claim(id: string, decision: Resolution): ResolveResult;
   /** Remove a claimed hold. Call only once the decision has actually taken effect. */
-  finalize(id: string): boolean;
+  finalize(id: string, claimToken: string): boolean;
+  /** Give a claim back without resolving, so a retry can take it. */
+  release(id: string, claimToken: string): void;
   /**
    * `claim` + `finalize` in one step.
    *
@@ -71,8 +93,20 @@ export interface PendingHumanStore {
   resolve(id: string, decision: Resolution): ResolveResult;
 }
 
-export function pendingHumanStore(path: string, opts: { now?: () => number } = {}): PendingHumanStore {
+export function pendingHumanStore(
+  path: string,
+  opts: {
+    now?: () => number;
+    /**
+     * Passed through to the cross-process lock. Exposed so a test can assert that a method actually
+     * takes it — without this, "does `register` lock?" is unobservable in one process, and the test
+     * for it passed whether the lock was there or not.
+     */
+    lock?: { timeoutMs?: number; staleMs?: number };
+  } = {}
+): PendingHumanStore {
   const now = opts.now ?? (() => Date.now());
+  const locked = <T>(fn: () => T): T => withExclusiveFileLock(path, fn, { ...opts.lock, now });
 
   // Read on every call rather than caching. The point of this store is surviving a restart, and a
   // cache is how a second process's writes become invisible to the first.
@@ -83,6 +117,11 @@ export function pendingHumanStore(path: string, opts: { now?: () => number } = {
 
   return {
     register(sourceId, held) {
+      // Under the lock, like every other mutation. It was the one method left out, and it is the
+      // one the PIPELINE calls while a human may be answering: an unlocked register read the file,
+      // an approval wrote a claim into it, and the register's write put the pre-claim copy back —
+      // erasing a claim that had already been granted. Observed in an audit probe.
+      return locked(() => {
       const file = read();
       const byId = new Map(file.holds.map((h) => [h.id, h]));
 
@@ -107,6 +146,7 @@ export function pendingHumanStore(path: string, opts: { now?: () => number } = {
       const holds = [...byId.values()];
       write({ version: 1, holds });
       return holds.filter((h) => h.sourceId === sourceId);
+      });
     },
 
     list(sourceId) {
@@ -126,22 +166,66 @@ export function pendingHumanStore(path: string, opts: { now?: () => number } = {
      * and the second click must not produce a second card.
      */
     claim(id, decision) {
-      const hold = read().holds.find((h) => h.id === id);
-      if (!hold) return { status: 'unknown' };
-      if (decision === 'approve' && !hold.originalItem) return { status: 'not_resumable', hold };
-      return { status: 'resolved', decision, hold };
+      // Under the CROSS-PROCESS lock. `npm run answer` is a CLI, so two operators are two processes,
+      // and an in-process lock cannot see the other one at all: both read the file, both find the
+      // hold unclaimed, both write. Measured that way before this lock existed.
+      return locked((): ResolveResult => {
+        const file = read();
+        const hold = file.holds.find((h) => h.id === id);
+        if (!hold) return { status: 'unknown' };
+        if (decision === 'approve' && !hold.originalItem) return { status: 'not_resumable', hold };
+
+        // A live claim by someone else wins — for EITHER decision. The guard used to read
+        // `live && decision === 'approve'`, so a skip walked past an in-flight approval, took the
+        // claim, and deleted the hold: measured as one card written AND the same hold reported
+        // skipped. A decision already being acted on is not available to a second decision,
+        // whichever way each one points.
+        const live = hold.claim && now() - Date.parse(hold.claim.atIso) < CLAIM_TTL_MS;
+        if (live) return { status: 'in_progress', hold, since: hold.claim!.atIso };
+
+        const claimToken = `${process.pid}-${now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const claimed: PendingHold = { ...hold, claim: { token: claimToken, atIso: new Date(now()).toISOString() } };
+        write({ version: 1, holds: file.holds.map((h) => (h.id === id ? claimed : h)) });
+        return { status: 'resolved', decision, hold: claimed, claimToken };
+      });
     },
 
-    finalize(id) {
-      const file = read();
-      if (!file.holds.some((h) => h.id === id)) return false;
-      write({ version: 1, holds: file.holds.filter((h) => h.id !== id) });
-      return true;
+    finalize(id, claimToken) {
+      return locked(() => {
+        const file = read();
+        const hold = file.holds.find((h) => h.id === id);
+        if (!hold) return false;
+        // **Finalizing requires holding a matching claim — no claim is a refusal, not a pass.**
+        // The guard used to read `hold.claim && ...`, so an UNCLAIMED hold fell straight through and
+        // any string at all deleted it: `finalize(id, 'i-made-this-up')` returned true. The token
+        // was doing nothing in exactly the case where nothing else was either.
+        //
+        // A stale token — from a claim taken over after expiring — is refused for the same reason:
+        // it must not delete the hold the new owner is working on.
+        if (!hold.claim || hold.claim.token !== claimToken) return false;
+        write({ version: 1, holds: file.holds.filter((h) => h.id !== id) });
+        return true;
+      });
+    },
+
+    release(id, claimToken) {
+      return locked(() => {
+        const file = read();
+        const hold = file.holds.find((h) => h.id === id);
+        if (!hold || hold.claim?.token !== claimToken) return;
+        const { claim: _dropped, ...rest } = hold;
+        write({ version: 1, holds: file.holds.map((h) => (h.id === id ? (rest as PendingHold) : h)) });
+      });
     },
 
     resolve(id, decision) {
       const res = this.claim(id, decision);
-      if (res.status === 'resolved') this.finalize(id);
+      // Acting on the result, not discarding it. A `false` means the claim was taken over between
+      // the two calls, so this resolution did NOT take effect — reporting `resolved` anyway is the
+      // same silent-success bug that `resumeHold` had, one layer down.
+      if (res.status === 'resolved' && !this.finalize(id, res.claimToken)) {
+        return { status: 'in_progress', hold: res.hold, since: res.hold.claim?.atIso ?? 'unknown' };
+      }
       return res;
     },
   };

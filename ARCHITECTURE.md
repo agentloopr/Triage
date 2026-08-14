@@ -109,12 +109,32 @@ more.**
 | Pass 1.7 consolidator | **open** — the 1 + 1.5 inventory kept | Same |
 | Pass 1 inventory | **returns null** | Nothing earlier to fall back to; the caller decides |
 | Evidence prefetch | **open** — `probeOk: false`, never throws | Missing evidence is a weaker decision, not a wrong one |
+| **Pass 2b blind read** | **CLOSED — the deterministic gates run, then the item is held** | An item written without its second read was the only place this system degraded toward writing *more*. A thrown error and a reply carrying none of the contract's fields take the same path: both mean no independent read happened |
 | Role profiles | **open** — prompt loses context, warns | A badly-edited markdown file must not kill a run |
 | Observability | **open** — always | A tracing backend must never take down the thing it traces |
 | **Ops registry degraded** | **CLOSED — holds the entire batch** | An empty roster means every assignee resolves to nobody. Writing against it would put real work on no one's board and report success. |
 
-That last row is the only fail-closed path, and it holds *all* items, not the ones that happen to
-look affected — a registry that cannot be trusted cannot be trusted per-item either.
+**Two fail-closed paths, and they close differently.** The registry holds *all* items, not the ones
+that happen to look affected — a registry that cannot be trusted cannot be trusted per-item either.
+The blind read holds only the items whose own verification failed, because that failure is per-item
+and a partial outage should not stop the work it did not touch.
+
+**Pass 2b used to fail open**, on the argument that a flaky call must not silently block well-formed
+work. That argument is real and it lost to a simpler one: an item written without its second read was
+indistinguishable in the output from one that had it, so *every automatic write has passed two
+independent model reads* was true except when it quietly was not. Holding costs a batch of questions
+during a provider outage; failing open cost the repo's headline claim.
+
+**Two details that are easy to get wrong, and were.** The deterministic gates run *before* the
+verification hold is raised — the first fail-closed version skipped them, so an item with an unknown
+list key was held as "verification unavailable" carrying the ungated manifest item, and approving it
+wrote work the gates would have refused. And an *empty* reply is a failure, not agreement: every
+optional field on the verdict defaults to permissive, so a 200 with no body disagreed with nothing
+and the item was written on one read. Closing the throw and leaving the silence fixed the visible
+half of one bug.
+
+The row was missing from this table entirely until an outside audit went looking — the most
+consequential fail-open in the system, absent from the document that exists to enumerate them.
 
 **A truncated reply is a failure, not a shorter success.** This is the subtle one: a long *partial*
 parses cleanly and silently ships half an inventory. `CompletionResult.truncated` exists so callers
@@ -196,13 +216,45 @@ items in the backlog", because English reuses "number of X" for quantity.
 None of the eight scenarios trips it, so it ships proven by test rather than by fixture. That is
 stated here rather than left for a reader to notice.
 
-**A hold outlives a failed write.** Approving claims the hold, executes, and finalizes only once the
-board actually changed — where "changed" means `failed`, `refused` **and** `unsupported` are all zero.
-The first version deleted the hold and then executed, so a tracker outage or a protected-status
-refusal destroyed the human's decision and left nothing to retry; and reading `failed === 0` as
-success reported a refusal as an approved write, which is the quiet failure, because it looks
-finished. A write that does not land leaves the question open and says which of the three happened,
-since only one of them is worth retrying.
+**Answering a hold has three outcomes, not two**, because an item can plan several operations — an
+UPDATE emits a comment and then any of setStatus, setDueDate, setPriority, setAssignees, moveList,
+and `moveList` is `unsupported` on ClickUp by design.
+
+| What landed | The hold | Why |
+|---|---|---|
+| nothing | **stays open** | Safe to retry. A queue entry is cheap; a lost human decision is not |
+| some of it | **closes** | A retry would re-apply what already worked — a second comment on the card. The remainder is reported and left to a human |
+| all of it | **closes** | Done |
+
+Three earlier versions of this got it wrong, each in a way the next one introduced:
+
+- It deleted the hold and *then* executed, so a tracker outage destroyed the human's decision.
+- It read `failed === 0` as success. `refused` and `unsupported` also mean nothing changed — and a
+  refusal reported as an approved write is the quiet one, because it looks finished.
+- It ran the Pass 2d audit *before* closing the hold. The audit re-reads the tracker, so a read
+  timeout threw past the close, leaving a written card **and** an open hold — and the retry wrote a
+  second card. A post-hoc check must never be able to undo the record of what already happened.
+
+**Approving is exclusive.** The hold carries a claim token with a five-minute TTL, so two concurrent
+`npm run answer -- <id> --approve` do not both execute; measured before the claim existed, they put
+two cards on the board from one decision. The TTL matters as much as the claim: a process that dies
+mid-write must not lock the item forever, which is a worse failure than the double write. The claim
+is released when nothing landed, so a retry is immediate rather than waiting out the TTL.
+
+The claim is taken under a **cross-process lock** — `openSync(..., 'wx')`, which creates or throws
+`EEXIST` in one atomic syscall — because `npm run answer` is a CLI and two operators are two
+processes. An in-process lock cannot see the other one at all. The lock is broken after 30s as stale,
+for the same reason the claim expires: a queue nobody can ever answer again is worse than the race it
+prevents.
+
+**A live claim blocks either decision, not just another approve.** It once guarded approvals only, so
+a skip walked past an in-flight approval and deleted the hold — measured as one card written *and*
+the same hold reported skipped. Two confirmations, opposite meanings, one decision.
+
+**Approving a DUPLICATE resolves it.** A DUPLICATE plans zero operations, because deciding not to
+write is the correct outcome. Counting applied operations alone read that as "nothing landed", so
+approving a held duplicate answered "not written" forever and `--skip` was the only exit — and skip
+means *drop this*, not *yes, it really is a duplicate*.
 
 **Approved work goes through the same tail as pipeline-written work** — `finalizeWrite`: role memory,
 then a Pass 2d audit against a fresh board read. It used to go through neither, which made the one

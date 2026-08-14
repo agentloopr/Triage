@@ -8,9 +8,20 @@
  *   4. routing correctness
  *   5. cross-item consistency, once over the survivors
  *
- * **Check 1 fails OPEN.** If the model call errors, the item falls through to the deterministic
- * gates rather than being held. A flaky network call must never silently block well-formed work —
- * that failure mode is invisible and looks exactly like the system being cautious.
+ * **Check 1 fails CLOSED, per item.** If the blind read cannot run — the call throws, or it returns
+ * a reply carrying none of the contract's fields — the deterministic gates still run, and the item
+ * is then held rather than written. Two failure modes, one handler, because they mean the same
+ * thing: no independent read happened.
+ *
+ * It used to fail open, on the argument that a flaky call must not silently block well-formed work.
+ * That argument is real and lost to a simpler one: an item written without its second read was
+ * indistinguishable in the output from one that had it, so "two independent reads" was true except
+ * when it quietly was not.
+ *
+ * **The gates run BEFORE the verification hold is raised**, and that ordering is load-bearing. The
+ * first fail-closed version short-circuited them, so an item with an unknown list key was held under
+ * "verification unavailable" carrying the raw manifest item — and approving it replayed that item
+ * straight into the writer. A provider outage became a way to write work the gates would refuse.
  *
  * **Registry degradation fails CLOSED, for the whole batch.** Deliberately a global short-circuit
  * rather than a per-item gate: the human-resume path does not re-check the registry, so a per-item
@@ -89,6 +100,29 @@ export type ContractCheckOptions = {
 /** Matched by the delivery layer to post one summary instead of fanning out unanswerable questions. */
 export const REGISTRY_DEGRADED_GATE = 'ops registry unavailable (running on an empty fallback roster)';
 
+/**
+ * The blind read could not run for this item, so it is held rather than written on one read.
+ *
+ * Distinct from every other gate on purpose: it says nothing about the item. It is the pipeline
+ * reporting that its own verification was unavailable, which a human answers differently from
+ * "which list should this go on".
+ */
+export const VERIFICATION_UNAVAILABLE_GATE = 'independent verification unavailable';
+
+/**
+ * The blind read replied, and the reply contained nothing this pipeline can read.
+ *
+ * Thrown so that silence and an exception take the same path. They mean the same thing — no
+ * independent read happened — and only one of them used to be treated that way.
+ */
+class UnusableVerdictError extends Error {
+  constructor(reply: string) {
+    const shown = reply.trim().slice(0, 80);
+    super(`the blind read returned no usable verdict (${shown ? `got: "${shown}"` : 'empty reply'})`);
+    this.name = 'UnusableVerdictError';
+  }
+}
+
 const REGISTRY_DEGRADED_QUESTION = [
   "I've paused every task from this run instead of creating any.",
   '',
@@ -150,6 +184,13 @@ export async function runContractCheck(
         });
         const reply = await opts.runAgent(parts.user, `pass2b:item${m.item}`, parts.system);
         const verdict = parseContractVerdict(reply);
+
+        // A reply carrying none of the contract's fields is not agreement — it is an absence, and
+        // every default on `ContractVerdict` is shaped to disagree with nothing. Empty, whitespace,
+        // plain prose and a truncated line all reached here and were read as "the second read
+        // concurred". Routed to the same handler as a thrown error, because they mean the same
+        // thing: no independent read happened.
+        if (!verdict.usable) throw new UnusableVerdictError(reply);
 
         if (categoryDisputeHolds(m.category, verdict.category)) {
           heldThis = {
@@ -232,11 +273,50 @@ export async function runContractCheck(
           }
         }
       } catch (err) {
-        console.warn(
-          `[pass2b] blind read errored for item ${m.item} — failing open to the deterministic gates: ${
-            err instanceof Error ? err.message.slice(0, 120) : String(err)
-          }`
-        );
+        // ── FAILS CLOSED. This used to fall through to the deterministic gates. ────────────────
+        //
+        // The argument for failing open was that a flaky network call must not silently block
+        // well-formed work. It is a real argument and it loses to a simpler one: this repo's stated
+        // rule is *degrade toward doing less, never toward writing more*, and an item written
+        // without its second read is the only place the whole system broke that rule. Nothing in
+        // the output distinguished such an item from one that was genuinely verified, so the
+        // headline claim — two independent reads — was true except when it quietly was not.
+        //
+        // Held, not dropped: the work is preserved as a question, `npm run answer` can approve it
+        // once the provider recovers, and the gate names the reason so nobody mistakes an outage
+        // for a judgement about the item.
+        const detail = err instanceof Error ? err.message.slice(0, 120) : String(err);
+        console.warn(`[pass2b] blind read unavailable for item ${m.item} — HOLDING rather than writing unverified: ${detail}`);
+
+        // **The deterministic gates run FIRST, and that ordering is the whole correctness of this
+        // branch.** The first version raised the verification hold immediately and short-circuited
+        // them — so an item with an unknown list key or an off-roster assignee was held under
+        // "verification unavailable", and `npm run answer --approve` replayed the RAW manifest item
+        // straight into `planOperations`. A provider outage became a way to write work that the
+        // gates would have refused. The hint even claimed "every other gate passed"; they had not run.
+        //
+        // Now: if a gate holds it, that hold wins — a specific, answerable question beats a generic
+        // one. If the gates pass it, the hold carries the GAP-FILLED item, so approving replays
+        // something that has been through every deterministic check. The only thing missing is then
+        // genuinely the second read.
+        const gated = deterministicGatesForItem(m, snap, {
+          ...(input.todayIso ? { todayIso: input.todayIso } : {}),
+          ...(inv ? { inventoryItem: inv } : {}),
+          routingGateEnabled: routingOn,
+        });
+
+        heldThis = gated.held ?? {
+          item: m.item,
+          title: m.title,
+          category: m.category,
+          gate: VERIFICATION_UNAVAILABLE_GATE,
+          question: formatClarifyAsk({
+            facts: [`The independent second read could not run for this item: ${detail}`],
+            choice: 'Approve it on the first read alone, or leave it for a re-run once the provider recovers?',
+            hint: 'Every deterministic gate passed. What is missing is the disconfirming check, not the information.',
+          }),
+          originalItem: gated.clean ?? m,
+        };
       }
     }
 

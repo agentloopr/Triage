@@ -19,14 +19,19 @@
  * took. A second inference on resume would mean the human approved one thing and something else got
  * written — and the divergence would be invisible, because both outputs look like the model's work.
  */
-import { join } from 'node:path';
-import { STATE_DIR, TRACKER } from '../config';
+import { PENDING_HUMAN_PATH, TRACKER } from '../config';
 import { resumeHold } from '../pipeline/resume';
 import { pendingHumanStore } from '../state/pendingHuman';
+import { fileRoleStateStore } from '../state/roleState';
 import { makeTracker } from '../trackers/factory';
 
-/** Where a hold lives between the run that raised it and the human who answers it. */
-const HOLDS_PATH = join(STATE_DIR, 'pending-human.json');
+/**
+ * Where a hold lives between the run that raised it and the human who answers it.
+ *
+ * Imported rather than rebuilt: this file and `pull.ts` each computing `STATE_DIR/pending-human.json`
+ * separately is how `pull` came to supply no store at all while this one read an always-empty file.
+ */
+const HOLDS_PATH = PENDING_HUMAN_PATH;
 
 const USAGE = `usage: npm run answer [-- <id> --approve|--skip]
 
@@ -73,16 +78,30 @@ async function main(): Promise<void> {
     throw new Error('pass exactly one of --approve or --skip');
   }
 
-  const outcome = await resumeHold(store, id, approve ? 'approve' : 'skip', { tracker: makeTracker() });
+  const outcome = await resumeHold(store, id, approve ? 'approve' : 'skip', {
+    tracker: makeTracker(),
+    // Approved work reaches role memory the same way pipeline-written work does. Without this the
+    // one item a human personally signed off is the one the next run has no memory of.
+    roleState: fileRoleStateStore(),
+    alert: (detail) => console.error(`  ! ${detail}`),
+  });
 
   switch (outcome.status) {
     case 'executed': {
       const e = outcome.exec;
-      console.log(`\n✓ ${id} approved — ${e.created} created · ${e.commented} commented · ${e.failed} failed (tracker: ${TRACKER})\n`);
+      console.log(`\n✓ ${id} approved — ${e.created} created · ${e.commented} commented (tracker: ${TRACKER})`);
+      console.log(`  audit: ${outcome.audit.passed} passed, ${outcome.audit.mismatched} mismatched\n`);
       // The write is reported from the executor's result, never from the fact that we asked for it.
-      if (e.failed > 0) process.exit(1);
+      if (outcome.audit.mismatched > 0) process.exit(1);
       break;
     }
+    case 'write_failed':
+      // The hold is still open. Saying so is the whole point: the alternative was reporting an
+      // approval that changed nothing, with the queue entry already deleted.
+      console.error(`\n✗ ${id} was NOT written — ${outcome.reason}`);
+      console.error(`  The hold is still open. Fix the cause and re-run, or drop it with --skip.\n`);
+      process.exit(1);
+      break;
     case 'skipped':
       console.log(`\n✓ ${id} skipped — nothing written\n`);
       break;

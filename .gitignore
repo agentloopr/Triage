@@ -11,3 +11,10 @@ coverage/
 # Scratch the demo/recorder write inside a scenario dir while running.
 fixtures/scenarios/*/.corrections.json
 fixtures/scenarios/*/.demo-idempotency.json
+
+# This repo keeps every document at the root (README.md, ARCHITECTURE.md, …). A `docs/`
+# directory here has only ever meant one thing: private material staged in the wrong tree.
+# A copy of the internal PRD sat here untracked-but-unignored on 2026-08-13, one `git add -A`
+# away from being published. gitleaks would not have caught it — strategy is not a secret,
+# it is just not ours to publish.
+/docs/

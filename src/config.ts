@@ -108,6 +108,16 @@ export const ASR_PROVENANCE_FLOOR = num('ASR_PROVENANCE_FLOOR', 0.5);
 /** When the registry is degraded, hold the entire batch rather than writing against an empty roster. */
 export const REGISTRY_FAIL_CLOSED = bool('REGISTRY_FAIL_CLOSED', true);
 
+/**
+ * Hold high-stakes writes for a human even when every other gate is satisfied.
+ *
+ * **On by default**, unlike the agent layer, because a gate that only protects the deployments that
+ * remembered to switch it on protects nothing. The categories it covers are compiled constants in
+ * `gates/criticalGate.ts`; this boolean is the only part of that gate anything outside the source
+ * can reach, and that asymmetry is the point — see the header of that file.
+ */
+export const CRITICAL_GATE_ENABLED = bool('CRITICAL_GATE_ENABLED', true);
+
 // ── Tool loop (optional; the default path pre-fetches evidence host-side) ────
 /**
  * Hard ceiling on model turns in the read-only tool loop.
@@ -152,6 +162,26 @@ export const OPS_REGISTRY_PATH = resolve(str('OPS_REGISTRY_PATH', './config/ops-
 export const ROLES_DIR = resolve(str('ROLES_DIR', './config/roles'));
 export const STATE_DIR = resolve(str('STATE_DIR', './.state'));
 export const CORRECTIONS_PATH = resolve(str('CORRECTIONS_PATH', `${STATE_DIR}/corrections.json`));
+
+/**
+ * Where human holds live between the run that raised them and the person who answers them.
+ *
+ * **Defined once, on purpose.** `npm run pull` writes here and `npm run answer` reads here; when the
+ * two CLIs each computed their own path, `pull` supplied no store at all and the mismatch was
+ * invisible — the run announced a question and nothing could ever find it again. One constant means
+ * a divergence is a compile error rather than a silently empty list.
+ */
+export const PENDING_HUMAN_PATH = resolve(str('PENDING_HUMAN_PATH', `${STATE_DIR}/pending-human.json`));
+
+/**
+ * Idempotency keys for live runs, split by whether the run could write.
+ *
+ * A dry run must not consume the source key and make the subsequent `--write` a no-op — "I planned
+ * it, then it refused to do it" is the worst possible behaviour for a command whose whole purpose is
+ * to let you look before you leap. Two files, so a plan and a write never share a namespace.
+ */
+export const IDEMPOTENCY_PATH = resolve(str('IDEMPOTENCY_PATH', `${STATE_DIR}/idempotency.json`));
+export const IDEMPOTENCY_PLAN_PATH = resolve(str('IDEMPOTENCY_PLAN_PATH', `${STATE_DIR}/idempotency-plan.json`));
 export const CASSETTE_DIR = resolve(str('CASSETTE_DIR', './fixtures/cassettes'));
 /**
  * A second, parallel recording of the same scenarios from a different provider.

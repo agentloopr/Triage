@@ -16,7 +16,7 @@
  * rather than a per-item gate: the human-resume path does not re-check the registry, so a per-item
  * hold would leave a route where approving a held card writes an unassignable task.
  */
-import { REGISTRY_FAIL_CLOSED } from '../../config';
+import { CRITICAL_GATE_ENABLED, REGISTRY_FAIL_CLOSED } from '../../config';
 import { opsRegistryDegradedReason } from '../../registry/opsRegistry';
 import type { BoardTask } from '../../trackers';
 import { runWarmedPool } from '../../utils/pool';
@@ -31,6 +31,7 @@ import {
   routingGate,
   uncertainFieldsGate,
 } from '../gates/contractGates';
+import { criticalGate } from '../gates/criticalGate';
 import type { CategorizationItem, MeetingCategory } from '../parsing/categorizationManifest';
 import { autoSkippable, legitimacyHolds, parseContractVerdict } from '../parsing/contractVerdict';
 import { buildContractCheckerPrompt } from '../prompts/contractCheck';
@@ -281,6 +282,8 @@ export type DeterministicGateOptions = {
   /** Supplies `isVague` and the item text the duplicate backstop scans. Absent = not vague. */
   inventoryItem?: EnrichedInventoryItem;
   routingGateEnabled?: boolean;
+  /** Defaults to `CRITICAL_GATE_ENABLED`. Tests pass it explicitly; nothing else should. */
+  criticalGateEnabled?: boolean;
 };
 
 /**
@@ -294,6 +297,16 @@ export function deterministicGatesForItem(
 ): { held?: HeldItem; clean?: CategorizationItem } {
   const inv = opts.inventoryItem;
   const { filled, missing } = fillFieldGaps(m, snap, opts.todayIso);
+
+  // FIRST, ahead of the missing-field gate, and the ordering carries the whole point of this gate.
+  // Every gate below produces a hold too, so order does not decide whether the item is written — it
+  // decides which question a human is shown. "This touches credentials, confirm" has to win over
+  // "I need an assignee for this", or a high-stakes write gets filed as a routine one.
+  //
+  // Runs against the raw item, not `filled`: a gap-fill could only add fields, never remove the
+  // words that matched, and reading the model's own text is the honest input here.
+  const crit = criticalGate(m, opts.criticalGateEnabled ?? CRITICAL_GATE_ENABLED);
+  if (crit) return { held: { item: m.item, title: m.title, category: m.category, ...crit, originalItem: filled } };
 
   if (missing.length) {
     return {

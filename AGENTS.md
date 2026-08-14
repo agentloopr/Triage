@@ -87,6 +87,13 @@ the routing gate holds the item. Propose an assignee who is not on the roster, o
 list, and it holds. Raise an ownership doubt without naming a successor and it becomes an uncertain
 field on `assignee`, which holds and asks the human your own reason.
 
+**The description is re-gated too, and that is the case worth stating.** Rewriting prose cannot
+change routing, so skipping `applyGates` for description-only proposals looks like a free
+optimisation — and it would let an agent turn "tidy the onboarding docs" into "rotate the api key
+that leaked in the onboarding docs" and have that written unreviewed. The `critical` gate reads the
+description, so it fires on the re-gate exactly as it would have on the first pass.
+`agents.test.ts` pins that case directly.
+
 This is why the merge is by named field rather than `{...item, ...reply}`. A wholesale merge would
 also let a reply set `tier2Cited` — the flag the evidence gate reads — and an agent that can set its
 own evidence flag walks past the evidence gate by talking. There is a test that smuggles `tier2Cited`

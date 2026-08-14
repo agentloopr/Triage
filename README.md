@@ -19,6 +19,11 @@ show up as a gap. (The rounded percentages sum to 100.1; the counts are the clai
 *Applied* counts everything the pipeline did without a human: creates, status changes and comments.
 Creates alone are 44.4%.
 
+**One hold does not mean "unsure" at all.** The `critical` gate holds a write that touches
+credentials, client PII, a production deploy or a client-facing send **even when every other gate
+passed** — and its patterns are compiled constants no env var, correction, prompt or model output
+can reach. See [ARCHITECTURE.md](ARCHITECTURE.md).
+
 **That 27.3% is the number to look at.** A pipeline that writes to a real board is only useful if it
 knows what it does not know, and better than a quarter of everything it sees goes to a human instead
 of to the board. The gates that decide which quarter are the substance of this repo.
@@ -171,8 +176,10 @@ fixture, test and demo stays offline because they start from a recorded payload 
 read.
 
 **An optional agent layer** (PRD §5) sits between the gates and the writer: a board agent that
-delegates to eight role agents with **read-only** tools. It is off by default, it cannot write, and
-it cannot change what an item is — only how it reads. See [AGENTS.md](AGENTS.md).
+delegates to eight role agents with **read-only** tools. It is off by default. It may **propose** a
+different category, list, assignee or description — and every proposal is re-run through the same
+gates, so one the gates refuse becomes a hold rather than a write. **The agent never writes, and
+never un-holds.** See [AGENTS.md](AGENTS.md).
 
 **The rule that makes the tracker seam real:** the pipeline speaks canonical member names and list
 keys; only an adapter ever sees a tracker id. Every gate, prompt, parser and the whole categorization

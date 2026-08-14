@@ -24,7 +24,7 @@
  */
 import { delegateToRoleAgents } from '../agents/boardAgent';
 import { AGENT_MAX_DELEGATIONS, MODEL_PROVIDER, TRACKER } from '../config';
-import { memoryStore } from '../idempotency/memory';
+import { buildLiveDeps } from './liveDeps';
 import type { IngestedSource } from '../ingest';
 import { driveSource } from '../ingest/drive';
 import { githubSource } from '../ingest/github';
@@ -124,7 +124,8 @@ async function main(): Promise<void> {
         'or pass --provider deepseek'
     );
   }
-  const model = makeModelClient({ provider });
+  const tracker = makeTracker();
+  const { model, deps: liveDeps } = buildLiveDeps({ tracker, model: makeModelClient({ provider }), events: emitter, write });
   const complete = async (key: string, prompt: string, system?: string): Promise<string> => {
     const r = await model.complete({
       key,
@@ -136,13 +137,10 @@ async function main(): Promise<void> {
     return r.text;
   };
 
-  const tracker = makeTracker();
-
+  // Every store a live run persists through — built in `liveDeps.ts` so a test can assert on them
+  // without a credential or a network. See that file for what was missing here and for how long.
   const result = await runPipeline(ingested, {
-    tracker,
-    idempotency: memoryStore(),
-    events: emitter,
-    execute: write,
+    ...liveDeps,
     runPass: async ({ prompt, label }) => ({ text: await complete(label, prompt) }),
     runCategorization: (prompt, label, system) => complete(`2a/${label}`, prompt, system),
     runContractCheck: (prompt, label, system) => complete(`2b/${label}`, prompt, system),
@@ -165,7 +163,8 @@ async function main(): Promise<void> {
 
   console.log(
     write
-      ? `\n✓ ${result.exec?.created ?? 0} created · ${result.exec?.commented ?? 0} commented · ${result.held.length} held\n`
+      ? `\n✓ ${result.exec?.created ?? 0} created · ${result.exec?.commented ?? 0} commented · ${result.held.length} held` +
+        (result.held.length ? `\n  answer them with: npm run answer\n` : '\n')
       : `\n✓ planned ${result.clean.length} item(s) · ${result.held.length} held — nothing written. Re-run with --write.\n`
   );
 }

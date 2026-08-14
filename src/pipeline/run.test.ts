@@ -285,6 +285,8 @@ describe('degraded paths', () => {
         },
         list: () => [],
         get: () => null,
+        claim: () => ({ status: 'unknown' }),
+        finalize: () => false,
         resolve: () => ({ status: 'unknown' }),
       },
       runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),

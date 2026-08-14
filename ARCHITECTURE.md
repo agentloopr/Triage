@@ -151,12 +151,12 @@ only one of them involves a model at the moment of blocking.
 
 | | Gates | Decided by |
 |---|---|---|
-| **Pure code over structured data** | unknown list key · assignee not in team roster · assignee not valid for list · referenced/parent/RELATE task id not on the board · subtask list ≠ parent list · RELATE self-link · evidence not cited · uncertain field(s) · vague update — card not confirmed · update — card match not confident · possible missed duplicate · registry degraded | The board, the registry, and a literal read of the manifest. No model is consulted. |
+| **Pure code over structured data** | unknown list key · assignee not in team roster · assignee not valid for list · referenced/parent/RELATE task id not on the board · subtask list ≠ parent list · RELATE self-link · evidence not cited · uncertain field(s) · vague update — card not confirmed · update — card match not confident · possible missed duplicate · registry degraded · **critical — credentials / client PII / production deploy / client-facing send** |  The board, the registry, and a literal read of the manifest. No model is consulted. |
 | **A code rule over a model's stated verdict** | legitimacy — may not be a trackable task | `legitimacyHolds()` combines Pass 2b's legitimacy verdict with 2a's confidence and the source's ASR provenance. The *rule* is code; one of its three inputs is a judgement. |
 | **Two independent model reads disagreeing** | category dispute | Genuinely a model decision, and the only one. |
 
 **This is the opposite of what the design anticipated.** The system this was extracted from expected
-deterministic blocking to be the rare case and model judgement the norm; here twelve of fourteen
+deterministic blocking to be the rare case and model judgement the norm; here thirteen of fifteen
 gates never ask a model anything. That is not an accident of porting — it is what happens when the
 model's job is narrowed to producing a *manifest* and every structural claim in that manifest is
 checked against data the pipeline already holds.
@@ -165,6 +165,48 @@ The practical consequence: **most holds are reproducible.** Feed the same manife
 and the same twelve gates fire identically. Only `category dispute` can move between two runs of the
 same fixture, which is exactly why no scenario asserts a hold — see
 [LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers).
+
+### The one hold that does not mean "I am unsure"
+
+Every gate above fires because something is missing or two reads disagree. **`critical` fires when
+the pipeline is completely confident and the write is high-stakes anyway** — a credential rotation,
+a production deploy, client PII, a client-facing send. Nothing about those items is ambiguous, which
+is exactly why every other gate waves them through.
+
+It is a different question, so it is asked first: ordering does not decide whether the item is
+written — every gate holds — it decides which question a human sees. "This touches credentials,
+confirm" has to beat "I need an assignee for this", or a high-stakes write gets filed as a routine
+one.
+
+**The patterns are compiled constants, and that is the security property.** No environment variable,
+correction, registry entry, prompt or model output can widen, narrow or disable them; only a boolean
+turns the gate off. Upstream of this gate an agent proposes fields and, in any deployment ingesting
+email or public issues, the source text is attacker-controlled. A review step its own input can talk
+out of reviewing is not a review step. The guarantee is not *"these patterns are complete"* — it is
+**whatever they catch, no input stops them catching it**, and
+[`criticalGate.test.ts`](src/pipeline/gates/criticalGate.test.ts) asserts that directly.
+
+Coverage is deliberately narrow, because a gate that fires on a tenth of an ordinary week teaches
+people to approve without reading. **Porting it found two live defects in the original rule table**,
+both caught by writing down what the gate must *not* catch: `deploy(ing)? (to )?prod` required the
+verb to sit beside the target, so "Deploy the billing service to production" — the commonest
+phrasing of the riskiest item in the table — was missed; and `card number` matched "card number of
+items in the backlog", because English reuses "number of X" for quantity.
+
+None of the eight scenarios trips it, so it ships proven by test rather than by fixture. That is
+stated here rather than left for a reader to notice.
+
+**A hold outlives a failed write.** Approving claims the hold, executes, and finalizes only once the
+board actually changed — where "changed" means `failed`, `refused` **and** `unsupported` are all zero.
+The first version deleted the hold and then executed, so a tracker outage or a protected-status
+refusal destroyed the human's decision and left nothing to retry; and reading `failed === 0` as
+success reported a refusal as an approved write, which is the quiet failure, because it looks
+finished. A write that does not land leaves the question open and says which of the three happened,
+since only one of them is worth retrying.
+
+**Approved work goes through the same tail as pipeline-written work** — `finalizeWrite`: role memory,
+then a Pass 2d audit against a fresh board read. It used to go through neither, which made the one
+item a human personally signed off the only item in the system nobody verified afterwards.
 
 **Persistence is an injection, not a default.** Pass `pendingHuman` to `runPipeline` (or
 `pendingHumanPath` to `runScenario`) and holds survive a restart; omit it and a hold exists only in
@@ -188,6 +230,35 @@ That command was missing until `reachable.test.ts` was written. `resumeHold` exi
 was correct, and **nothing could call it** — so the repo could raise a question and had no way to
 answer one. "Human-in-the-loop" named a loop that did not close, behind a green suite. It is the
 fourth defect of that exact shape here, and the reason there is now a test for the shape itself.
+
+## What running this at production scale actually looks like
+
+The system this was extracted from runs as **two processes on one host**, and the split is worth
+knowing before anyone plans a deployment from this repo.
+
+| | Production | Here |
+|---|---|---|
+| Pipeline | an Express app | `runPipeline()`, a function |
+| Agents | a separate per-agent runtime | `roleAgent.ts`, in-process |
+| Agent context | a workspace directory per agent, outside version control | `config/roles/*.md` + `config/roles/state/*.json`, in the repo |
+| Agent credentials | injected per agent from a per-agent directory | none — role agents are read-only |
+| Isolation | one sandboxed process per agent, its own API port | none needed; nothing spawns |
+| Bounds | a turn cap and a wall-clock budget per run | `TOOL_LOOP_MAX_ITERATIONS`, `AGENT_MAX_DELEGATIONS` |
+
+The shape is the same on both sides — an agent with a profile, read-only tools, and a hard bound on
+how long it may think. What the second process buys is **isolation and per-agent secrets**, which
+matter when twelve agents run for twelve real people against live credentials, and matter not at all
+for a reference that ships no secrets and delegates at most eight items.
+
+**The runtime is not here and could not be.** It is a separate product in its own repository, and
+its prompts load an agent's profile and routing rules from a workspace by filename — two of which
+are exactly what this repo's CI identifier guard rejects. Publishing the supervisor without the
+thing it supervises would ship a launcher for a binary nobody can obtain.
+
+So the honest framing: **this repo publishes what the agents are, not the machine that runs them.**
+If you need per-agent isolation, that is a deployment decision you make on your own infrastructure,
+and the seam it hangs from is `ModelClient` — swap the in-process client for one that calls out to
+whatever runs your agents, and nothing above it changes.
 
 ## What is deliberately not here
 

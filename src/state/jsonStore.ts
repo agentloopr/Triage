@@ -12,7 +12,9 @@
  * is gone, nothing says so, and the next successful write persists the emptiness as the new truth.
  * A corrupt file is renamed aside (so it can be inspected) and reported through an injected notifier.
  *
- * **FIFO write lock.** Concurrent read-modify-write on one file is lost-update by construction.
+ * **One cross-process lock.** Concurrent read-modify-write on one file is lost-update by
+ * construction, and the processes doing it are usually not the same process — see
+ * `withExclusiveFileLock`.
  */
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -66,29 +68,19 @@ export function readJsonOrNull<T>(path: string, opts?: { quarantine?: boolean })
 }
 
 /**
- * Serialize async work FIFO. Failures never break the chain — one rejected write must not wedge
- * every later one.
- */
-export function makeFifoLock(): <T>(fn: () => Promise<T>) => Promise<T> {
-  let chain: Promise<unknown> = Promise.resolve();
-  return <T>(fn: () => Promise<T>): Promise<T> => {
-    const run = chain.then(fn, fn);
-    chain = run.then(
-      () => undefined,
-      () => undefined
-    );
-    return run;
-  };
-}
-
-/**
  * Serialize a read-modify-write **across processes**, not just within one.
  *
- * `makeFifoLock` above orders work inside a single process, which is all the pipeline needs. The
- * hold store needs more: `npm run answer` is a CLI, and two operators answering the same queue are
- * two processes. Without a real lock, both read the holds file, both see the item unclaimed, and
- * both write — measured, before this existed, as two cards on the board from one decision. An
- * in-process lock cannot see the other process at all.
+ * This is the only lock in the repo, and that is deliberate. There used to be a second — a
+ * `makeFifoLock` that ordered promises inside one process — held by the idempotency store, the
+ * corrections store and the registry mutator. Every one of those files exists *because* the next
+ * reader is a different process, so an in-process lock was the wrong primitive at all three, and it
+ * read as protection in every review. It is deleted rather than kept for the cases that "only need
+ * ordering": a codebase with two locks invites picking the cheap one.
+ *
+ * The failure was measured, not theorised. Two operators answering the same queue both read the
+ * holds file, both saw the item unclaimed, and both wrote — two cards on the board from one
+ * decision. Twenty processes racing one delivery key against a 75,000-record idempotency file all
+ * twenty accepted it as new. Eight processes recording eight distinct corrections kept four.
  *
  * `openSync(..., 'wx')` is the primitive: it creates the file or throws `EEXIST`, atomically, in one
  * syscall. That is the only part that has to be atomic — everything inside the callback is protected
@@ -188,7 +180,7 @@ export function withExclusiveFileLock<T>(
       const expired = now() - started > timeoutMs;
       const giveUp = (): never => {
         throw new Error(
-          `timed out after ${timeoutMs}ms waiting for ${lockPath} (held ${Math.round(age)}ms by ${holder ?? 'an unknown process'}). ` +
+          `timed out after ${timeoutMs}ms waiting for ${lockPath} (held ${Math.round(age)}ms by ${holder || 'an unknown process'}). ` +
             'Another process is answering this queue; retry, or remove the lock file if it is orphaned.'
         );
       };
@@ -198,8 +190,22 @@ export function withExclusiveFileLock<T>(
         continue;
       }
 
-      // An empty lock is one that was created moments ago and has not written its token yet.
-      if (holder !== null && holder !== '' && age > staleMs) {
+      // **An empty lock is judged by its age, like every other lock.**
+      //
+      // Empty means created but not yet stamped — `openSync` and the token write are two syscalls,
+      // and a reader catching the gap must not conclude the holder is dead. That gap is microseconds
+      // wide. It used to be excluded from stale-breaking *at every age*, which quietly converted a
+      // microsecond window into a permanent one: kill a process between those two syscalls and the
+      // empty file it leaves is a lock nobody can ever remove — its creator is gone, and every
+      // passer-by is forbidden from touching it. C-01 fixed the case where the write *fails*;
+      // nothing in JavaScript runs when the process is killed instead.
+      //
+      // So the rule is just `age > staleMs`. Thirty seconds between two adjacent syscalls is not a
+      // live process, and this is exactly the inference the stale-break already makes for a stamped
+      // lock whose holder went quiet. The identity re-read below still applies: `''` is an identity
+      // like any other, so a creator that stamps its token in the meantime is no longer a match and
+      // does not get unlinked.
+      if (holder !== null && age > staleMs) {
         try {
           if (readHolder() === holder) unlinkSync(lockPath);
         } catch {
@@ -214,16 +220,42 @@ export function withExclusiveFileLock<T>(
       continue;
     }
 
+    // ── OWNERSHIP IS PART OF ACQUISITION, NOT BEST EFFORT ──────────────────────────────────────
+    //
+    // Written immediately, because the identity is what makes stale-breaking safe above. A reader
+    // catching the file in the gap sees empty and treats it as fresh, which is right: a file created
+    // microseconds ago cannot be stale.
+    //
+    // **This used to be best-effort, and swallowing the failure created an immortal lock.** With no
+    // token on disk the release below (`readHolder() === token`) never matches, so the holder does
+    // not remove its own file — and at the time the stale-break skipped empty holders at every age,
+    // so nobody else removed it either. Two individually right rules, jointly permanent: one
+    // transient ENOSPC and every later mutation of that file timed out until a human deleted the
+    // lock by hand. Probed at the time: `openSync` succeeded under a zero-byte output limit, the
+    // callback ran, and a retry 30s later with `staleMs: 1` still refused to break the empty lock.
+    //
+    // The stale-break no longer grants that exemption, so the wedge is recoverable either way. It is
+    // still not something to leave lying around: a failure here is a failed acquisition, so undo it
+    // and propagate. **Nothing may run under a lock that cannot be released.**
+    //
+    // The cleanup re-reads before unlinking, exactly like the release path. Ours is microseconds old
+    // and cannot yet be stale, so in practice it is always still there — but "cannot be stale yet"
+    // is a fact about `staleMs`, and deriving safety from a constant somewhere else is how the pair
+    // of rules above became a bug in the first place.
+    try {
+      writeFileSync(fd, token);
+    } catch (err) {
+      closeSync(fd);
+      try {
+        if (readHolder() === '') unlinkSync(lockPath);
+      } catch {
+        /* already gone */
+      }
+      throw err;
+    }
+
     // ── HELD. Anything the callback throws is the CALLBACK's, and propagates untouched. ─────────
     try {
-      try {
-        // Written immediately, because the identity is what makes stale-breaking safe above. A
-        // reader catching the file in the gap sees empty and treats it as fresh, which is right: a
-        // file created microseconds ago cannot be stale.
-        writeFileSync(fd, token);
-      } catch {
-        /* best effort; the worst case is that a future stale-break cannot verify us */
-      }
       return fn();
     } finally {
       closeSync(fd);

@@ -110,8 +110,9 @@ export function pendingHumanStore(
 
   // Read on every call rather than caching. The point of this store is surviving a restart, and a
   // cache is how a second process's writes become invisible to the first.
-  // ponytail: read-modify-write is atomic only within one process; add file locking if two
-  // processes ever resolve holds concurrently.
+  // (This used to carry a note saying read-modify-write was atomic only within one process and that
+  // file locking should be added if two ever resolved holds concurrently. The locking arrived; the
+  // note stayed, describing the behaviour of code three lines above that had stopped being true.)
   const read = (): File => readJsonOrNull<File>(path) ?? { ...EMPTY, holds: [] };
   const write = (f: File): void => atomicWriteJson(path, f);
 

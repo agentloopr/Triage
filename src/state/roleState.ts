@@ -21,7 +21,7 @@
 import { join } from 'node:path';
 import { ROLES_DIR, STATE_DIR } from '../config';
 import { ROLE_ARCHETYPES, type RoleArchetype, isRoleArchetype } from '../registry/opsRegistry';
-import { atomicWriteJson, readJsonOrNull } from './jsonStore';
+import { atomicWriteJson, readJsonOrNull, withExclusiveFileLock } from './jsonStore';
 
 /** Keep the injected block small; the taxonomy next to it is what decides the answer. */
 export const MAX_OPEN_ITEMS = 5;
@@ -110,29 +110,41 @@ export function readRoleState(role: RoleArchetype): RoleState {
  *
  * `context` is never touched: it is the human's half of the file, and a run that overwrote it would
  * silently delete the one thing here nobody else can reconstruct.
+ *
+ * **The read and the write are one locked step.** They were two, with nothing between them, which
+ * made every concurrent run a lost update: eight simultaneous writers left two unique items in a
+ * file capped at five. That is not a wrong write — the routing gate re-validates every assignee
+ * afterwards, so nothing bad reaches the board — but the whole point of this file is that the *next*
+ * run knows what the last one did, and a merge that drops most of its inputs quietly stops being
+ * that. Read-then-write across processes needs the same lock as everything else on disk here.
  */
 export function recordRoleWork(role: RoleArchetype, items: RoleOpenItem[]): void {
   if (!items.length) return;
-  const prior = readRoleState(role);
-
-  const seen = new Set<string>();
-  const merged: RoleOpenItem[] = [];
-  for (const it of [...items, ...prior.openItems]) {
-    const key = (it.taskId ?? it.title).toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(it);
-    if (merged.length >= MAX_OPEN_ITEMS) break;
-  }
+  const file = pathFor(role);
 
   try {
-    atomicWriteJson(pathFor(role), {
-      ...prior,
-      openItems: merged,
-      updatedAt: new Date().toISOString(),
-    } satisfies RoleState);
+    withExclusiveFileLock(file, () => {
+      const prior = readRoleState(role);
+
+      const seen = new Set<string>();
+      const merged: RoleOpenItem[] = [];
+      for (const it of [...items, ...prior.openItems]) {
+        const key = (it.taskId ?? it.title).toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(it);
+        if (merged.length >= MAX_OPEN_ITEMS) break;
+      }
+
+      atomicWriteJson(file, {
+        ...prior,
+        openItems: merged,
+        updatedAt: new Date().toISOString(),
+      } satisfies RoleState);
+    });
   } catch (err) {
-    // Fail-open: losing the memo must not fail a run whose writes already succeeded.
+    // Fail-open, and now that includes losing the lock race: a memo written after the writes have
+    // already succeeded must never turn a successful run into a failed one.
     console.warn(`[role-state] could not write ${role}: ${(err as Error)?.message ?? err}`);
   }
 }

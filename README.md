@@ -8,6 +8,16 @@ it is not sure about.
 no compatibility promise; the point is that you can read it, run it offline, and take the parts that
 are useful.
 
+![Eight scenarios running offline through the real prompts, parsers and gates, then a redelivery that costs zero tokens](assets/demo.gif)
+
+*Real captured output, replayed at reading speed — the actual run takes ~40ms. Nothing above is staged.*
+
+```bash
+npm ci
+npm run demo             # 8 scenarios, offline, ~40ms, no API key
+npm run demo -- --twice  # a redelivery costs zero tokens
+```
+
 From real trace data across 49 production runs — 48 meetings and one channel log — totalling 711
 items: **14.5 items per run, 62.6% applied automatically, 27.3% held for a human, 8.2% skipped as a
 duplicate, 2.0% failed.** It runs for a team of 12, which is the roster size in the routing registry

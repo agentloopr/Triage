@@ -62,15 +62,36 @@ describe.skipIf(SETS.length === 0)('the agent path replays offline', () => {
       /**
        * The containment invariant, checked end to end rather than at the merge function.
        *
-       * Every item that reached the writer still has a category the gates produced. An agent that
-       * could set one would be able to walk past every gate in this repo by talking.
+       * **This test used to assert a tautology.** Its body checked that each final category was one
+       * of the five enum members — which the type already guarantees — under the name "agents changed
+       * no category". It would have passed with every category rewritten. A test whose name states an
+       * invariant and whose body cannot fail is worse than no test: it reads as coverage in a summary,
+       * and it is why nobody looked here again.
+       *
+       * What it does now is compare each item's **final** category against **Pass 2a's**, by item
+       * number. Measured across both recordings and all eight scenarios: zero differences.
+       *
+       * A failure here is not automatically a bug — since Part B a role agent *may* propose a
+       * category and `applyGates` may accept it. It is a **canary**: a category that changed on the
+       * agent path is the one place a model's opinion reaches a disposition, so it is surfaced for a
+       * human read rather than absorbed silently.
        */
-      it.each(listScenarios())('%s — agents changed no category', async (name) => {
+      it.each(listScenarios())('%s — no category changed between Pass 2a and the writer', async (name) => {
         const { result } = await replay(set.dir, name);
         if (result.status === 'skipped') return;
-        for (const item of result.clean) {
-          expect(['NEW_TASK', 'DUPLICATE', 'SUBTASK', 'UPDATE', 'RELATE']).toContain(item.category);
-        }
+
+        const byPass2a = new Map(result.manifest.map((m) => [m.item, m.category]));
+        const changed = result.clean
+          .filter((c) => byPass2a.get(c.item) !== c.category)
+          .map((c) => `  item ${c.item} "${c.title}": 2a said ${byPass2a.get(c.item)}, the writer got ${c.category}`);
+
+        expect(
+          changed,
+          'An agent proposal changed a category and the gates accepted it. That is permitted — see\n' +
+            "AGENTS.md — but it is the one place a model's opinion reaches a disposition, so it is\n" +
+            'surfaced rather than absorbed. Confirm the change is right, then update this expectation.\n\n' +
+            `${changed.join('\n')}\n`
+        ).toEqual([]);
       });
 
       /** Nothing may vanish between the manifest and a decision, agents or not. */

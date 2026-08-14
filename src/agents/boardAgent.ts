@@ -66,9 +66,16 @@ export interface DelegationResult {
 /**
  * Hand each selected item to its role agent, and merge the result FIELD BY FIELD.
  *
- * Never wholesale. A role agent may improve prose and may raise a doubt; it may not change what the
- * item is. Merging the whole object would hand an agent the ability to rewrite a category and walk
- * straight past every gate — which is precisely the door this repo keeps shut everywhere else.
+ * Never wholesale. A role agent may **propose** prose, a category, a list, an assignee or a doubt —
+ * and nothing it proposes is applied here. `applyProposals` copies the named fields onto a copy and
+ * `applyGates` re-runs every gate over the result, so a refused proposal becomes a human hold.
+ *
+ * Merging the whole object would let an agent set any field the parser never named, including ones
+ * no gate inspects — which is precisely the door this repo keeps shut everywhere else.
+ *
+ * (This said "it may not change what the item is" until an outside audit found it. True before the
+ * re-gate shipped. The guarantee was never "an agent cannot propose"; it is "a proposal faces the
+ * same gates the pipeline's own answer faced".)
  */
 export async function delegateToRoleAgents(
   items: CategorizationItem[],

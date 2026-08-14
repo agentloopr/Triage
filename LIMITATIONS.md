@@ -67,12 +67,21 @@ and asks the human the agent's own reason. Worth recording as the shape of the f
 deleting silently: the signal was already there and already correct, and what was missing was a path
 from it to a gate.
 
-**No scenario asserts a human hold.** Whether two independent reads disagree about one genuinely
-ambiguous item varies run to run — three consecutive re-recordings of one identical fixture gave
-three different answers. That variance is *why* the disagreement is worth surfacing to a human in
-the first place, and it means no cassette can pin it. The gates that produce holds are proven
-separately and deterministically, with scripted replies, in `contractGates.test.ts` and
-`run.test.ts`.
+**No scenario asserts a *model-disagreement* hold**, and the qualifier is the whole sentence. This
+paragraph read "no scenario asserts a human hold" until an outside audit pointed out that
+`06-github-activity` pins two — which it does, and should.
+
+The distinction is which kind of hold can be pinned at all:
+
+- A hold resting on a **judgement** — two independent reads disagreeing about a genuinely ambiguous
+  item — varies run to run. Three consecutive re-recordings of one identical fixture gave three
+  different answers. That variance is *why* the disagreement goes to a human, and it means no
+  cassette can pin it.
+- A hold resting on a **missing or uncertain field** does not vary that way. `06-github-activity`
+  asserts two, because a code feed says who wrote a change and never who owns the follow-up.
+
+The gates themselves are proven separately and deterministically, with scripted replies, in
+`contractGates.test.ts` and `run.test.ts`.
 
 **The de-tuning A/B never ran, and never can.** The strongest available guard on replacing tuned
 prompts with generic ones is to record each prompt before and after and diff the eval dimensions.
@@ -126,7 +135,8 @@ entirely" was written once and then cited as though it were a requirement, and t
 sources on the strength of it — which is how a source-agnostic pipeline came to look like a meeting
 pipeline with a second entry point.
 
-**All three source clients are live-verified.** The GitHub client made real reads on
+**All three source clients were verified live by hand** (not by any test — see the table below).
+The GitHub client made real reads on
 2026-08-13, including one against a busy public repo that returned **85 pull requests, 15 issues and
 9 commits** — which is the only way to exercise the mapping that matters, since the `/issues`
 endpoint returns PRs and issues in one stream and this repo's own history contains neither. See
@@ -166,8 +176,17 @@ credential; the Gmail and Drive halves are waiting for someone to do the same.
 **All three normalizers now run end-to-end** — `06-github-activity`, `07-email-thread` and
 `08-drive-activity` each go through the full 1 → 2d chain offline, so "the pipeline does not care
 which source produced it" is demonstrated for all five kinds rather than argued for three of them.
-That covers the *normalizers*. The **clients** in `src/sources/` are still fake-tested only: a
-scenario replays a recorded payload, and no scenario has ever called GitHub, Gmail or Drive. See
+That covers the *normalizers*. The **clients** are a separate question, and this document used to
+answer it twice, incompatibly — "all three are live-verified" above, "still fake-tested only" here.
+Both sentences were reaching for a real distinction and neither stated it. Once, precisely:
+
+| | |
+|---|---|
+| **Automated tests** | fakes only. Every scenario replays a recorded payload; **no test has ever called GitHub, Gmail or Drive** |
+| **Live verification** | performed by hand on 2026-08-13 against real accounts, described above |
+| **Reproducible from this repo** | **no** — the smokes left no committed script or log, so treat them as testimony |
+
+The way to settle it on your own credential is `npm run pull`. See
 [ADAPTERS.md](ADAPTERS.md#the-source-clients-have-had-no-live-call-at-all).
 
 **Both providers now have all eight scenarios**, and the three source ones diverge more than the five
@@ -229,9 +248,72 @@ the board agent and the eight role agents in `src/agents/` were written **for th
 tested — the read-only guarantee and the anti-fabrication rule both have tests — but tested is not
 the same as *has governed a real board for months*, which is what is true of everything around them.
 
-That is why `AGENTS_ENABLED` defaults to **false**. Turning it on changes no disposition: agents may
-improve how an item reads and may raise an ownership doubt, and they cannot change a category, a
-list, an assignee, or write anything at all. See [AGENTS.md](AGENTS.md).
+That is why `AGENTS_ENABLED` defaults to **false**. What turning it on can and cannot do:
+
+- It **can** propose a description, a category, a list or an assignee, and raise an ownership doubt.
+- Every proposal is re-run through `applyGates` — the same gates Pass 2b uses, not a copy — so one
+  the gates refuse becomes a human hold rather than a write.
+- It **cannot** write anything, and **cannot un-hold**: agents only ever see items that already
+  passed the gates, so there is no path from an agent to an item a gate stopped.
+
+Measured across both recordings and all eight scenarios, **no proposal has changed a final
+category** — `agentReplay.test.ts` compares each item's final category against Pass 2a's and fails
+if one does. (This paragraph previously said agents "cannot change a category, a list, an assignee".
+That was true before Part B and stopped being true when the re-gate shipped; an outside audit found
+it still standing here.) See [AGENTS.md](AGENTS.md).
+
+## What production has and this does not
+
+The PRD this repo was built to never asked for any of the four below, and their absence is a
+decision rather than an oversight. They are listed because a reader comparing this to a description
+of the production system should not have to discover the difference themselves — and because one of
+them sits directly under the claim that human-in-the-loop is this system's strongest coverage.
+
+### The approval surface is a CLI, not a chat app
+
+**The gates that decide to hold are here in full.** All fifteen of them, with the ordering, the
+questions, and the persistence. What is not here is production's asking-and-answering surface: ten
+Block Kit modules — clarify, duplicate-resolution, critical approval, task rating — with modals,
+per-actor authorisation so the wrong person cannot resolve someone else's question, and TTLs on
+pending slots. Roughly 4,600 lines.
+
+Here, a hold is announced on the `items:held` event and answered with
+[`npm run answer`](src/cli/answer.ts). **The seam is real, not aspirational**: the event carries
+`notifyAssignee`, and `PendingHumanStore.resolve` is the same call the CLI makes, so a Slack or
+email surface is a consumer of two existing interfaces rather than a fork of the pipeline. That is
+transport, and this repo's position on transport has not changed.
+
+Be precise about what this costs: **nothing about which items hold, everything about how quickly a
+human sees them.** A CLI nobody runs is a queue that grows.
+
+### Files and attachments are absent entirely
+
+Production ingests a file from Slack or Drive, has the agent classify intent — answer a question,
+attach it to a task, or ask the human — with **no caption regex**, extracts text (directly, from an
+office format, or through a vision model), then resolves *which* task by overlap scoring followed by
+a semantic pick. Roughly 1,650 lines across six modules.
+
+None of it is here. It needs a vision model, two more OAuth scopes and a file store, and the PRD
+never asked for it. A source that arrives as a document rather than as text is out of scope.
+
+### The correction loop is closed; the doorbell is missing
+
+This one is usually stated backwards, so: **the substance ships.** A typed routing fact —
+`npm run correct -- assignee --list backend --name "Avery Chen"` — is stored, merged into the
+effective roster at [`identity.ts`](src/registry/identity.ts), and enforced by the deterministic
+assignee gate on every later run. Not-duplicate pairs, list aliases, name aliases and free-form
+notes work the same way, and `05-corrections` demonstrates the whole path.
+
+What is missing is only the conversational front door. In production a teammate DMs their agent
+*"Remember that Taylor is on the platform team"*, the agent emits a structured fact line, and it
+lands in the same store. Here you type it. The loop is closed either way; the doorbell is a Slack
+app.
+
+### Per-agent isolation is a deployment concern
+
+Covered in [ARCHITECTURE.md](ARCHITECTURE.md) — production runs the agents in a separate runtime
+with a sandbox and per-agent credentials; here they run in-process and read-only. The seam to hang
+your own on is `ModelClient`.
 
 ## Scale
 

@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { type DelegationResult, MAX_DELEGATIONS, delegateToRoleAgents, selectForDelegation, summariseRun } from './boardAgent';
 import { type RoleEnrichment, buildRoleAgentPrompt, parseRoleReply, roleOf, runRoleAgent } from './roleAgent';
 import { applyProposals } from '../pipeline/run';
+import { applyGates } from '../pipeline/passes/contractCheck';
 import type { CategorizationItem } from '../pipeline/parsing/categorizationManifest';
 import type { ExecuteResult } from '../pipeline/passes/execute';
 import { type OpsRegistry, setOpsRegistryPath } from '../registry/opsRegistry';
@@ -35,7 +36,8 @@ const REGISTRY: OpsRegistry = {
     { name: 'Rowan Diaz', externalIds: {}, email: 'rowan@example.com', role: 'designer', defaultProjects: ['design'] },
   ],
   routes: [
-    { key: 'backend', externalIds: {}, pattern: 'api|backend', defaultAssignee: 'Avery Chen', validAssignees: ['Avery Chen'], status: 'active' },
+    { key: 'backend', externalIds: {}, pattern: 'api|backend', defaultAssignee: 'Avery Chen', validAssignees: ['Avery Chen', 'Rowan Diaz'], status: 'active' },
+    { key: 'design', externalIds: {}, pattern: 'design|ux', defaultAssignee: 'Rowan Diaz', validAssignees: ['Rowan Diaz'], status: 'active' },
   ],
   log: [],
 };
@@ -291,6 +293,74 @@ describe('applyProposals copies named fields onto a copy', () => {
   it('leaves an item alone when its agent proposed nothing', () => {
     const original = item();
     expect(applyProposals([original], [delegation({})])[0]).toBe(original);
+  });
+
+  // ── The positive half, which was missing entirely ──────────────────────────────────────────
+  //
+  // Every test above proves a proposal is REFUSED: unknown list holds, off-roster assignee holds,
+  // ownership doubt holds. None proved a GOOD proposal survives. A re-gate that rejected everything
+  // would have passed the whole suite while making the agent layer decorative — and the replay test
+  // that should have caught it was asserting a tautology.
+
+  // Each of these must start from a DIFFERENT valid value than it proposes. The first version did
+  // not: the list case began on `backend` and proposed `backend`, the category case began on
+  // NEW_TASK and proposed NEW_TASK. Both passed whether or not `applyProposals` copied the field at
+  // all — the same tautology this repo had just removed from `agentReplay.test.ts`, reintroduced in
+  // the tests written to close that gap. An outside audit caught it. A positive test that cannot
+  // observe the change it is named for is not a positive test.
+
+  it('a valid list proposal changes the list and reaches the writer', () => {
+    const proposed = applyProposals(
+      [item({ list: 'backend', assignee: 'Rowan Diaz' })],
+      [delegation({ proposedList: 'design' })]
+    );
+    expect(proposed[0]!.list).toBe('design'); // changed, not merely unrejected
+
+    const res = applyGates(proposed, new Map(), { criticalGateEnabled: false });
+    expect(res.held).toEqual([]);
+    expect(res.clean[0]!.list).toBe('design');
+  });
+
+  it('a valid assignee proposal changes the owner and reaches the writer', () => {
+    const proposed = applyProposals(
+      [item({ list: 'backend', assignee: 'Rowan Diaz' })],
+      [delegation({ proposedAssignee: 'Avery Chen' })]
+    );
+    expect(proposed[0]!.assignee).toBe('Avery Chen');
+
+    const res = applyGates(proposed, new Map(), { criticalGateEnabled: false });
+    expect(res.held).toEqual([]);
+    expect(res.clean[0]!.assignee).toBe('Avery Chen');
+  });
+
+  it('a valid category proposal changes the category and reaches the writer', () => {
+    // NEW_TASK → UPDATE against a card that really exists, so the gates have something to check.
+    const snap = new Map([['t100', { id: 't100', title: 'Add rate limiting', status: 'open', list: 'backend' }]]);
+    const proposed = applyProposals(
+      [item({ category: 'NEW_TASK', list: 'backend' })],
+      [delegation({ proposedCategory: 'UPDATE' })]
+    );
+    expect(proposed[0]!.category).toBe('UPDATE');
+
+    const res = applyGates(proposed, snap as never, { criticalGateEnabled: false });
+    expect(res.clean[0]?.category ?? res.held[0]?.category).toBe('UPDATE');
+  });
+
+  it('a proposal that makes an item critical is held, not written', () => {
+    // The case the re-gate exists for, in its sharpest form. An item passes every gate, an agent
+    // rewrites the description into something that touches credentials, and the re-gate catches
+    // what the first pass had no reason to look for. If `applyGates` were skipped for
+    // description-only proposals — a tempting optimisation, since a description cannot change
+    // routing — this write would land unreviewed.
+    const clean = item({ finalDesc: 'Tidy the onboarding docs.' });
+    const proposed = applyProposals(
+      [clean],
+      [delegation({ finalDesc: 'Rotate the api key that leaked in the onboarding docs.' })]
+    );
+
+    const res = applyGates(proposed, new Map(), { criticalGateEnabled: true });
+    expect(res.clean).toEqual([]);
+    expect(res.held[0]!.gate).toContain('critical');
   });
 });
 

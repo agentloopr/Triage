@@ -4,7 +4,7 @@ The pipeline reaches a model through one interface, `ModelClient`. Three impleme
 **deepseek**, **anthropic**, and **cassette** (recorded replies, which is what makes the demo run
 offline). Selection is `MODEL_PROVIDER`; the model itself is `DEEPSEEK_MODEL` / `ANTHROPIC_MODEL`.
 
-Both live providers have been run against the same five scenarios, and both recordings ship:
+Both live providers have been run against the same eight scenarios, and both recordings ship:
 
 ```bash
 npm run demo                        # replays the DeepSeek recording — this one gates CI
@@ -69,7 +69,7 @@ hand-labelled ground truth that does not exist here. See `EVAL.md`.
 
 ## Cost
 
-Measured over one full pass — all five scenarios, 44 DeepSeek / 42 Claude model calls:
+Measured over one full pass of the **five** scenarios that existed when this was taken — 44 DeepSeek / 42 Claude model calls:
 
 | | Claude Sonnet 5 | DeepSeek v4-pro |
 |---|---|---|
@@ -130,7 +130,7 @@ report here.
 
 ## What the agent layer costs
 
-Turning agents on adds calls; it does not change what the gates decide. Measured over the same five
+Turning agents on adds calls; it does not change what the gates decide. Measured over all eight
 scenarios:
 
 | | calls, agents off | calls, agents on |
@@ -154,15 +154,23 @@ budget is not portable between providers even when the prompts are byte-identica
 Agent cost is bounded by two caps rather than by hope: `AGENT_MAX_DELEGATIONS` (default 8) and
 `TOOL_LOOP_MAX_ITERATIONS` (default 6).
 
-**The agent layer changed no disposition it is capable of changing.** Observed today: DeepSeek with
-agents matches four of five goldens and diverges on `04-channel-messages` (5 items · 4 created vs the
-golden's 4 · 3). Claude with agents diverges on `01` (7 items) and `04` (3 items · 2 created).
+**The agent layer changed no category on any recording.** DeepSeek with agents matches five of eight
+goldens and diverges on `04`, `06` and `08`; Claude with agents diverges on `01`, `04`, `06`, `07`
+and `08`.
 
-Every one of those is an **inventory count**, and **the agent layer runs after every gate, so it
-cannot change an inventory count** — the divergences trace to Pass 1 and Pass 1.5 in a separately
-recorded set, exactly the re-record variance `EXTRACTION.md` documents. What agents provably do not
-move is category, list, assignee, or the decision to write, and that has a test
-(`agents.test.ts`) rather than a sentence.
+Those divergences are **inventory counts**, and the agent layer runs after every gate, so it cannot
+change one — they trace to Pass 1 and Pass 1.5 in a separately recorded set, exactly the re-record
+variance `EXTRACTION.md` documents.
+
+What agents *can* do, since Part B, is propose a category, list, assignee or description. Every
+proposal is re-run through `applyGates`, so a refused one becomes a human hold rather than a write —
+and measured across both recordings and all eight scenarios, **no proposal has changed a final
+category**. `agentReplay.test.ts` compares each item's final category against Pass 2a's and fails if
+one does.
+
+*An earlier version of this paragraph said agents "provably do not move category, list, assignee".
+That was true before the re-gate shipped and stopped being true then; it cited `agents.test.ts`,
+whose containment test had by then been replaced. An outside audit found it still here.*
 
 ## Provider differences worth knowing
 

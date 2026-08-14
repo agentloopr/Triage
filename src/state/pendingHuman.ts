@@ -53,6 +53,21 @@ export interface PendingHumanStore {
   register(sourceId: string, held: HeldItem[]): PendingHold[];
   list(sourceId?: string): PendingHold[];
   get(id: string): PendingHold | null;
+  /**
+   * Validate that this hold can take this decision, and hand back what is needed to act on it —
+   * **without removing it.** The hold survives until `finalize`.
+   */
+  claim(id: string, decision: Resolution): ResolveResult;
+  /** Remove a claimed hold. Call only once the decision has actually taken effect. */
+  finalize(id: string): boolean;
+  /**
+   * `claim` + `finalize` in one step.
+   *
+   * Correct only when acting on the decision cannot fail — a skip writes nothing, so there is no
+   * outcome to wait for. **Never use it before a tracker write:** that ordering deleted the hold
+   * first and executed second, so a tracker outage or a protected-status refusal destroyed the
+   * human's decision and left nothing to retry.
+   */
   resolve(id: string, decision: Resolution): ResolveResult;
 }
 
@@ -110,17 +125,24 @@ export function pendingHumanStore(path: string, opts: { now?: () => number } = {
      * again. Answering twice is normal — a person clicks, nothing visibly happens, they click again —
      * and the second click must not produce a second card.
      */
-    resolve(id, decision) {
-      const file = read();
-      const hold = file.holds.find((h) => h.id === id);
+    claim(id, decision) {
+      const hold = read().holds.find((h) => h.id === id);
       if (!hold) return { status: 'unknown' };
-
-      if (decision === 'approve' && !hold.originalItem) {
-        return { status: 'not_resumable', hold };
-      }
-
-      write({ version: 1, holds: file.holds.filter((h) => h.id !== id) });
+      if (decision === 'approve' && !hold.originalItem) return { status: 'not_resumable', hold };
       return { status: 'resolved', decision, hold };
+    },
+
+    finalize(id) {
+      const file = read();
+      if (!file.holds.some((h) => h.id === id)) return false;
+      write({ version: 1, holds: file.holds.filter((h) => h.id !== id) });
+      return true;
+    },
+
+    resolve(id, decision) {
+      const res = this.claim(id, decision);
+      if (res.status === 'resolved') this.finalize(id);
+      return res;
     },
   };
 }

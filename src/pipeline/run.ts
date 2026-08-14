@@ -19,9 +19,8 @@ import { indexTasks } from './gates/clarify';
 import { type IdempotencyStore, contentKey } from '../idempotency';
 import type { IngestedSource } from '../ingest';
 import { errText } from '../providers';
-import { type RoleArchetype, getMembers } from '../registry/opsRegistry';
 import type { PendingHumanStore } from '../state/pendingHuman';
-import type { RoleOpenItem, RoleStateStore } from '../state/roleState';
+import type { RoleStateStore } from '../state/roleState';
 import type { BoardTask, TrackerAdapter } from '../trackers';
 import { renderBoardSnapshot, renderCompactSnapshot } from '../trackers/renderSnapshot';
 import { PipelineEvents } from './events';
@@ -31,9 +30,10 @@ import type { ContractFlag, HeldItem } from './gates/contractGates';
 import { type CategorizationItem } from './parsing/categorizationManifest';
 import { parseEnrichedInventoryItems } from './parsing/inventory';
 import { type CategorizationAgentRunner, runCategorizationPass } from './passes/categorization';
-import { type AuditResult, auditPostWrite } from './passes/audit';
+import type { AuditResult } from './passes/audit';
 import { type ContractCheckerRunner, type SkippedNotTask, applyGates, runContractCheck } from './passes/contractCheck';
 import { type ExecuteResult, executeOperations, planOperations } from './passes/execute';
+import { finalizeWrite } from './finalize';
 import { type PassRunner, runCleanup, runInventory, runInventoryConsolidator, runInventoryCritic } from './passes/inventory';
 import type { EnrichedInventoryItem } from './types';
 
@@ -350,24 +350,28 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
   // Derived from the executor's results, never from the model. See `summariseRun`.
   if (deps.agents) emit({ type: 'agent:summary', summary: summariseRun(exec, held, delegations) });
 
-  // Per-role memory, written from what actually landed rather than from what was planned — a plan
-  // that failed at the tracker must not leave the next run believing the work is underway. Opt-in:
-  // no store, no writes.
-  if (deps.roleState) {
-    recordExecutedWorkByRole(deps.roleState, checked.clean, exec, (detail) => emit({ type: 'alert', detail }));
-  }
-
-  // ── Pass 2d — audit against a FRESH read ─────────────────────────────────
-  // Re-read rather than reusing `tasks`: auditing against the pre-write snapshot would just re-read
-  // our own assumptions and pass every time.
+  // Role memory and the Pass 2d audit are the SHARED tail of a write — `finalizeWrite` — because the
+  // resume path (`npm run answer -- <id> --approve`) reaches the tracker too and used to do neither.
+  // If the two paths ever need to differ, the difference belongs in that file rather than arising
+  // from one caller forgetting.
   //
-  // `writable`/`held`, NOT `checked.*`. This pass asks "did what we said we would do actually
-  // happen", so it must be given what Pass 2c was actually handed. Auditing the pre-proposal list
-  // reports every item the re-gate moved to held as a card that should exist and does not — a false
-  // alarm, from the one pass whose whole job is to not raise them. Pass 2d caught this itself the
-  // first time the re-gate ran, which is the best argument in the repo for why it exists.
+  // `writable`/`held`, NOT `checked.*`. Both readers must get what Pass 2c was actually handed.
+  // Auditing the pre-proposal list reports every re-gated hold as a card that should exist and does
+  // not — a false alarm from the one pass whose whole job is to not raise them. Role memory gets the
+  // owner an accepted assignee proposal replaced. **Those were the same bug at sibling call sites;
+  // one was fixed and the other was not, because nothing looked for a second reader of the pre-agent
+  // list.** One function now, so there is no second reader to miss.
   const audit = await timed('2d-audit', async () =>
-    auditPostWrite(writable, exec, await deps.tracker.listTasks({ includeClosed: true }), held)
+    finalizeWrite(
+      writable,
+      exec,
+      {
+        tracker: deps.tracker,
+        ...(deps.roleState ? { roleState: deps.roleState } : {}),
+        alert: (detail) => emit({ type: 'alert', detail }),
+      },
+      held
+    )
   );
   emit({ type: 'audit', passed: audit.passed, mismatched: audit.mismatched, report: audit.report });
 
@@ -377,50 +381,6 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
   return { ...base, clean: writable, held, exec, audit };
 }
 
-/**
- * Fold what a run actually wrote into each role's state file.
- *
- * Keyed off the **executed** actions, not the plan: an item whose write failed or was refused is not
- * "already open for" anyone, and recording it would teach the next run to treat undone work as done.
- *
- * Entirely fail-open. This is a memo written after the writes have already succeeded; losing it costs
- * the next run some context and must never turn a successful run into a failed one.
- */
-function recordExecutedWorkByRole(
-  store: RoleStateStore,
-  clean: CategorizationItem[],
-  exec: ExecuteResult,
-  alert: (detail: string) => void
-): void {
-  try {
-    const roleOf = new Map(getMembers().map((m) => [m.name.toLowerCase(), m.role]));
-    const at = new Date().toISOString();
-    const byRole = new Map<RoleArchetype, RoleOpenItem[]>();
-
-    for (const action of exec.actions) {
-      if (!action.ok || action.outcome !== 'planned') continue;
-
-      const item = clean.find((c) => c.item === action.item);
-      const owner = item?.assignee ?? item?.notifyAssignee;
-      const role = owner ? roleOf.get(owner.toLowerCase()) : undefined;
-      if (!role) continue;
-
-      const created = action.results.find((r) => r.op.kind === 'createTask' && r.outcome.status === 'applied');
-      const taskId =
-        (created?.outcome.status === 'applied' ? created.outcome.resultId : undefined) ??
-        item?.existingTaskId ??
-        item?.parentTaskId;
-
-      const bucket = byRole.get(role) ?? [];
-      bucket.push({ ...(taskId ? { taskId } : {}), title: action.title, at });
-      byRole.set(role, bucket);
-    }
-
-    for (const [role, items] of byRole) store.record(role, items);
-  } catch (err) {
-    alert(`could not update role state: ${(err as Error)?.message ?? err}`);
-  }
-}
 
 // ── Agent proposals ──────────────────────────────────────────────────────────
 

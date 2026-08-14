@@ -1,0 +1,78 @@
+name: traffic export
+
+# GitHub Insights → Traffic retains 14 days. This is not a schedule for convenience — it's the
+# only way to keep more than a fortnight of the launch, which is the window that matters most.
+#
+# Uses a PAT (TRAFFIC_TOKEN), not the default GITHUB_TOKEN: the traffic API requires push access,
+# and the automatic token's standing to satisfy that check is not something this workflow should
+# gamble on silently. Set it once:
+#   gh secret set TRAFFIC_TOKEN --repo agentloopr/ops-agent-reference --body "<a PAT with repo scope>"
+#
+# If the secret is unset, this fails loudly rather than logging nothing — the same rule the
+# IDENTIFIER_PATTERNS guard in ci.yml follows, for the same reason: a workflow that is configured
+# to do nothing and reports success is worse than one that never ran.
+
+on:
+  schedule:
+    - cron: '17 6 * * 1' # weekly, Monday — arbitrary time chosen to avoid the top-of-hour crowd
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: require TRAFFIC_TOKEN
+        env:
+          TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+        run: |
+          if [ -z "${TRAFFIC_TOKEN}" ]; then
+            echo "::error::TRAFFIC_TOKEN is unset — this run would silently export nothing. See the comment at the top of this file."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: metrics
+          fetch-depth: 0
+
+      - name: fetch traffic snapshot
+        env:
+          GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+          STAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
+          mkdir -p traffic
+          gh api "repos/${REPO}/traffic/views" > "traffic/views-${STAMP}.json"
+          gh api "repos/${REPO}/traffic/clones" > "traffic/clones-${STAMP}.json"
+          gh api "repos/${REPO}/traffic/popular/referrers" > "traffic/referrers-${STAMP}.json"
+          gh api "repos/${REPO}/traffic/popular/paths" > "traffic/paths-${STAMP}.json"
+          gh api "repos/${REPO}" --jq '{stars: .stargazers_count, watchers: .subscribers_count, forks: .forks_count, at: now | strftime("%Y-%m-%dT%H:%M:%SZ")}' > "traffic/stars-${STAMP}.json"
+
+      - name: verify the snapshot is non-empty
+        run: |
+          set -euo pipefail
+          for f in traffic/views-*.json traffic/clones-*.json; do
+            latest="$(ls -t $f | head -1)"
+            # A well-formed empty response still has a "count" key at 0 — this only catches an
+            # actually broken/empty file, which is the "configured but doing nothing" failure.
+            python3 -c "import json,sys; d=json.load(open('$latest')); assert 'count' in d, 'malformed traffic response'" || {
+              echo "::error::$latest did not contain a usable traffic snapshot"; exit 1;
+            }
+          done
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add traffic/
+          if git diff --cached --quiet; then
+            echo "no new traffic files"
+          else
+            git commit -m "traffic: $(date -u +%Y-%m-%d) snapshot"
+            git push origin metrics
+          fi

@@ -150,18 +150,26 @@ async function dispatch(
 ): Promise<string> {
   try {
     switch (name) {
+      // ── Every tool result below is screened. ──────────────────────────────────────────────────
+      //
+      // The comment on `get_task_comments` used to say a tool result is "the easiest place to
+      // forget" that external text needs framing — and the two cases either side of it had been
+      // forgotten, for as long as they had existed. A title and description are written by whoever
+      // can edit the card; `JSON.stringify` of a tracker record is third-party text in a wrapper,
+      // not the system's own output, and it reached the model with neither redaction nor framing.
+      //
+      // This repo's own recurring lesson, one more time: fixing one instance is not fixing the bug.
       case 'get_task': {
         const task = await tracker.getTask(String(args.task_id ?? ''));
-        return task ? JSON.stringify(task) : `no task with id "${String(args.task_id ?? '')}"`;
+        return task
+          ? screenExternalPromptText(JSON.stringify(task), 'task-record').text
+          : `no task with id "${String(args.task_id ?? '')}"`;
       }
 
       case 'get_task_comments': {
         const limit = Number(args.limit) || 20;
         const comments = await tracker.getComments(String(args.task_id ?? ''), limit);
         if (comments.length === 0) return 'no comments on that task';
-        // Comment bodies are written by other people and may contain anything. They get the same
-        // screening as the host-side evidence block: framed as data, never as instructions. A tool
-        // result is the easiest place to forget that, because it feels like the system's own output.
         return screenExternalPromptText(
           comments.map((c) => `[${c.createdAt}] ${c.author}: ${c.body}`).join('\n'),
           'task-comments'
@@ -172,7 +180,9 @@ async function dispatch(
         const q = String(args.query ?? '').toLowerCase();
         if (!q) return 'search_tasks needs a non-empty query';
         const hits = (await tracker.listTasks()).filter((t) => t.title.toLowerCase().includes(q)).slice(0, 10);
-        return hits.length ? JSON.stringify(hits) : `no open task title contains "${q}"`;
+        return hits.length
+          ? screenExternalPromptText(JSON.stringify(hits), 'task-search-results').text
+          : `no open task title contains "${q}"`;
       }
 
       default:

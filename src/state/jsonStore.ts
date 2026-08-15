@@ -16,7 +16,7 @@
  * construction, and the processes doing it are usually not the same process — see
  * `withExclusiveFileLock`.
  */
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 let onCorrupt: ((msg: string) => void) | null = null;
@@ -29,11 +29,27 @@ export function setCorruptFileNotifier(fn: ((msg: string) => void) | null): void
   onCorrupt = fn;
 }
 
+/**
+ * Owner-only, because of what these files hold rather than what they are.
+ *
+ * Holds, corrections, role memory and the roster carry task titles, member names and the content of
+ * decisions a human made. None of it is a credential, so no secret scanner would ever flag it — and
+ * under a default `022` umask it was landing as world-readable `0644` inside a `0755` directory. On
+ * a shared host or a CI runner with other tenants, "not a secret" and "fine for anyone to read" are
+ * different claims, and only the first one was true.
+ */
+const DIR_MODE = 0o700;
+const FILE_MODE = 0o600;
+
 export function atomicWriteJson(path: string, value: unknown): void {
   const dir = dirname(path);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: DIR_MODE });
   const tmp = `${path}.tmp-${process.pid}`;
-  writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  // The mode is set on the temp file, before the rename, so the final path is never briefly
+  // world-readable — `writeFileSync`'s mode applies only when it creates the file, and a rename
+  // carries the source's permissions with it.
+  writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: FILE_MODE });
+  chmodSync(tmp, FILE_MODE); // explicit: `mode` above is masked by the umask on creation
   renameSync(tmp, path);
 }
 

@@ -10,6 +10,7 @@
  * evidence the categorization pass needs to match a card, which trades a rare attack for a constant
  * accuracy loss. Redaction of *secrets* is unconditional, because a leaked token is not recoverable.
  */
+import { createHash } from 'node:crypto';
 
 /**
  * Concrete secret values read from our own environment. Checked first, because an exact match
@@ -65,12 +66,26 @@ const PROMPT_INJECTION_PATTERNS: RegExp[] = [
   /\b(print|dump|reveal|show)\b[\s\S]{0,20}\b(env(ironment)?\s+variables?|process\.env|os\.environ|\.env)\b/i,
 ];
 
-/** Log-and-report. Returns true if anything matched; the caller decides what to do about it. */
+/**
+ * Log-and-report. Returns true if anything matched; the caller decides what to do about it.
+ *
+ * **The matched text is not logged.** It used to log the first 150 characters, which quietly made
+ * the log a second copy of exactly the content most worth protecting: redaction runs before this,
+ * so credentials were stripped — but an SSN, a customer name, or an incident detail sitting on the
+ * same line as the matched phrase was not, and it landed in terminal output and anywhere those logs
+ * are shipped. A security control that creates a new store of sensitive text is a poor trade.
+ *
+ * What is logged instead is enough to investigate: which rule fired, where, how much text it saw,
+ * and a short digest that correlates repeated occurrences of the *same* input without revealing it.
+ */
 export function detectPromptInjection(text: string, context: string): boolean {
   for (const pattern of PROMPT_INJECTION_PATTERNS) {
     if (pattern.test(text)) {
-      const snippet = text.slice(0, 150).replace(/\n/g, ' ');
-      console.warn(`[security] prompt-injection detected in ${context}: pattern=/${pattern.source}/i snippet="${snippet}"`);
+      const digest = createHash('sha256').update(text).digest('hex').slice(0, 12);
+      console.warn(
+        `[security] prompt-injection detected in ${context}: pattern=/${pattern.source}/i ` +
+          `chars=${text.length} digest=${digest}`
+      );
       return true;
     }
   }

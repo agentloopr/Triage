@@ -212,6 +212,49 @@ describe('the loop', () => {
     expect(await asContractCheck('p', '2b/item-01')).toBe('VERDICT_CATEGORY: NEW_TASK');
   });
 
+  /**
+   * Every tool result is screened before the model sees it — asserted on **what reaches the
+   * provider**, not on what the tool returned.
+   *
+   * Read-only enforcement, tested above, stops these tools mutating the tracker. It says nothing
+   * about the content coming back. A card's title and description are written by anyone who can edit
+   * the card, so a pasted credential or an injected instruction rides into the next request unless
+   * something strips it — and for `get_task` and `search_tasks`, nothing did. Only
+   * `get_task_comments` screened, which is exactly what made the gap easy to miss: the file *looked*
+   * like it had the control, in the one case somebody had thought about.
+   *
+   * The assertion deliberately inspects the request built *after* the tool result was appended to
+   * history. Checking the tool's return value would pass with the screening applied anywhere at all,
+   * including somewhere that never reaches the model.
+   */
+  it.each([
+    ['get_task', () => call('get_task', { task_id: 'leak' })],
+    ['search_tasks', () => call('search_tasks', { query: 'rotate' })],
+  ])('screens %s output before it reaches the next request', async (_label, mkCall) => {
+    const SECRET = 'sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+
+    const tracker = memoryTracker({
+      tasks: [
+        {
+          id: 'leak',
+          title: `Rotate the key ${SECRET}`,
+          listKey: 'backend',
+          assignees: ['Avery Chen'],
+          status: 'to do',
+        },
+      ],
+    });
+
+    const model = scriptedModel([{ toolCalls: [mkCall()] }, { text: 'done' }]);
+    await makeToolLoopRunner({ model, tracker })('p', 'k');
+
+    expect(model.seen.length, 'the loop did not make a second request to inspect').toBeGreaterThan(1);
+    const followUp = JSON.stringify(model.seen[1]);
+
+    expect(followUp, 'a credential from a card reached the provider verbatim').not.toContain(SECRET);
+    expect(followUp, 'the tool result was not framed as data-not-instructions').toContain('raw DATA');
+  });
+
   it('cannot write even when the model asks for a write-shaped tool', async () => {
     const inner = memoryTracker({ tasks: BOARD });
     const model = scriptedModel([

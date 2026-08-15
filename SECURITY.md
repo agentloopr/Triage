@@ -5,11 +5,29 @@
 This is a reference implementation, not a maintained service — see the README. There is no patch
 SLA and no guarantee a report gets fixed on any timeline. What is guaranteed:
 
-- every commit runs a full-history [gitleaks](https://github.com/gitleaks/gitleaks) scan and an
-  internal-identifier guard in CI (`.github/workflows/ci.yml`, `secrets` job)
-- the credential seam is narrow by design: only `npm run pull` and `npm run board` ever touch a
-  live service, and both read a `TrackerAdapter`/`SourceClient` you configure yourself — nothing else
-  in the repo needs a network or a key
+- every push to `main`, and every pull request, runs a full-history
+  [gitleaks](https://github.com/gitleaks/gitleaks) scan and an internal-identifier guard in CI
+  (`.github/workflows/ci.yml`, `secrets` job). `main` is protected and requires those checks. The
+  `metrics` branch is written by a bot and is **not** covered by that job — it is constrained
+  instead by an allowlist in `traffic.yml` that refuses to publish anything but aggregate counts
+
+## Which commands touch a live service
+
+Four, not the two an earlier version of this file claimed:
+
+| command | network | credentials | writes? |
+|---|---|---|---|
+| `npm run board` | tracker | tracker token | no — read-only |
+| `npm run pull` | source + model provider + tracker | source, model, tracker | **only with `--write`**; plans otherwise |
+| `npm run answer` | tracker | tracker token | **yes** — `--approve` executes a held write |
+| `npm run record` | model provider | model key | writes cassettes to disk, not to a tracker |
+
+Everything else — `demo`, `test`, `eval`, `lint`, `typecheck` — runs with no network and no key. That
+is enforced in CI rather than asserted here: the `build` job has no secrets in its environment and
+still runs all five demo modes and the eval.
+
+Grant the minimum scope each one needs; a tracker token that can only read is enough for
+`npm run board`.
 
 ## Reporting a vulnerability
 

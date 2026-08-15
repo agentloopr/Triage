@@ -16,8 +16,12 @@ jobs:
       matrix:
         node: [20, 22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Pinned to full commit SHAs, not tags. A tag is mutable — whoever controls the action's repo
+      # can repoint `v4` at different code, and these steps run with a checkout of our source and,
+      # in the traffic workflow, a token. A SHA is the only immutable reference GitHub offers.
+      # Bump deliberately: read the diff between the pinned SHA and the new one before moving it.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '${{ matrix.node }}'
           cache: npm
@@ -43,18 +47,28 @@ jobs:
   secrets:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0 # full history — the scan must cover every commit, not just the tip
 
       # The gitleaks BINARY, not gitleaks-action: the action requires a paid licence key for
       # organization-owned repositories, which would make this gate depend on a subscription rather
       # than on the code. The binary is the same scanner with no such condition.
+      #
+      # **The checksum is verified before the binary runs.** `curl | tar` piped straight into
+      # execution trusts whatever the endpoint served — a compromised release, a hijacked CDN, or an
+      # MITM would run as this job. The scanner that certifies this repo has no secrets is the last
+      # thing that should execute unverified. Download, verify, then run — and the pinned digest is
+      # from the release's published checksums file for this exact version.
       - name: gitleaks (full history)
         run: |
           VERSION=8.28.0
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
-            | tar -xz gitleaks
+          SHA256=a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
+          TARBALL="gitleaks_${VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$TARBALL" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/${TARBALL}"
+          echo "${SHA256}  ${TARBALL}" | sha256sum -c -
+          tar -xzf "$TARBALL" gitleaks
           ./gitleaks --version
           # `git` scans every commit; `dir` scans the working tree. `detect` is a deprecated alias
           # whose --no-git flag silently does nothing on 8.28 — do not reintroduce it.

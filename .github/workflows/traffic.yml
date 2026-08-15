@@ -20,6 +20,13 @@ on:
 permissions:
   contents: write
 
+# Two exporters writing the same branch would race on the push. Weekly + manual dispatch makes that
+# unlikely rather than impossible, and "unlikely" is how the cross-process lock bug in this repo's
+# own history started.
+concurrency:
+  group: traffic-export
+  cancel-in-progress: false
+
 jobs:
   export:
     runs-on: ubuntu-latest
@@ -33,24 +40,64 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: metrics
           fetch-depth: 0
 
+      # **Referrers and paths are collected but NOT published.**
+      #
+      # `traffic/popular/referrers` is privileged data — GitHub shows it only to people with push
+      # access — and this branch is public. Today's referrers are benign (github.com, google). A
+      # future one can be an internal hostname, an unreleased campaign URL, a partner system, or a
+      # private Slack/Notion workspace that linked here. Publishing raw referrers turns a weekly
+      # analytics job into a standing disclosure channel for whatever happens to appear in it later.
+      #
+      # So the export keeps the aggregate — how many referrers, how much traffic — and drops the
+      # names. Counts are what the launch actually needs measured; the names are readable any time
+      # in the Insights tab by anyone entitled to see them.
+      #
+      # `${{ github.repository }}` is passed through `env` rather than interpolated into the shell
+      # body: expression interpolation splices text directly into the script, so a value containing
+      # shell syntax would execute. It cannot here — GitHub controls that particular value — but
+      # "this specific one is safe" is the reasoning that makes the habit unsafe everywhere else.
       - name: fetch traffic snapshot
         env:
           GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          REPO="${{ github.repository }}"
           STAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
           mkdir -p traffic
           gh api "repos/${REPO}/traffic/views" > "traffic/views-${STAMP}.json"
           gh api "repos/${REPO}/traffic/clones" > "traffic/clones-${STAMP}.json"
-          gh api "repos/${REPO}/traffic/popular/referrers" > "traffic/referrers-${STAMP}.json"
-          gh api "repos/${REPO}/traffic/popular/paths" > "traffic/paths-${STAMP}.json"
           gh api "repos/${REPO}" --jq '{stars: .stargazers_count, watchers: .subscribers_count, forks: .forks_count, at: now | strftime("%Y-%m-%dT%H:%M:%SZ")}' > "traffic/stars-${STAMP}.json"
+
+          # Aggregate only — count of distinct referrers and their total, never the referrer names.
+          gh api "repos/${REPO}/traffic/popular/referrers" \
+            --jq '{distinct_referrers: length, total_count: (map(.count) | add // 0), total_uniques: (map(.uniques) | add // 0)}' \
+            > "traffic/referrers-summary-${STAMP}.json"
+          gh api "repos/${REPO}/traffic/popular/paths" \
+            --jq '{distinct_paths: length, total_count: (map(.count) | add // 0), total_uniques: (map(.uniques) | add // 0)}' \
+            > "traffic/paths-summary-${STAMP}.json"
+
+      # The bot's commits land on `metrics`, which CI does not scan — ci.yml runs on `main` and pull
+      # requests only. Rather than widen CI to a branch it has no reason to build, the export refuses
+      # to commit anything that is not one of the shapes it just produced.
+      - name: refuse to publish anything unexpected
+        run: |
+          set -euo pipefail
+          for f in traffic/*.json; do
+            case "$(basename "$f")" in
+              views-*.json|clones-*.json|stars-*.json|referrers-summary-*.json|paths-summary-*.json) ;;
+              *) echo "::error::unexpected file staged for the public metrics branch: $f"; exit 1 ;;
+            esac
+          done
+          # Belt and braces: no raw referrer/path names may appear in any file about to be pushed.
+          if grep -rlE '"referrer"|"path"[[:space:]]*:' traffic/ 2>/dev/null | grep -q .; then
+            echo "::error::a raw referrer/path name reached the public export — see SEC-05"
+            exit 1
+          fi
 
       - name: verify the snapshot is non-empty
         run: |

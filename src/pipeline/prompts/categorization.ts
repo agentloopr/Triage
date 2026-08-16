@@ -21,6 +21,7 @@ import { roleRosterBlock } from '../../registry/roleProfiles';
 import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
 import type { EnrichedInventoryItem } from '../types';
 import type { PromptParts } from './parts';
+import { screenedPrimary } from '../../utils/security';
 
 export type CategorizationPromptOptions = {
   participantLine?: string;
@@ -38,6 +39,13 @@ export function buildCategorizationPrompt(
   sourceText: string,
   opts: CategorizationPromptOptions = {}
 ): PromptParts {
+  // Board snapshot and source text are the two untrusted inputs here. The board is tracker content —
+  // anyone who can edit a card writes it — and it never passed through Pass 0, so this is the only
+  // place it gets screened. `item` fields are Pass 1 output over already-screened source.
+  boardSnapshot = screenedPrimary(boardSnapshot, 'board/2a');
+  sourceSummary = screenedPrimary(sourceSummary, 'source-summary/2a');
+  sourceText = screenedPrimary(sourceText, 'source/2a');
+
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
   const retrievedBlock = opts.retrievedContext ?? '';
   const routes = getRoutes();

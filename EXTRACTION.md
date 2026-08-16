@@ -24,6 +24,30 @@ this line is how you work out whether the other already has it.
 | Tracker client | A 2,034-line bash script shelling out from TypeScript | Typed HTTP adapters for ClickUp and Linear | Most of that script was `jq` shaping. Three pieces were real logic and were carried across; see below. |
 | Retrieval | A live vector substrate | A declared `Retriever` interface, wired into 2a/2b, whose only implementation returns nothing | Retrieval quality has never been measured, so no claim about it would be falsifiable. The interface ships so the architecture visibly accommodates a knowledge layer; the substrate does not, because nothing could be said about it honestly. |
 
+### One thing that was NOT deliberately different, and belonged in the table
+
+**Primary-source screening did not make it across, and nobody noticed for the whole of Phases 1–8.**
+
+Production screens the meeting transcript, the Slack channel text, the GitHub issue/PR body and the
+email body before any of them reach a prompt — `redactSecretsInText` unconditionally, plus a
+conditional injection notice. That is four call sites, in `src/index.ts`, `webhooks/github.ts`,
+`slack/channelHistory.ts` and `clickup/boardClassifiers.ts`.
+
+This repo shipped the same `security.ts` primitives and wired them to comment history and retrieved
+documents — the two *smallest* untrusted inputs — while the source the pipeline exists to read went
+to the provider raw. An outside security audit found it by capturing the outgoing model messages.
+Every unit test passed throughout, because nothing asserted on what actually left the process.
+
+Closed in `sourceScreening.test.ts`, which asserts on the **built prompt** rather than on the
+screener, because a screener wired to nothing passes its own unit tests perfectly well. The port kept
+production's shape exactly — **redaction always, banner only when a pattern matched** — and that
+detail is what made it free: on clean input both are no-ops, so no cassette moved and nothing needed
+re-recording.
+
+The lesson is one this repo keeps relearning. *The architecture is identical* is a claim about the
+code that runs, and a control that exists but is wired to a narrower input than production's looks
+identical to any review that reads the module instead of its call sites.
+
 ### A sentence that hardened into a constraint
 
 Worth recording, because it is the most expensive mistake in this repo's history and it left no trace

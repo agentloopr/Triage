@@ -4,7 +4,7 @@
  * Both were found by an outside audit running probes rather than reading code, which is the only
  * method that has caught anything in this area.
  */
-import { existsSync, mkdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -43,6 +43,26 @@ beforeEach(() => {
 afterEach(() => rmSync(DIR, { recursive: true, force: true }));
 
 describe('withExclusiveFileLock', () => {
+  /**
+   * The lock creates the state directory, so the lock is what decides its permissions.
+   *
+   * `atomicWriteJson` was given `mode: 0o700` and that looked like the fix. It was not: locking
+   * happens before writing on every real path, so this `mkdirSync` runs first, and the writer's
+   * `existsSync` check then finds the directory already present and never applies its mode. The
+   * result was 0600 files inside a 0755 directory — the permissions that were easy to check were
+   * right, and the one that actually gates access to them was not.
+   *
+   * Asserted on the mode bits of a directory created BY the lock, on a path where nothing else has
+   * run, because that is the only arrangement that can tell the two fixes apart.
+   */
+  it('creates the state directory owner-only, not just the files in it', () => {
+    const fresh = join(DIR, 'brand', 'new', 'state.json');
+    withExclusiveFileLock(fresh, () => 'ran');
+
+    const mode = statSync(join(DIR, 'brand', 'new')).mode & 0o777;
+    expect(mode.toString(8), 'state directory is traversable by other local users').toBe('700');
+  });
+
   it('creates the directory rather than throwing ENOENT on a fresh checkout', () => {
     // The lock is taken BEFORE `atomicWriteJson`, which is the code that used to create the
     // directory — so the very first run on a clean machine died in the lock.

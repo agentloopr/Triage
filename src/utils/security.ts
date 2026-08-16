@@ -142,22 +142,41 @@ export const PRIMARY_SOURCE_INJECTION_NOTICE =
  * stated posture is annotation, and the two are a genuine judgement call rather than one being
  * wrong.)
  */
+/**
+ * Any `--- END … ---` style terminator inside the content.
+ *
+ * Every primary prompt wraps the source in a delimited block (`--- END RAW TRANSCRIPT ---`,
+ * `--- END ---`). Source text containing one of those closes the block early, and everything after
+ * it reads as trusted prose in the model's own voice. Neutralising them costs nothing — no real
+ * transcript line is a row of dashes around the word END — and removes the escape.
+ */
+const CLOSING_DELIMITER = /^[ \t]*-{2,}[ \t]*END\b[^\n]*-{2,}[ \t]*$/gim;
+
 export function screenPrimarySourceText(raw: string, context: string): ScreenedText {
   if (!raw) return { text: raw, injectionDetected: false, secretsRedacted: false };
 
-  // Idempotent: a builder may receive text another builder already screened, and a second banner
-  // would be noise rather than a second warning.
-  if (raw.startsWith(PRIMARY_SOURCE_INJECTION_NOTICE)) {
-    return { text: raw, injectionDetected: true, secretsRedacted: false };
-  }
+  // ── Idempotency, WITHOUT a bypass ────────────────────────────────────────────────────────────
+  //
+  // This used to early-return when the text already began with the notice, so re-screening would
+  // not stack banners. That was a hole, and a bad one: the notice is a public constant in this
+  // repo, so anything that could put text into a source could open with it and skip redaction
+  // entirely. Measured — a transcript beginning with the notice carried its credential intact
+  // through `buildCleanupPrompt` and out to the provider.
+  //
+  // The idempotency requirement was real; the shortcut was the mistake. Strip whatever notice is
+  // present, screen the body unconditionally, then re-attach the notice only if this pass earns it.
+  // Re-screening our own output is stable, and a forged notice is removed rather than trusted.
+  const forged = raw.startsWith(PRIMARY_SOURCE_INJECTION_NOTICE);
+  const body = forged ? raw.slice(PRIMARY_SOURCE_INJECTION_NOTICE.length).replace(/^\n+/, '') : raw;
 
-  const redacted = redactSecretsInText(raw);
-  const injectionDetected = detectPromptInjection(redacted, context);
+  const redacted = redactSecretsInText(body);
+  const deframed = redacted.replace(CLOSING_DELIMITER, '[delimiter removed]');
+  const injectionDetected = detectPromptInjection(deframed, context);
 
   return {
-    text: injectionDetected ? `${PRIMARY_SOURCE_INJECTION_NOTICE}\n\n${redacted}` : redacted,
+    text: injectionDetected ? `${PRIMARY_SOURCE_INJECTION_NOTICE}\n\n${deframed}` : deframed,
     injectionDetected,
-    secretsRedacted: redacted !== raw,
+    secretsRedacted: redacted !== body,
   };
 }
 

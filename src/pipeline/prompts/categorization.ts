@@ -263,7 +263,7 @@ export function buildCategorizationPrompt(
     'CONFIDENCE: low',
     'RATIONALE: The deliverable is clear but the owning workstream is not; routing it would be a guess.',
     '',
-    ...(opts.participantLine ? [`PARTICIPANTS (speaker mapping only): ${opts.participantLine}`, ''] : []),
+    ...(opts.participantLine ? [`PARTICIPANTS (speaker mapping only): ${screenedPrimary(opts.participantLine, 'participants')}`, ''] : []),
     // Before the snapshot on purpose: the scan below is only as good as the vocabulary going into it.
     // A taught fact ("X is how the transcriber garbles Y") has to be known before the hunt, not after.
     ...learnedFactsBlock(30),

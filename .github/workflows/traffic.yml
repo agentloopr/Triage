@@ -46,15 +46,20 @@ jobs:
       # — because the traffic endpoints require push-level access that the automatic token does not
       # reliably carry. It is never persisted to disk and never used to push.
       #
-      # The push uses the automatic `GITHUB_TOKEN` that checkout stores here, which is scoped to this
-      # repository and expires with the job. Combining the two — a longer-lived PAT that also holds
-      # write authority over a public branch — is one credential doing both jobs, and the blast
-      # radius of anything going wrong in this workflow becomes the PAT's full scope rather than a
-      # single branch.
+      # The push uses the automatic `GITHUB_TOKEN`, which is scoped to this repository and expires
+      # with the job. Combining the two — a longer-lived PAT that also holds write authority over a
+      # public branch — is one credential doing both jobs, and the blast radius of anything going
+      # wrong in this workflow becomes the PAT's full scope rather than a single branch.
+      #
+      # **Neither is persisted into `.git/config`.** `persist-credentials: false` — the default
+      # writes the token there, where every subsequent step and anything they shell out to can read
+      # it, for the whole job. The push below supplies its credential explicitly on the one command
+      # that needs it, so the window is a single git invocation instead of the job's lifetime.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: metrics
           fetch-depth: 0
+          persist-credentials: false
 
       # **Referrers and paths are collected but NOT published.**
       #
@@ -123,6 +128,11 @@ jobs:
           done
 
       - name: commit
+        env:
+          # Scoped to this repo, expires with the job, and supplied only to the push below rather
+          # than stored in .git/config by checkout.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -132,5 +142,7 @@ jobs:
             echo "no new traffic files"
           else
             git commit -m "traffic: $(date -u +%Y-%m-%d) snapshot"
-            git push origin metrics
+            # The token is on the remote URL for this one command; `-c` keeps it out of the stored
+            # config, and `--` guards against a repo name that could look like a flag.
+            git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git" -- HEAD:metrics
           fi

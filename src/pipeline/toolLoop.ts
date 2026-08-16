@@ -204,6 +204,14 @@ async function dispatch(
         return `no tool named "${name}". Available: ${READ_ONLY_TOOLS.map((t) => t.name).join(', ')}`;
     }
   } catch (err) {
-    return `tool "${name}" failed: ${(err as Error)?.message ?? String(err)}`;
+    // **The error message is screened too.** It is the one path out of `dispatch` that skipped
+    // screening, and an adapter's exception is not the system's own words: HTTP clients quote the
+    // request and the response body back in `.message`, so a tracker error can carry a task title,
+    // an auth header, or a whole payload. Measured before this line existed — a synthetic
+    // credential and an injection phrase inside a thrown error both reached the next request intact.
+    return screenPrimarySourceText(
+      `tool "${name}" failed: ${(err as Error)?.message ?? String(err)}`,
+      `tool-error/${name}`
+    ).text;
   }
 }

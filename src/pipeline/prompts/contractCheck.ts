@@ -218,7 +218,7 @@ export function buildContractCheckerPrompt(
     // The ROUTING_OK check above asks whether an entity can be placed "from the roster below". Until
     // Phase 4 that sentence pointed at nothing — the prompt promised context it never supplied.
     ...(roster.length ? [...roster, ''] : []),
-    ...(opts.participantLine ? [`PARTICIPANTS (speaker mapping only): ${opts.participantLine}`, ''] : []),
+    ...(opts.participantLine ? [`PARTICIPANTS (speaker mapping only): ${screenedPrimary(opts.participantLine, 'participants')}`, ''] : []),
     // Placed immediately BEFORE the board snapshot. This pass's whole job is "assume this is NOT new,
     // hunt the board", so it must know the team's taught facts BEFORE it scans — otherwise it hunts
     // for a garbled token, finds nothing, and concludes NEW. Empty until something is taught.

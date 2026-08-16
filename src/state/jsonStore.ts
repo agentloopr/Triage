@@ -41,9 +41,32 @@ export function setCorruptFileNotifier(fn: ((msg: string) => void) | null): void
 export const DIR_MODE = 0o700;
 export const FILE_MODE = 0o600;
 
+/**
+ * Ensure `dir` exists AND is owner-only.
+ *
+ * `mkdirSync`'s `mode` applies only when it creates the directory. A state directory that already
+ * exists at 0755 — from a checkout, an older version of this code, or a `mkdir -p` in someone's
+ * setup script — kept its permissions forever, so the fix that set the mode on creation left every
+ * pre-existing deployment exactly as it was. Tightening is idempotent and costs one `stat`.
+ *
+ * Only tightens: if the directory is already 0700 or stricter, nothing happens. This never widens
+ * permissions, so pointing `STATE_DIR` somewhere deliberately locked down is safe.
+ */
+function ensurePrivateDir(dir: string): void {
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true, mode: DIR_MODE });
+    return;
+  }
+  try {
+    if (statSync(dir).mode & 0o077) chmodSync(dir, DIR_MODE);
+  } catch {
+    /* best effort — a directory we cannot stat is one we are about to fail to write to anyway */
+  }
+}
+
 export function atomicWriteJson(path: string, value: unknown): void {
   const dir = dirname(path);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: DIR_MODE });
+  ensurePrivateDir(dir);
   const tmp = `${path}.tmp-${process.pid}`;
   // The mode is set on the temp file, before the rename, so the final path is never briefly
   // world-readable — `writeFileSync`'s mode applies only when it creates the file, and a rename
@@ -131,7 +154,7 @@ export function withExclusiveFileLock<T>(
   // never applied. Setting the mode in only one of the two left every lock-before-write path with a
   // 0755 directory holding 0600 files — the file permissions looked fixed while the directory they
   // sat in was still world-traversable.
-  mkdirSync(dirname(lockPath), { recursive: true, mode: DIR_MODE });
+  ensurePrivateDir(dirname(lockPath));
 
   // A sync sleep without busy-burning a core. `Atomics.wait` on a private buffer is the standard
   // idiom; the buffer is never shared, so nothing can notify it and it always times out.

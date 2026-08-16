@@ -30,6 +30,7 @@
 import { getRoleProfile } from '../registry/roleProfiles';
 import { type RoleArchetype, getMembers } from '../registry/opsRegistry';
 import { readRoleState } from '../state/roleState';
+import { screenedPrimary } from '../utils/security';
 import { isMeetingCategory, type MeetingCategory } from '../pipeline/parsing/categorizationManifest';
 import { makeToolLoopRunner } from '../pipeline/toolLoop';
 import type { ModelClient } from '../providers';
@@ -107,19 +108,30 @@ export function buildRoleAgentPrompt(input: RoleAgentInput): string {
     lines.push(`WHAT YOUR ROLE OWNS: ${profile.owns}`, `WHAT YOUR ROLE WATCHES FOR: ${profile.watchesFor}`, `HOW YOUR ROLE PHRASES AN UPDATE: ${profile.updateStyle}`, '');
   }
 
-  if (state.context.trim()) lines.push(`CONTEXT ABOUT THIS ROLE RIGHT NOW: ${state.context.trim()}`, '');
+  // Everything below traces back to something a person wrote — the item came from a transcript or a
+  // card, and role state is a file a human maintains by hand plus item titles the pipeline wrote
+  // there from the source. The role profile above does not: it ships in this repo.
+  //
+  // This was the last unscreened path into a model prompt, and it is easy to miss because a role
+  // agent reads like an internal component talking to itself. The state file especially looks like
+  // configuration rather than input.
+  if (state.context.trim()) {
+    lines.push(`CONTEXT ABOUT THIS ROLE RIGHT NOW: ${screenedPrimary(state.context.trim(), 'role-state-context')}`, '');
+  }
   if (state.openItems.length) {
     lines.push(
       `ALREADY OPEN FOR ${input.owner}:`,
-      ...state.openItems.map((i) => `  - ${i.title}${i.taskId ? ` (${i.taskId})` : ''}`),
+      ...state.openItems.map(
+        (i) => `  - ${screenedPrimary(i.title, 'role-state-item')}${i.taskId ? ` (${i.taskId})` : ''}`
+      ),
       ''
     );
   }
 
   lines.push(
     'THE ITEM:',
-    `  TITLE: ${input.title}`,
-    `  DESC: ${input.desc || '(none)'}`,
+    `  TITLE: ${screenedPrimary(input.title, 'role-item-title')}`,
+    `  DESC: ${input.desc ? screenedPrimary(input.desc, 'role-item-desc') : '(none)'}`,
     ...(input.taskId ? [`  EXISTING CARD: ${input.taskId}`] : []),
     '',
     'You have read-only tools. Use them if — and only if — the description is too thin to act on or',

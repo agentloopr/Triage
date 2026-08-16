@@ -49,6 +49,31 @@ jobs:
       # Never --labels here: that path calls a judge model, and this job has no secrets.
       - run: npm run eval
 
+      # **Cassette drift is a failure here, not a warning.**
+      #
+      # `warnOnPromptDrift` prints "recorded against a different prompt" and the run stays green,
+      # which is the right behaviour mid-development and the wrong one in CI: a security change once
+      # left 105 drifted cassettes across the suite and every job passed, because nothing read the
+      # warning. A recording made against a prompt the code no longer sends is a reply that may not
+      # be representative — the demo's entire claim is that it replays the real prompts.
+      #
+      # If this fails: either re-record (`npm run record -- --all --agents --provider <p>`) or work
+      # out why the prompt moved. Do not silence it.
+      - name: no cassette drift
+        run: |
+          set -uo pipefail
+          drift=0
+          for mode in "" "--twice" "--provider anthropic" "--agents" "--agents --provider anthropic"; do
+            # shellcheck disable=SC2086
+            n=$(npm run demo --silent -- $mode 2>&1 | grep -c "recorded against a different prompt" || true)
+            echo "demo ${mode:-(default)}: $n drifted cassette(s)"
+            drift=$((drift + n))
+          done
+          if [ "$drift" -ne 0 ]; then
+            echo "::error::$drift cassette(s) were recorded against a prompt the code no longer sends"
+            exit 1
+          fi
+
   secrets:
     runs-on: ubuntu-latest
     steps:

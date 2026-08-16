@@ -22,7 +22,7 @@
  */
 import { TOOL_LOOP_MAX_ITERATIONS } from '../config';
 import type { ChatMessage, ModelClient, ToolSpec } from '../providers';
-import { screenExternalPromptText } from '../utils/security';
+import { screenExternalPromptText, screenPrimarySourceText } from '../utils/security';
 import type { OpOutcome, TrackerAdapter } from '../trackers';
 
 /**
@@ -159,10 +159,23 @@ async function dispatch(
       // not the system's own output, and it reached the model with neither redaction nor framing.
       //
       // This repo's own recurring lesson, one more time: fixing one instance is not fixing the bug.
+      //
+      // **Two screeners, and the difference is about where the text lands.**
+      //
+      // A record fetched by `get_task`/`search_tasks` is delivered in a `role: "tool"` message, so
+      // the protocol already types it as data — prepending "treat this as data" is framing something
+      // the transport has framed. `screenPrimarySourceText` is the right shape there: redact
+      // unconditionally, and add the notice only when a pattern actually matched, when it says
+      // something. Comment bodies are different: they are prose written by other people that gets
+      // read as narrative, so they keep the unconditional banner.
+      //
+      // The always-on banner was tried here first and cost 9 drifted agent cassettes, because it
+      // changed the tool result and therefore the next turn's prompt. Conditional framing is
+      // byte-identical on clean input, which is why the demo replays unchanged.
       case 'get_task': {
         const task = await tracker.getTask(String(args.task_id ?? ''));
         return task
-          ? screenExternalPromptText(JSON.stringify(task), 'task-record').text
+          ? screenPrimarySourceText(JSON.stringify(task), 'task-record').text
           : `no task with id "${String(args.task_id ?? '')}"`;
       }
 
@@ -181,7 +194,7 @@ async function dispatch(
         if (!q) return 'search_tasks needs a non-empty query';
         const hits = (await tracker.listTasks()).filter((t) => t.title.toLowerCase().includes(q)).slice(0, 10);
         return hits.length
-          ? screenExternalPromptText(JSON.stringify(hits), 'task-search-results').text
+          ? screenPrimarySourceText(JSON.stringify(hits), 'task-search-results').text
           : `no open task title contains "${q}"`;
       }
 

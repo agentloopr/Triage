@@ -23,6 +23,7 @@ import { formatTier2EvidenceBlock } from '../evidence/tier2Prefetch';
 import type { EnrichedInventoryItem } from '../types';
 import { WORTH_A_CARD_RUBRIC } from '../worthACardRubric';
 import type { PromptParts } from './parts';
+import { screenedPrimary } from '../../utils/security';
 
 export type ContractCheckPromptOptions = {
   participantLine?: string;
@@ -42,6 +43,13 @@ export function buildContractCheckerPrompt(
   sourceText: string,
   opts: ContractCheckPromptOptions = {}
 ): PromptParts {
+  // Board snapshot and source text are the two untrusted inputs here. The board is tracker content —
+  // anyone who can edit a card writes it — and it never passed through Pass 0, so this is the only
+  // place it gets screened. `item` fields are Pass 1 output over already-screened source.
+  boardSnapshot = screenedPrimary(boardSnapshot, 'board/2b');
+  sourceSummary = screenedPrimary(sourceSummary, 'source-summary/2b');
+  sourceText = screenedPrimary(sourceText, 'source/2b');
+
   const tier2Block = formatTier2EvidenceBlock(opts.tier2Evidence);
   const retrievedBlock = opts.retrievedContext ?? '';
   const roster = roleRosterBlock();

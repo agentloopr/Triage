@@ -11,6 +11,24 @@ SLA and no guarantee a report gets fixed on any timeline. What is guaranteed:
   `metrics` branch is written by a bot and is **not** covered by that job — it is constrained
   instead by an allowlist in `traffic.yml` that refuses to publish anything but aggregate counts
 
+## What happens to untrusted text before it reaches a model
+
+Every externally-authored input is screened at the prompt boundary — the source (transcript, channel
+log, email thread, GitHub activity, Drive comments), the board snapshot, comment history, retrieved
+documents, and every tool result:
+
+- **Secrets are redacted unconditionally.** A key pasted into a Slack channel or a card description
+  never leaves the process. This is not hypothetical for chat sources.
+- **Injection patterns are detected and the text is framed as data**, not dropped — removing the
+  matched line destroys the evidence the categorization pass needs to match a card.
+- **The alert names the rule, the length and a digest — never the matched text.** A security log that
+  copies the content it flagged is a second store of the thing worth protecting.
+
+**This is not a sandbox.** The pattern list is regexes; a rephrased attack walks past it. What bounds
+the damage is structural and downstream: the writer is deterministic, every write passes the gates,
+and Pass 2b re-derives the categorization blind. A successful injection can mislead a
+categorization. It cannot author a write.
+
 ## Which commands touch a live service
 
 Four, not the two an earlier version of this file claimed:

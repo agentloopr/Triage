@@ -7,9 +7,23 @@
  */
 import type { SourceKind } from '../../ingest';
 import { INVENTORY_END, INVENTORY_START, CONSOLIDATED_END, CONSOLIDATED_START } from '../parsing/inventory';
+import { screenedPrimary } from '../../utils/security';
 
-/** Pass 0 — clean up a raw source without changing what it says. */
+/**
+ * Pass 0 — clean up a raw source without changing what it says.
+ *
+ * `rawSource` is the least-trusted string in the pipeline: a meeting transcript, a Slack log, an
+ * inbound email, or GitHub issue text that anyone on the internet can write. It is screened here,
+ * at the first prompt that reads it, so every later pass works from already-redacted text — a
+ * secret stripped at Pass 0 cannot be echoed back into an item description by Pass 1.
+ */
 export function buildCleanupPrompt(rawSource: string, opts: { participantNames?: string } = {}): string {
+  const source = screenedPrimary(rawSource, 'source/cleanup');
+  const participantNames = opts.participantNames
+    ? screenedPrimary(opts.participantNames, 'participants/cleanup')
+    : opts.participantNames;
+  rawSource = source;
+  opts = { ...opts, ...(participantNames ? { participantNames } : {}) };
   return [
     'You are cleaning up a raw transcript so a later pass can read it accurately.',
     '',
@@ -56,6 +70,16 @@ const SOURCE_LABEL: Record<SourceKind, { long: string; short: string; delim: str
 /** Pass 1 — extract every actionable item. */
 export function buildInventoryPrompt(sourceText: string, opts: InventoryPromptOptions = {}): string {
   const src = SOURCE_LABEL[opts.sourceKind ?? 'transcript'];
+
+  // Screened even though Pass 0 already screened the source: this builder is also reachable with a
+  // raw source when cleanup is skipped, and `boardCompact` is tracker text that has not been through
+  // Pass 0 at all. Screening is idempotent, so the overlap costs nothing.
+  sourceText = screenedPrimary(sourceText, 'source/inventory');
+  opts = {
+    ...opts,
+    ...(opts.participantNames ? { participantNames: screenedPrimary(opts.participantNames, 'participants/inventory') } : {}),
+    ...(opts.boardCompact ? { boardCompact: screenedPrimary(opts.boardCompact, 'board/inventory') } : {}),
+  };
 
   return [
     `You are extracting every ACTIONABLE item from a ${src.long}.`,
@@ -115,6 +139,10 @@ export function buildInventoryPrompt(sourceText: string, opts: InventoryPromptOp
  * rewrite means the next pass trusts one model's retyping of another's work.
  */
 export function buildCriticPrompt(sourceText: string, inventoryRaw: string): string {
+  // `inventoryRaw` is our own model's output over already-screened text, so it is not screened again
+  // — screening a model's own reply would be theatre. The source is, because this builder is a
+  // separate entry point and must not depend on who called it first.
+  sourceText = screenedPrimary(sourceText, 'source/critic');
   return [
     'A first pass extracted an action inventory from the source below. Your job is to find what it MISSED.',
     '',

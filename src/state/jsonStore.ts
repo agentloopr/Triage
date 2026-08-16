@@ -38,8 +38,8 @@ export function setCorruptFileNotifier(fn: ((msg: string) => void) | null): void
  * a shared host or a CI runner with other tenants, "not a secret" and "fine for anyone to read" are
  * different claims, and only the first one was true.
  */
-const DIR_MODE = 0o700;
-const FILE_MODE = 0o600;
+export const DIR_MODE = 0o700;
+export const FILE_MODE = 0o600;
 
 export function atomicWriteJson(path: string, value: unknown): void {
   const dir = dirname(path);
@@ -124,7 +124,14 @@ export function withExclusiveFileLock<T>(
   // acquisition — not after the first write. Taking the lock ahead of `atomicWriteJson`'s own
   // `mkdirSync` meant a first run on a fresh checkout threw ENOENT from the lock, before any of the
   // code that creates the directory could run.
-  mkdirSync(dirname(lockPath), { recursive: true });
+  //
+  // **And it carries the same mode as `atomicWriteJson`'s, because it usually wins.** Locking
+  // happens before writing on every real path, so this is the call that actually creates the state
+  // directory; `atomicWriteJson`'s `existsSync` check then finds it already there and its mode is
+  // never applied. Setting the mode in only one of the two left every lock-before-write path with a
+  // 0755 directory holding 0600 files — the file permissions looked fixed while the directory they
+  // sat in was still world-traversable.
+  mkdirSync(dirname(lockPath), { recursive: true, mode: DIR_MODE });
 
   // A sync sleep without busy-burning a core. `Atomics.wait` on a private buffer is the standard
   // idiom; the buffer is never shared, so nothing can notify it and it always times out.
@@ -162,7 +169,10 @@ export function withExclusiveFileLock<T>(
     // but the acquisition, so it cannot misread anything else.
     let fd: number;
     try {
-      fd = openSync(lockPath, 'wx');
+      // Owner-only like everything else here. The token is a pid and a timestamp rather than
+      // anything sensitive, but a 0644 file sitting inside a 0700 directory is a loose end that
+      // invites the question of which one is the mistake.
+      fd = openSync(lockPath, 'wx', FILE_MODE);
     } catch (err) {
       if ((err as NodeJS.ErrnoException)?.code !== 'EEXIST') throw err;
 

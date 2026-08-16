@@ -20,7 +20,12 @@ jobs:
       # can repoint `v4` at different code, and these steps run with a checkout of our source and,
       # in the traffic workflow, a token. A SHA is the only immutable reference GitHub offers.
       # Bump deliberately: read the diff between the pinned SHA and the new one before moving it.
+      # `persist-credentials: false` — checkout otherwise writes the job's token into
+      # .git/config, where every later step and any tool they invoke can read it. This job
+      # only builds and tests; it never pushes, so it has no use for a stored credential.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '${{ matrix.node }}'
@@ -50,6 +55,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0 # full history — the scan must cover every commit, not just the tip
+          persist-credentials: false # a scanner has no reason to hold a push credential
 
       # The gitleaks BINARY, not gitleaks-action: the action requires a paid licence key for
       # organization-owned repositories, which would make this gate depend on a subscription rather

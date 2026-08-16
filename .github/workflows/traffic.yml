@@ -40,6 +40,17 @@ jobs:
             exit 1
           fi
 
+      # **Two credentials, deliberately, doing two different jobs.**
+      #
+      # `TRAFFIC_TOKEN` is a repo-scoped PAT and it appears in exactly one step below — the API read
+      # — because the traffic endpoints require push-level access that the automatic token does not
+      # reliably carry. It is never persisted to disk and never used to push.
+      #
+      # The push uses the automatic `GITHUB_TOKEN` that checkout stores here, which is scoped to this
+      # repository and expires with the job. Combining the two — a longer-lived PAT that also holds
+      # write authority over a public branch — is one credential doing both jobs, and the blast
+      # radius of anything going wrong in this workflow becomes the PAT's full scope rather than a
+      # single branch.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: metrics

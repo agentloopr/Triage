@@ -4,7 +4,7 @@
  * Both were found by an outside audit running probes rather than reading code, which is the only
  * method that has caught anything in this area.
  */
-import { existsSync, mkdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -61,6 +61,25 @@ describe('withExclusiveFileLock', () => {
 
     const mode = statSync(join(DIR, 'brand', 'new')).mode & 0o777;
     expect(mode.toString(8), 'state directory is traversable by other local users').toBe('700');
+  });
+
+  /**
+   * ...and a directory that ALREADY exists at 0755 gets tightened, which the create-time mode
+   * could never do.
+   *
+   * `mkdirSync`'s `mode` applies only on creation. Setting it fixed fresh checkouts and left every
+   * existing deployment exactly as it was — the state directory from before the fix, or from
+   * someone's `mkdir -p`, stayed world-traversable forever while the files inside it were 0600.
+   * "The new path is secure" is not the same claim as "the deployment is secure".
+   */
+  it('tightens a pre-existing world-traversable state directory', () => {
+    const dir = join(DIR, 'preexisting');
+    mkdirSync(dir, { recursive: true, mode: 0o755 });
+    chmodSync(dir, 0o755); // explicit: mkdirSync's mode is masked by the umask
+
+    withExclusiveFileLock(join(dir, 'state.json'), () => 'ran');
+
+    expect((statSync(dir).mode & 0o777).toString(8), 'a pre-existing 0755 directory was left open').toBe('700');
   });
 
   it('creates the directory rather than throwing ENOENT on a fresh checkout', () => {

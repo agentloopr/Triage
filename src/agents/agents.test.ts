@@ -100,6 +100,41 @@ describe('a role agent is built from its profile and its state', () => {
     expect(prompt).toMatch(/re-checked by the same rules/i);
     expect(prompt).toMatch(/asks a human instead of writing it/i);
   });
+
+  /**
+   * The item reaching a role agent came from a transcript or a card, so it is the same untrusted
+   * text every other prompt screens — and this was the last path that did not.
+   *
+   * It is easy to miss because a role agent reads like an internal component talking to itself: by
+   * the time an item arrives it has been through Pass 1, categorization and the gates, which makes
+   * the title and description feel like the pipeline's own output. They are not. They are a
+   * restatement of what someone wrote.
+   */
+  it('screens the item title and description, which came from the source', () => {
+    const SECRET = 'sk-ant-api03-EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE';
+    const prompt = buildRoleAgentPrompt({
+      role: 'engineer',
+      owner: 'Avery Chen',
+      title: `Rotate ${SECRET}`,
+      desc: `also ${SECRET}`,
+    });
+
+    expect(prompt, 'a credential in an item reached the role-agent prompt').not.toContain(SECRET);
+    expect(prompt).toContain('sk_<redacted>');
+  });
+
+  it('adds nothing to a clean item, so agent cassettes do not move', () => {
+    const prompt = buildRoleAgentPrompt({
+      role: 'engineer',
+      owner: 'Avery Chen',
+      title: 'Add rate limiting',
+      desc: 'ship by Thursday',
+    });
+
+    expect(prompt).not.toContain('SECURITY NOTICE');
+    expect(prompt).not.toContain('<redacted>');
+    expect(prompt).toContain('Add rate limiting');
+  });
 });
 
 describe('the read-only guarantee, asserted through the agent', () => {

@@ -1,0 +1,28 @@
+name: CodeQL
+
+# Replaces GitHub's "default setup", which has no branch filter and was scanning every push —
+# including the data-only `metrics` branch (JSON traffic exports, no source to analyze), which
+# failed on every push and left a permanent red X in the Actions tab. Scoped to match ci.yml.
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+      - uses: github/codeql-action/analyze@v4

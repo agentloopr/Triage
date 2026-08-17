@@ -82,6 +82,15 @@ gate set — the same `applyGates` Pass 2b runs, not a second copy of it — is 
 agent proposes → applyProposals (named fields, onto a copy) → applyGates → clean | held
 ```
 
+**Say this plainly, since the mechanism above can read as more than it is: a proposal gets
+deterministic gates, not a second blind model read.** [Pass 2b's blind re-derivation](ARCHITECTURE.md#pass-2b-is-blind-and-that-is-the-headline-claim)
+happens once, before any agent sees the item. A proposed category/list/assignee change afterward is
+checked against the board and the roster, the same way a hand-typed correction would be — never
+independently re-derived by a second model call the way 2a's own answer is. Widening that would mean
+either a second blind model pass just for agent proposals, or narrowing what proposals may touch;
+neither is built, and this repo would rather say that than let the word "gate" imply more rigor than
+three deterministic checks actually provide.
+
 **A proposal the gates refuse becomes a human hold, never a write.** Propose an unknown list key and
 the routing gate holds the item. Propose an assignee who is not on the roster, or not valid for that
 list, and it holds. Raise an ownership doubt without naming a successor and it becomes an uncertain

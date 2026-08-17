@@ -198,7 +198,8 @@ checked against data the pipeline already holds.
 
 The practical consequence: **most holds are reproducible.** Feed the same manifest and board twice
 and the same twelve gates fire identically. Only `category dispute` can move between two runs of the
-same fixture, which is exactly why no scenario asserts a hold — see
+same fixture, which is exactly why no scenario asserts a *model-disagreement* hold — deterministic
+holds on a missing or uncertain field are pinned just fine (`06-github-activity` asserts two). See
 [LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers).
 
 ### The one hold that does not mean "I am unsure"

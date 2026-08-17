@@ -208,13 +208,16 @@ public repo. It separated all 100 correctly, and distinguished `merged` from `cl
 `state: closed`) via `pull_request.merged_at`. Also confirmed: the auth header shape, server-side
 `since` filtering on both endpoints, short-read pagination, and no field falling back to `unknown`.
 
-**Rate limiting is tested, not observed.** Six tests cover the branch that only runs on a bad day:
-the `Retry-After` wait, the fallback to `x-ratelimit-reset` when that header is absent, GitHub's
-secondary-limit 403 being retried, a **permissions** 403 not being retried, and a 404 not being
+**Rate limiting is tested, not observed.** Four tests, against GitHub's own client, cover the branch
+that only runs on a bad day: the `Retry-After` wait, the fallback to `x-ratelimit-reset` when that
+header is absent, GitHub's secondary-limit 403 being retried, and a **permissions** 403 not being
 retried. They assert the *delay*, not just that a retry happened — see below for why that distinction
-found a bug. **No smoke has hit a real 429**, and provoking one would mean hammering a third party's
-API thousands of times to test their throttle rather than our handling of it. So what a fake cannot
-settle stands: whether GitHub really signals a secondary limit the way this client assumes.
+found a bug. A fifth behavior — a 404 never being retried — is shared retry logic
+(`withRetryBudget`, used identically by GitHub, Gmail and Drive) and is exercised once, via Gmail's
+client, rather than duplicated per source. **No smoke has hit a real 429**, and provoking one would
+mean hammering a third party's API thousands of times to test their throttle rather than our handling
+of it. So what a fake cannot settle stands: whether GitHub really signals a secondary limit the way
+this client assumes.
 
 **Gmail: live-verified, 2026-08-13.** A real thread, six messages. Every `from` resolved, every
 timestamp ISO and none of them epoch-zero — which is the check that matters, because it proves

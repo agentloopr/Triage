@@ -113,13 +113,8 @@ footing before drawing that conclusion.
 
 **Token counts are still not comparable across providers**, so any per-token price comparison that
 skips the tokenizer ratio is wrong by whatever that ratio happens to be — regardless of which dollar
-figures are current.
-
-Two things in that table matter more than the totals:
-
-**Token counts are not comparable across providers.** Claude reports 1.7× the input tokens for
-byte-identical prompts — different tokenizer, not a bigger prompt. Any per-token price comparison
-between vendors that skips this step is wrong by whatever the tokenizer ratio happens to be.
+figures are current. (Claude reports 1.7× the input tokens for byte-identical prompts — a tokenizer
+difference, not a bigger prompt.)
 
 **Prompt caching now fires, and that took a prompt change rather than new caching code.** The
 Anthropic adapter always set a cache breakpoint on the last system block; the pipeline always sent

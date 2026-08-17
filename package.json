@@ -30,7 +30,8 @@
     "pull": "tsx src/cli/pull.ts",
     "answer": "tsx src/cli/answer.ts",
     "cost:deepseek": "tsx scripts/measureDeepSeekCost.ts",
-    "smoke:tracker": "tsx scripts/smokeTracker.ts"
+    "smoke:tracker": "tsx scripts/smokeTracker.ts",
+    "smoke:tracker:write": "tsx scripts/smokeTrackerWrite.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

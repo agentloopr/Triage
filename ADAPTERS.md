@@ -160,7 +160,7 @@ So the suite proves an adapter's own logic — replace-versus-append, refusals, 
 pagination, capability mapping, error handling — and **cannot prove an endpoint path, a field name,
 or an auth header**. Only a live call settles those.
 
-**Both have had one, 2026-08-12**, against real throwaway accounts.
+**First run by hand, 2026-08-12**, against real throwaway accounts.
 
 **ClickUp:** create, get, setStatus, an unknown status rejected by name, setAssignees, addComment,
 the protected-status refusal against a real card in a real status, `moveList` reporting `unsupported`
@@ -175,14 +175,24 @@ itself afterward.
 Both smokes ran through the ops registry and the adapter, the same code path the pipeline uses — not
 a curl script standing in for the adapter.
 
-**The create/setStatus/setAssignees/addComment/protected-status-refusal half is not reproducible from
-this repo**, and that is the only part of this claim you cannot check. No script or log for it is
-tracked, because committing one would mean shipping something that creates and deletes objects in
-whatever workspace a reader points it at. Treat those counts as testimony rather than evidence.
+**Re-verified 2026-08-17 from a committed script.** `scripts/smokeTrackerWrite.ts` runs the same
+operations — create, get, setStatus, unknown-status rejection, setAssignees (including Linear's
+two-assignee `unsupported` case), addComment, the protected-status refusal, ClickUp's `moveList`
+`unsupported`, the member-name-not-raw-id snapshot check — against real ClickUp and Linear workspaces.
+11/11 on each provider (a coarser-grained count than the original 18/17, same operations covered),
+both test objects created and then deleted through one direct API call per provider — `apply()` has no
+delete kind, by design.
 
-**The read half is reproducible.** `npm run board` reaches a real tracker through the same adapter,
-read-only, via `listTasks`. `npm run smoke:tracker` (`scripts/smokeTracker.ts`) extends that to
-`getTask` and `getComments` too — still no write path. Neither can touch your board.
+**The script is not committed to run itself.** No log of a past run is tracked either, and it needs
+`--list`/`--team` and `--member` supplied explicitly rather than defaulting to the first thing it
+finds — a write-capable script that guesses a target by default is the wrong thing to ship. It is
+still excluded from CI, which can't hold private workspace credentials, and should only ever be
+pointed at a workspace you know is disposable.
+
+**The read half is separately reproducible, and safe to run with no such caveat.** `npm run board`
+reaches a real tracker through the same adapter, read-only, via `listTasks`. `npm run smoke:tracker`
+(`scripts/smokeTracker.ts`) extends that to `getTask` and `getComments` too — neither can touch your
+board.
 
 ### The source clients: all three verified live
 

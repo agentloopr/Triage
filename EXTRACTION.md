@@ -198,10 +198,11 @@ scenario. `PROVIDERS.md` has the measured comparison.
 
 The finding worth carrying: **the pipeline is portable, extraction is not.** Given each provider's
 own replies, every deterministic layer behaved identically — same parsers, gates, plan, writes and
-audit. What the two models disagree about is what counts as an action item in the first place, on two
-of five scenarios. Neither is wrong, and this repo has no ground truth to say otherwise, so the
-recordings ship side by side and the portability test asserts the layers match while explicitly
-tolerating the extraction difference.
+audit. What the two models disagree about is what counts as an action item in the first place, on
+five of the current eight scenarios (see [PROVIDERS.md](PROVIDERS.md) for the breakdown — the count
+moved as activity-feed scenarios were added, and moves again on any re-recording). Neither is wrong,
+and this repo has no ground truth to say otherwise, so the recordings ship side by side and the
+portability test asserts the layers match while explicitly tolerating the extraction difference.
 
 One thing that comparison exposed: the Anthropic adapter set a prompt-cache breakpoint on the last
 system block, and the pipeline sent no system block at all — so it never fired, and every call

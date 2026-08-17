@@ -227,8 +227,9 @@ automatic, so the figure above is an Anthropic number and does not generalize. S
 byte-identical prompts — a tokenizer difference, not a bigger prompt. Any per-token cost comparison
 across vendors that skips this step is wrong by whatever the tokenizer ratio happens to be.
 
-**The two providers disagree about what counts as an action item** — on one of five scenarios in the
-current recordings, and which scenarios differ moves whenever anything is re-recorded. Every
+**The two providers disagree about what counts as an action item** — on five of the eight scenarios in
+the current recordings (two of the original five meeting/chat scenarios, all three of the newer
+activity-feed ones), and which scenarios differ moves whenever anything is re-recorded. Every
 downstream layer behaves identically given each provider's own replies — the pipeline is portable.
 Extraction is not, and this repo has no ground truth to say which model is right. See
 [PROVIDERS.md](PROVIDERS.md).

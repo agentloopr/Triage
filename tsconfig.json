@@ -17,6 +17,6 @@
   },
   // Tests are INCLUDED in typecheck, unlike the internal repo — a test that no longer compiles is
   // a test that is no longer testing what it claims.
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }

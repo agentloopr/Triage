@@ -69,33 +69,51 @@ hand-labelled ground truth that does not exist here. See `EVAL.md`.
 
 ## Cost
 
-Measured over one full pass of the **five** scenarios that existed when this was taken — 44 DeepSeek / 42 Claude model calls:
+### DeepSeek — measured, 2026-08-17
 
-| | Claude Sonnet 5 | DeepSeek v4-pro |
-|---|---|---|
-| Input tokens | **190,200** (measured) | ~109,000 (*estimated*) |
-| Output tokens | **9,986** (measured, includes thinking) | ~5,400 (*estimated, visible text only*) |
-| Cost | **$0.48** | not computed |
-| Cached input | **0** | n/a |
+`scripts/measureDeepSeekCost.ts` runs a live pass over all eight current scenarios and tallies real
+API usage. It never touches `fixtures/cassettes` — the metered client wraps the live provider purely
+to sum tokens, so this carries none of the cassette-drift risk a re-record would. Re-run it yourself
+with `DEEPSEEK_API_KEY=... npm run cost:deepseek`.
 
-Those figures predate the system/user split described below, and are kept as the *before* they are
-compared against. They were taken on the pre-split prompt, so they are a baseline, not current cost.
+80 calls, current post-split prompts:
 
-**The DeepSeek column is an estimate, and no DeepSeek dollar figure is published at all.** Its
-recordings were made before usage capture was wired in, so those token figures come from character
-counts at ~4 chars/token rather than from the API. They are here for rough scale, not for a ratio.
+| | Tokens | Rate (peak / off-peak, per 1M) | Cost (peak) | Cost (off-peak) |
+|---|---|---|---|---|
+| Input, cache miss | 133,065 | $1.32 / $0.66 | $0.176 | $0.088 |
+| Input, cache hit | 86,528 | $0.44 / $0.22 | $0.038 | $0.019 |
+| Output | 187,678 | $3.96 / $1.98 | $0.743 | $0.372 |
+| **Total** | | | **$0.96** | **$0.48** |
 
-**This is a partial answer to what the PRD asks for**, and saying so is cheaper than the alternatives.
-PRD §8 asks us to "publish what each costs at our volume". Half of that is published and measured;
-half is not. The two ways to close it are to re-record all eight scenarios against a live DeepSeek key
-with usage capture on — which risks cassette drift across a repo that is otherwise stable — or to
-multiply an estimate by a list price, which would produce a number with a currency symbol and no more
-truth in it than the estimate it came from. **A cost comparison that is precise on one side and
-invented on the other is worse than one that says which side is which.**
+Rates from api-docs.deepseek.com, effective 2026-08-16; peak hours are 01:00–04:00 and 06:00–10:00 UTC.
+This run landed entirely inside a peak window. Output token count is larger than input — deepseek-v4-pro
+is a reasoning model and `completion_tokens` includes reasoning tokens, not just visible text, the same
+caveat the Claude figure below already carries.
 
-The finding that survives either way is the one worth having: **token counts are not comparable across
-providers**, so any per-token price comparison that skips the tokenizer ratio is wrong by whatever
-that ratio happens to be.
+### Claude — measured, stale baseline
+
+| | Claude Sonnet 5 |
+|---|---|
+| Input tokens | **190,200** |
+| Output tokens | **9,986** (includes thinking) |
+| Cost | **$0.48** |
+| Cached input | **0** |
+| Scope | 5 scenarios, 42 calls, pre-split prompt |
+
+This predates the system/user split described below and is kept as the *before* those numbers are
+compared against — a baseline, not current cost. **It is not directly comparable to the DeepSeek
+table above**: different scenario count (5 vs. 8) and a prompt shape from before caching existed. A
+fresh 8-scenario Claude measurement, taken the same way as the DeepSeek one, would make the two
+comparable; it has not been taken.
+
+**The apparent agreement between DeepSeek's off-peak total ($0.48) and this Claude figure ($0.48) is
+coincidence** — different token counts, different rates, different scenario sets producing the same
+rounded number. Do not read it as the two providers costing the same; re-measure both on equal
+footing before drawing that conclusion.
+
+**Token counts are still not comparable across providers**, so any per-token price comparison that
+skips the tokenizer ratio is wrong by whatever that ratio happens to be — regardless of which dollar
+figures are current.
 
 Two things in that table matter more than the totals:
 

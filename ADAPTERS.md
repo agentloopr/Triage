@@ -175,10 +175,14 @@ itself afterward.
 Both smokes ran through the ops registry and the adapter, the same code path the pipeline uses — not
 a curl script standing in for the adapter.
 
-**Neither is reproducible from this repo**, and it is the only claim here you cannot check. No script
-or log is tracked, because a committed smoke needs credentials to mean anything. Treat the counts
-above as testimony rather than evidence. What you *can* run is `npm run board`, which reaches a real
-tracker through the same adapter — read-only.
+**The create/setStatus/setAssignees/addComment/protected-status-refusal half is not reproducible from
+this repo**, and that is the only part of this claim you cannot check. No script or log for it is
+tracked, because committing one would mean shipping something that creates and deletes objects in
+whatever workspace a reader points it at. Treat those counts as testimony rather than evidence.
+
+**The read half is reproducible.** `npm run board` reaches a real tracker through the same adapter,
+read-only, via `listTasks`. `npm run smoke:tracker` (`scripts/smokeTracker.ts`) extends that to
+`getTask` and `getComments` too — still no write path. Neither can touch your board.
 
 ### The source clients: all three verified live
 

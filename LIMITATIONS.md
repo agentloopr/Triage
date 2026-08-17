@@ -109,10 +109,19 @@ setStatus, an unknown-status rejection, a single assignee, **two assignees corre
 real issue, and a snapshot carrying the member name and never the raw Linear user id. Seventeen
 checks, all passed, then deleted its own test issue.
 
-**Neither smoke is reproducible from this repo, and that is the one claim here you cannot check.**
-Both were run by hand against throwaway accounts and both deleted their own test objects; no script or
-log is tracked, because a committed smoke would need credentials to mean anything. Everything else in
-this repo can be re-run by a reader — treat these two paragraphs as testimony rather than evidence.
+**The write half of both smokes — create, setStatus, setAssignees, addComment, the protected-status
+refusal — is not reproducible from this repo, and that is the one claim here you cannot check.** Both
+were run by hand against throwaway accounts and both deleted their own test objects; no script or log
+for the write path is tracked, because committing one would mean shipping something that creates and
+deletes objects in whatever workspace a reader points it at — the wrong thing to hand out by default.
+
+**Part of the read half already was: `npm run board`** reaches a real tracker read-only via
+`listTasks`, and ADAPTERS.md has pointed there all along. It doesn't touch `getTask` or `getComments`,
+so `scripts/smokeTracker.ts` (`npm run smoke:tracker`) extends the same read-only path to those two —
+still never `apply()`, still cannot write to your board. Together they re-verify the part of the
+2026-08-12 claim a read-only script can safely check: auth headers, endpoint paths, and field mapping
+against the real API, not a wire fake. Excluded from CI for the same reason as always — a public
+repo's CI cannot hold your workspace's credentials.
 
 **Both adapters are now live-verified.** What remains unmeasured is everything a short smoke cannot
 reach: sustained load, rate-limit behaviour under real traffic, and every edge case the vendor's API

@@ -31,7 +31,10 @@ categorization. It cannot author a write.
 
 ## Which commands touch a live service
 
-Four, not the two an earlier version of this file claimed:
+Eight, not the four an earlier version of this file claimed — that version predated
+`scripts/`, and the count drifted again the moment those shipped without this table being updated.
+Whatever this number says next, verify it against `package.json`'s `scripts` block rather than
+trusting it on its own:
 
 | command | network | credentials | writes? |
 |---|---|---|---|
@@ -39,13 +42,18 @@ Four, not the two an earlier version of this file claimed:
 | `npm run pull` | source + model provider + tracker | source, model, tracker | **only with `--write`**; plans otherwise |
 | `npm run answer` | tracker | tracker token | **yes** — `--approve` executes a held write |
 | `npm run record` | model provider | model key | writes cassettes to disk, not to a tracker |
+| `npm run record:regression` | model provider | model key | writes cassettes to disk, not to a tracker |
+| `npm run cost:deepseek` | model provider (DeepSeek) | `DEEPSEEK_API_KEY` | no — tallies token usage only |
+| `npm run smoke:tracker` | tracker | tracker token | no — read-only, `apply()` is never called |
+| `npm run smoke:tracker:write` | tracker | tracker token, plus `--list`/`--team`/`--member` | **yes** — creates a real task/issue, exercises `setStatus`/`setAssignees`/`addComment`, then deletes what it created. Point it only at a workspace you know is disposable |
 
 Everything else — `demo`, `test`, `eval`, `lint`, `typecheck` — runs with no network and no key. That
 is enforced in CI rather than asserted here: the `build` job has no secrets in its environment and
 still runs all five demo modes and the eval.
 
 Grant the minimum scope each one needs; a tracker token that can only read is enough for
-`npm run board`.
+`npm run board` or `npm run smoke:tracker`, and `npm run smoke:tracker:write` should only ever hold a
+token scoped to a disposable workspace, never a production one.
 
 ## Reporting a vulnerability
 

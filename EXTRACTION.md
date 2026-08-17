@@ -229,7 +229,9 @@ checks, including two assignees on one issue correctly reporting `unsupported` r
 keeping the first — the exact failure `OpOutcome` exists to name. Both test objects deleted
 themselves; both accounts were confirmed back to their starting state afterward.
 
-**Neither smoke is reproducible from this repo.** Both were run by hand against throwaway
-accounts and no script or log is tracked, because a committed smoke needs credentials to mean
-anything. Treat the counts above as testimony rather than evidence — everything else here can be
-re-run by a reader. See [LIMITATIONS.md](LIMITATIONS.md#integrations).
+**That first pair was hand-run and unreproducible — since fixed.** Both were run by hand against
+throwaway accounts with no script or log tracked, so treat the 18/17 counts above as testimony.
+`scripts/smokeTrackerWrite.ts` (2026-08-17) now runs the same operations from a committed, opt-in
+script — 11/11 on each provider, re-verified against real workspaces, both test objects created and
+deleted. Still not something CI can run, since it needs private credentials and creates real objects —
+see [LIMITATIONS.md](LIMITATIONS.md#integrations) and [ADAPTERS.md](ADAPTERS.md) for the full picture.

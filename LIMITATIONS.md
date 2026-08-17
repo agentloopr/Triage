@@ -98,30 +98,25 @@ cannot prove **an endpoint path, a field name, or an auth header**, because the 
 the same reading of the docs as the adapter it tests — a shared misreading passes both. Only a live
 call settles those.
 
-**ClickUp: live-verified, 2026-08-12.** A full smoke — create, get, setStatus, an unknown-status
-rejection, setAssignees, addComment, the protected-status refusal against a real card, `moveList`
-reporting `unsupported`, and the snapshot carrying the member name and never the raw ClickUp user id —
-ran against a real workspace and passed on every check, then deleted its own test card.
+**ClickUp: live-verified, 2026-08-12, re-verified 2026-08-17 from a committed script.** create, get,
+setStatus, an unknown-status rejection, setAssignees, addComment, the protected-status refusal against
+a real card, `moveList` reporting `unsupported`, and the snapshot carrying the member name and never
+the raw ClickUp user id — 11/11 checks against a real workspace, test card deleted afterward.
 
-**Linear: live-verified, 2026-08-12.** The same smoke, run against a real team — create, get,
+**Linear: live-verified, 2026-08-12, re-verified 2026-08-17 from a committed script.** create, get,
 setStatus, an unknown-status rejection, a single assignee, **two assignees correctly reporting
 `unsupported` rather than silently keeping one**, addComment, the protected-status refusal against a
-real issue, and a snapshot carrying the member name and never the raw Linear user id. Seventeen
-checks, all passed, then deleted its own test issue.
+real issue, and a snapshot carrying the member name and never the raw Linear user id — 11/11 checks,
+test issue deleted afterward.
 
-**The write half of both smokes — create, setStatus, setAssignees, addComment, the protected-status
-refusal — is not reproducible from this repo, and that is the one claim here you cannot check.** Both
-were run by hand against throwaway accounts and both deleted their own test objects; no script or log
-for the write path is tracked, because committing one would mean shipping something that creates and
-deletes objects in whatever workspace a reader points it at — the wrong thing to hand out by default.
-
-**Part of the read half already was: `npm run board`** reaches a real tracker read-only via
-`listTasks`, and ADAPTERS.md has pointed there all along. It doesn't touch `getTask` or `getComments`,
-so `scripts/smokeTracker.ts` (`npm run smoke:tracker`) extends the same read-only path to those two —
-still never `apply()`, still cannot write to your board. Together they re-verify the part of the
-2026-08-12 claim a read-only script can safely check: auth headers, endpoint paths, and field mapping
-against the real API, not a wire fake. Excluded from CI for the same reason as always — a public
-repo's CI cannot hold your workspace's credentials.
+**Both the read and write halves are now reproducible from this repo.** `npm run board` and
+`npm run smoke:tracker` (`scripts/smokeTracker.ts`) cover the read path: `listTasks`, `getTask`,
+`getComments`, never `apply()`. `scripts/smokeTrackerWrite.ts` covers the write path — the same
+create/status/assignee/comment/protected-refusal sequence the 2026-08-12 manual smoke ran, plus
+cleanup through one direct API call per provider, since `TrackerOperation` has no delete kind at all.
+Still excluded from CI and still opt-in: it creates and deletes a real object in whatever workspace
+you point it at, so it takes `--list`/`--team` and `--member` explicitly rather than guessing, and it
+should only ever be pointed at a workspace you know is disposable.
 
 **Both adapters are now live-verified.** What remains unmeasured is everything a short smoke cannot
 reach: sustained load, rate-limit behaviour under real traffic, and every edge case the vendor's API

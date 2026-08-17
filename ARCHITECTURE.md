@@ -187,8 +187,8 @@ only one of them involves a model at the moment of blocking.
 | | Gates | Decided by |
 |---|---|---|
 | **Pure code over structured data** | unknown list key · assignee not in team roster · assignee not valid for list · referenced/parent/RELATE task id not on the board · subtask list ≠ parent list · RELATE self-link · evidence not cited · uncertain field(s) · vague update — card not confirmed · update — card match not confident · possible missed duplicate · registry degraded · **critical — credentials / client PII / production deploy / client-facing send** |  The board, the registry, and a literal read of the manifest. No model is consulted. |
-| **A code rule over a model's stated verdict** | legitimacy — may not be a trackable task | `legitimacyHolds()` combines Pass 2b's legitimacy verdict with 2a's confidence and the source's ASR provenance. The *rule* is code; one of its three inputs is a judgement. |
-| **Two independent model reads disagreeing** | category dispute | Genuinely a model decision, and the only one. |
+| **A code rule over a model's stated verdict** | legitimacy — may not be a trackable task | `legitimacyHolds()` combines Pass 2b's legitimacy verdict with 2a's confidence and the source's ASR provenance — but its `not_a_task` branch fires on the verdict alone, no other input required. Genuinely a model decision, not a softened one. |
+| **Two independent model reads disagreeing** | category dispute | A different *shape* of model decision — a disagreement between two reads, not a threshold on one — but not the only gate a live model verdict can decide. |
 
 **This is the opposite of what the design anticipated.** The system this was extracted from expected
 deterministic blocking to be the rare case and model judgement the norm; here thirteen of fifteen
@@ -197,9 +197,15 @@ model's job is narrowed to producing a *manifest* and every structural claim in 
 checked against data the pipeline already holds.
 
 The practical consequence: **most holds are reproducible.** Feed the same manifest and board twice
-and the same twelve gates fire identically. Only `category dispute` can move between two runs of the
-same fixture, which is exactly why no scenario asserts a *model-disagreement* hold — deterministic
-holds on a missing or uncertain field are pinned just fine (`06-github-activity` asserts two). See
+and the twelve gates in the first row above — everything except `critical`, covered in its own
+section next — fire identically. `category dispute` is the one **documented** to move between two
+runs of the same fixture: three consecutive re-recordings gave three different answers (see
+[EXTRACTION.md](EXTRACTION.md)). `legitimacy` is built the same way — a plain function of Pass 2b's
+own live verdict, not of anything 2a decided — so it can move too, on a borderline item; it just
+never has, because no current scenario's recording lands close enough to that boundary to show it.
+Neither gate's volatility is pinned by a scenario golden for that reason, which is exactly why no
+scenario asserts a *model-disagreement* hold — deterministic holds on a missing or uncertain field are
+pinned just fine (`06-github-activity` asserts two). See
 [LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers).
 
 ### The one hold that does not mean "I am unsure"

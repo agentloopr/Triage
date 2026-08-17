@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "eslint src scripts",
     "test": "vitest run",
     "test:watch": "vitest",
     "demo": "tsx src/cli/demo.ts",
@@ -28,7 +28,9 @@
     "board": "tsx src/cli/board.ts",
     "correct": "tsx src/cli/correct.ts",
     "pull": "tsx src/cli/pull.ts",
-    "answer": "tsx src/cli/answer.ts"
+    "answer": "tsx src/cli/answer.ts",
+    "cost:deepseek": "tsx scripts/measureDeepSeekCost.ts",
+    "smoke:tracker": "tsx scripts/smokeTracker.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",

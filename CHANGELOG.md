@@ -4,6 +4,10 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/). This rep
 semantic-versioning stability — see the README — but tags mark points the demo, the tests and the
 docs were all verified together.
 
+## Unreleased
+
+- Renamed the repository from `ops-agent-reference` to `Triage`. GitHub redirects the old URL.
+
 ## [0.1.0] — 2026-08-14
 
 First public release. Extracted from a production ops-agent pipeline; the architecture is identical

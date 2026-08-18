@@ -57,7 +57,7 @@ token scoped to a disposable workspace, never a production one.
 
 ## Reporting a vulnerability
 
-Open a [private security advisory](https://github.com/agentloopr/ops-agent-reference/security/advisories/new)
+Open a [private security advisory](https://github.com/agentloopr/Triage/security/advisories/new)
 on this repo, or email **security@agentloopr.com**. Include the scenario or command that reproduces
 it. Please don't open a public issue for something exploitable — everything else (a bug that isn't a
 vulnerability) is fine as a normal issue.

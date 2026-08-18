@@ -52,7 +52,7 @@ history is full of finding.
 
 Open an issue with the scenario or command that reproduces it, and what you expected instead. If
 it's a question rather than a bug, use
-[Discussions](https://github.com/agentloopr/ops-agent-reference/discussions) — it's indexed and
+[Discussions](https://github.com/agentloopr/Triage/discussions) — it's indexed and
 searchable, an issue tracker isn't.
 
 ## Security

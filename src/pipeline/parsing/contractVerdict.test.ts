@@ -71,13 +71,25 @@ describe('parseContractVerdict', () => {
       expect(parseContractVerdict(raw).usable).toBe(false);
     });
 
-    it('marks a reply usable as soon as it states a real category, however sparse', () => {
-      expect(parseContractVerdict('VERDICT_CATEGORY: NEW_TASK').usable).toBe(true);
+    it('marks a bare category alone as UNUSABLE — a real category is necessary, not sufficient', () => {
+      // A reply with nothing but VERDICT_CATEGORY used to be `usable`, which let it read as a full
+      // independent read concurring on legitimacy, grounding AND routing — all three default to
+      // "concurs" above, so their absence read as agreement rather than as the absence it was.
+      expect(parseContractVerdict('VERDICT_CATEGORY: NEW_TASK').usable).toBe(false);
     });
 
-    it('defaults garbage in the judgement fields to permissive', () => {
+    it('marks usable once the mandatory fields (category, WORTH_A_CARD, GROUNDED, RATIONALE) are all present', () => {
+      const v = verdict(['VERDICT_CATEGORY: NEW_TASK', 'WORTH_A_CARD: real_task', 'GROUNDED: yes', 'RATIONALE: no match found.']);
+      expect(v.usable).toBe(true);
+    });
+
+    it('defaults garbage in the judgement fields to permissive, independent of usable', () => {
+      // WORTH_A_CARD's value is unparseable ("???" has no letters, so the field itself is not
+      // captured) and there is no RATIONALE, so this reply is correctly unusable — but the individual
+      // field DEFAULTS still have to be permissive, since a partially-garbled reply must never
+      // suppress a real task on the strength of one bad field.
       const v = verdict(['VERDICT_CATEGORY: NEW_TASK', 'GROUNDED: probably?', 'ROUTING_OK: dunno', 'CARD_STILL_MATCHES: ¯\\_(ツ)_/¯', 'WORTH_A_CARD: ???']);
-      expect(v).toMatchObject({ grounded: true, routingOk: true, cardStillMatches: true, legitimacy: 'real_task', usable: true });
+      expect(v).toMatchObject({ grounded: true, routingOk: true, cardStillMatches: true, legitimacy: 'real_task', usable: false });
     });
 
     it('honours an explicit no', () => {

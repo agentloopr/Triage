@@ -1,13 +1,15 @@
 {
   "description": "Document activity, where most events are not actionable and one is. Seven raw events — three contentless edits, a typo suggestion, a compliment, and two comments that matter — become four items and two cards.",
+  "note": "Re-derived after the category-dispute gate widened from a new-vs-existing-boundary check to a write-equivalence check (see 01-meeting-mixed's note for the full reasoning). Item 4 (\"Rowan Diaz edited the document\") is 2a=DUPLICATE, and 2b's blind read disagrees on what to do with it. DUPLICATE writes NOTHING; whatever 2b proposed writes something — so under the old rule this was 'both an existing-card action, trust 2a' and the item was silently skipped as a duplicate with no hold and no trace. Under the write-equivalence rule, 'writes nothing' vs 'writes something' is exactly the dispute this gate exists to catch, and it now holds. This is the fix working as intended on real fixture data, not a regression: the old behaviour was a silent drop this repo could not previously demonstrate on its own scenarios.",
   "inventoryCount": 4,
   "categories": {
     "SUBTASK": 2,
     "UPDATE": 1,
     "DUPLICATE": 1
   },
-  "cleanCount": 4,
-  "heldCount": 0,
+  "cleanCount": 3,
+  "heldCount": 1,
+  "heldGates": ["category dispute"],
   "skippedNotTaskCount": 0,
   "createdCount": 2
 }

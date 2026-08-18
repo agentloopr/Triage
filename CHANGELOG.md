@@ -7,6 +7,20 @@ docs were all verified together.
 ## Unreleased
 
 - Renamed the repository from `ops-agent-reference` to `Triage`. GitHub redirects the old URL.
+- Widened Pass 2b's category-dispute gate from a new-vs-existing-boundary check to a write-equivalence
+  check: `writeDispute()` (renamed from `categoryDisputeHolds`, `src/pipeline/gates/contractGates.ts`)
+  now compares what each read would actually WRITE — create / comment / create-child / nothing / link,
+  and the target card where both reads name one — instead of which side of the new-versus-existing
+  boundary the category label falls on. A `DUPLICATE` read the old rule trusted outright whenever the
+  blind read also stayed on the "existing card" side is now correctly caught when the blind read would
+  have written something. Two scenario fixtures moved as a result: `01-meeting-mixed` now holds on
+  item 5 (SUBTASK vs UPDATE) instead of trusting Pass 2a silently, and `08-drive-activity` now holds
+  on item 4 — previously a silent duplicate-skip the old rule never surfaced, now correctly caught as
+  a dispute. Added `disputeArbiter.ts`, an optional resolver that checks a dispute against live
+  tracker state (a cited card that's gone settles it for free) and, failing that, asks a model to
+  resolve only at high confidence with a cited live-board fact — off by default
+  (`DISPUTE_ARBITER_ENABLED=false`), so out of the box every detected dispute still holds for a human,
+  just more of them are detected than before.
 
 ## [0.1.0] — 2026-08-14
 

@@ -114,7 +114,7 @@ describe('registry degraded — fail closed, whole batch', () => {
 
     const out = await runContractCheck(
       { manifestItems: items, inventoryItems, tasks: BOARD, boardSnapshot: '', sourceSummary: '', sourceText: '' },
-      { runAgent: async () => 'VERDICT_CATEGORY: NEW_TASK\nWORTH_A_CARD: real_task\nGROUNDED: yes\nROUTING_OK: yes' }
+      { runAgent: async () => 'VERDICT_CATEGORY: NEW_TASK\nWORTH_A_CARD: real_task\nGROUNDED: yes\nROUTING_OK: yes\nRATIONALE: no match found.' }
     );
 
     expect(out.held.filter((h) => h.gate === REGISTRY_DEGRADED_GATE)).toEqual([]);

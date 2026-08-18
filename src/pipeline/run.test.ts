@@ -15,7 +15,7 @@ import type { CategorizationItem } from './parsing/categorizationManifest';
 import type { RoleEnrichment } from '../agents/roleAgent';
 import { PipelineEvents, type PipelineEvent } from './events';
 import { INVENTORY_END, INVENTORY_START } from './parsing/inventory';
-import { VERIFICATION_UNAVAILABLE_GATE } from './passes/contractCheck';
+import { VERIFICATION_UNAVAILABLE_GATE, runContractCheck } from './passes/contractCheck';
 import { type PipelineDeps, runPipeline } from './run';
 
 const DIR = join(tmpdir(), `run-test-${process.pid}`);
@@ -318,19 +318,33 @@ describe('degraded paths', () => {
     expect(out.held[0]!.question).toMatch(/no usable verdict/);
   });
 
-  it('still accepts a valid reply that simply omits optional fields', async () => {
-    // The flag must separate "answered and left fields out" from "did not answer". A reply with a
-    // category and nothing else is the former, and must not be treated as silence.
-    const { deps } = makeDeps({ runContractCheck: async () => 'VERDICT_CATEGORY: NEW_TASK' });
+  it('accepts a full reply that only omits truly-optional fields (ROUTING_OK/CARD_STILL_MATCHES)', async () => {
+    // The flag must separate "answered and left fields out" from "did not answer" — but the
+    // mandatory fields (a category, WORTH_A_CARD, GROUNDED, a RATIONALE) still have to be present.
+    // A reply that has those and only omits genuinely-optional fields is the "answered" case.
+    const { deps } = makeDeps({
+      runContractCheck: async () => ['VERDICT_CATEGORY: NEW_TASK', 'WORTH_A_CARD: real_task', 'GROUNDED: yes', 'RATIONALE: no match found after scanning.'].join('\n'),
+    });
     const out = await runPipeline(SOURCE, deps);
 
     expect(out.held).toEqual([]);
     expect(out.exec?.created).toBe(1);
   });
 
+  it('holds when the reply states only a category and nothing else — that is silence, not agreement', async () => {
+    // A reply carrying nothing but VERDICT_CATEGORY used to read as a full independent read
+    // concurring on legitimacy, grounding AND routing (all three default to "concurs"). It is an
+    // absence, and now takes the same fail-closed path as a thrown error.
+    const { deps } = makeDeps({ runContractCheck: async () => 'VERDICT_CATEGORY: NEW_TASK' });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.clean).toHaveLength(0);
+    expect(out.held[0]!.gate).toBe(VERIFICATION_UNAVAILABLE_GATE);
+  });
+
   it('holds rather than writes when the blind read disputes the category', async () => {
     const { deps, events } = makeDeps({
-      runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
+      runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'GROUNDED: yes', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
     });
     const out = await runPipeline(SOURCE, deps);
 
@@ -351,7 +365,7 @@ describe('degraded paths', () => {
     const path = join(DIR, 'pending.json');
     const { deps, calls } = makeDeps({
       pendingHuman: pendingHumanStore(path),
-      runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
+      runContractCheck: async () => ['VERDICT_CATEGORY: DUPLICATE', 'MATCH_TASK_ID: t900', 'WORTH_A_CARD: real_task', 'GROUNDED: yes', 'RATIONALE: task-comments on t900 shows the same work.'].join('\n'),
     });
 
     const out = await runPipeline(SOURCE, deps);
@@ -370,6 +384,49 @@ describe('degraded paths', () => {
     expect(resumed.exec.created).toBe(1);
     expect(calls.length).toBe(callsBefore); // the answer replays the stored decision; no model runs
     expect(reloaded.list()).toEqual([]);
+  });
+
+  it('holds an UNKNOWN-category item immediately, before spending a blind-read call it has no use for', async () => {
+    // Every deterministic gate is blind to UNKNOWN, and there is no "trust 2a" available the way a
+    // real dispute has one — 2a produced no opinion to trust. CATEGORY here is deliberately outside
+    // the taxonomy, which is how a real 2a reply becomes UNKNOWN rather than being dropped (it still
+    // has a TITLE, so the parser keeps it).
+    const { deps, calls } = makeDeps({
+      runCategorization: async (_p, label) => {
+        calls.push(label);
+        return ['ITEM: 1', 'TITLE: Add rate limiting to the public API', 'CATEGORY: SOMETHING_WEIRD', 'RATIONALE: could not decide.'].join('\n');
+      },
+    });
+    const out = await runPipeline(SOURCE, deps);
+
+    expect(out.clean).toHaveLength(0);
+    expect(out.held[0]!.gate).toBe('uncategorized');
+    expect(calls.some((c) => c.startsWith('pass2b:'))).toBe(false);
+  });
+
+  it('holds rather than writes when a manifest item has no matching inventory entry', async () => {
+    // Every other no-second-read path (a thrown error, an unusable reply) fails closed. A manifest
+    // item number with nothing in the inventory to feed the blind read used to skip check 1 silently
+    // and could go clean on one read — this is the same failure class and now takes the same path.
+    //
+    // Pass 2a always overwrites a parsed item's number with the inventory item it ran against
+    // (`categorization.ts`: "the inventory is authoritative for identity"), so this mismatch cannot
+    // arise from a normal `runPipeline` call — it is exercised directly against `runContractCheck`,
+    // the same way the registry-degraded tests exercise their own short-circuit.
+    const out = await runContractCheck(
+      {
+        manifestItems: [{ item: 2, title: 'An item with no matching inventory entry', category: 'NEW_TASK', list: 'backend', assignee: 'Avery Chen', finalDesc: 'Do the thing.', tier2Cited: false, raw: '' }],
+        inventoryItems: [{ number: 1, title: 'Add rate limiting to the public API', desc: '', timestamp: '', possibleMatchHint: '(none)' }],
+        tasks: [],
+        boardSnapshot: '',
+        sourceSummary: '',
+        sourceText: '',
+      },
+      { runAgent: async () => { throw new Error('the blind read must not run — there is no inventory item to feed it'); } }
+    );
+
+    expect(out.clean).toHaveLength(0);
+    expect(out.held[0]!.gate).toBe(VERIFICATION_UNAVAILABLE_GATE);
   });
 
   it('reports rather than throws when the hold store cannot be written', async () => {

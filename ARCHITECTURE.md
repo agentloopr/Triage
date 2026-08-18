@@ -41,8 +41,22 @@ more context" and every test still passes, because the outputs get *more* agreea
 has [`blindness.test.ts`](src/pipeline/blindness.test.ts), which regex-asserts the rendered 2b prompt
 excludes every 2a-derived field, and fails loudly when it does not.
 
-When the two reads disagree across the new↔existing boundary, the item is **held for a human** rather
-than resolved by picking a winner.
+When the two reads would produce a genuinely different **write** — not merely a different category
+label — the item is **held for a human** rather than resolved by picking a winner. `writeDispute()`
+(`src/pipeline/gates/contractGates.ts`) compares each read's action (create / comment / create-child /
+nothing / link) and, when both name one, its target card: `UPDATE card-A` vs `UPDATE card-B` is a
+dispute (same action, different target), `UPDATE card-A` vs `DUPLICATE card-A` is a dispute (comment
+vs nothing), and `DUPLICATE card-A` vs `DUPLICATE card-B` is not (both write nothing). This replaced an
+earlier rule that only compared which side of the new-versus-existing-card boundary each label fell
+on, and trusted 2a on anything that stayed on the same side — which meant a 2a=DUPLICATE read that a
+blind re-derivation would have written *something* for was silently trusted and skipped, never held.
+
+An optional `disputeArbiter.ts` can settle some of these disputes against live tracker state instead of
+holding — a cited card that no longer exists, or a comment that already covers the disputed work —
+before falling back to a human. It is **off by default** (`DISPUTE_ARBITER_ENABLED=false`), so out of
+the box every detected dispute still holds, just more of them are detected than before. Its mechanical
+first step (does each cited card still exist?) resolves on card-missing only, not card-archived —
+`BoardTask` carries no `archived` field in this repo, unlike the production tracker it was ported from.
 
 ## The four seams
 
@@ -203,10 +217,17 @@ runs of the same fixture: three consecutive re-recordings gave three different a
 [EXTRACTION.md](EXTRACTION.md)). `legitimacy` is built the same way — a plain function of Pass 2b's
 own live verdict, not of anything 2a decided — so it can move too, on a borderline item; it just
 never has, because no current scenario's recording lands close enough to that boundary to show it.
-Neither gate's volatility is pinned by a scenario golden for that reason, which is exactly why no
-scenario asserts a *model-disagreement* hold — deterministic holds on a missing or uncertain field are
-pinned just fine (`06-github-activity` asserts two). See
-[LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers).
+
+Two scenario goldens *do* now assert a `category dispute` hold — `01-meeting-mixed` (item 5, a
+SUBTASK-vs-UPDATE read) and `08-drive-activity` (item 4, a DUPLICATE-vs-something-else read that the
+old boundary rule would have let through as a silent duplicate skip). That is new since the dispute
+rule widened from the boundary check to the write-equivalence check above, which catches disputes the
+old rule was blind to. It does not make the gate reproducible in the way the other eleven are: which
+item, if any, trips it is still whatever the current recording's blind read happens to say, and a
+future re-recording could see 2b agree with 2a on either item and go clean again — the same volatility
+the prior paragraph describes, just now visible on fixture data instead of only asserted in
+`contractGates.test.ts` and `run.test.ts`. `legitimacy` remains unpinned by any golden for the same
+reason. See [LIMITATIONS.md](LIMITATIONS.md#what-the-test-suite-covers).
 
 ### The one hold that does not mean "I am unsure"
 

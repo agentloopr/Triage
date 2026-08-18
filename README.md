@@ -19,9 +19,9 @@ npm run demo -- --twice  # a redelivery costs zero tokens
 ```
 
 From real trace data across 49 production runs — 48 meetings and one channel log — totalling 711
-items: **14.5 items per run, 62.6% applied automatically, 27.3% held for a human, 8.2% skipped as a
-duplicate, 2.0% failed.** It runs for a team of 12, which is the roster size in the routing registry
-that governs it.
+items, measured 2026-08-17: **14.5 items per run, 62.6% applied automatically, 27.3% held for a
+human, 8.2% skipped as a duplicate, 2.0% failed.** It runs for a team of 12, which is the roster size
+in the routing registry that governs it.
 
 Those four dispositions partition every item — 445 + 194 + 58 + 14 = 711, so a fifth outcome would
 show up as a gap. (The rounded percentages sum to 100.1; the counts are the claim.)
@@ -76,7 +76,7 @@ source (transcript | channel | github | gmail | drive)
      Pass 1.5  critic           ─ what the inventory got wrong
      Pass 1.7  consolidator     ─ merge, dedupe, anchor
      Pass 2a   categorization   ─ NEW_TASK | DUPLICATE | SUBTASK | UPDATE, against the live board
-     Pass 2b   contract check   ─ a BLIND re-derivation; new-vs-existing disagreement holds
+     Pass 2b   contract check   ─ a BLIND re-derivation; a genuinely different WRITE holds
      Pass 2c   execute          ─ the only writer. Deterministic. No model in the write path.
      Pass 2d   audit            ─ did the board end up how 2c said it would?
 ```
@@ -101,19 +101,20 @@ npm run demo -- --agents               # with the agent layer on (PRD §5), also
 ```
 ▶ 01-meeting-mixed — A normal standup: four categories exercised, four cards created, one duplicate
   skipped, and a post-write audit that confirms the board matches the plan.
-  ✓ 0-cleanup            1ms
+  ✓ 0-cleanup            4ms
   ✓ 1-inventory          1ms
   ✓ 1.5-critic           0ms
-  ✓ 1.7-consolidator     1ms
-  ✓ evidence             2ms
-  ✓ 2a-categorization    10ms
-[pass2b] item 5: existing-card dispute (2a=SUBTASK vs blind=UPDATE) — trusting 2a, not holding
-  ✓ 2b-contract-check    8ms
+  ✓ 1.7-consolidator     0ms
+  ✓ evidence             1ms
+  ✓ 2a-categorization    8ms
+  ✓ 2b-contract-check    12ms
+  ⏸ 1 held for a human:
+      #5 [category dispute] Check whether flaky auth test is causing noisy nightly build alerts
   ✓ 2c-execute           1ms
-  → 4 created · 1 commented · 1 skipped · 0 failed
+  → 3 created · 1 commented · 1 skipped · 0 failed
   ✓ 2d-audit             1ms
-  ✓ audit: 6 passed, 0 mismatched
-  ✓ 6 items · 4 created · 0 held · 0 skipped — matches expected.json
+  ✓ audit: 5 passed, 0 mismatched
+  ✓ 6 items · 3 created · 1 held · 0 skipped — matches expected.json
 ```
 
 The replayed replies are real: recorded from `deepseek-v4-pro` against these exact prompts. A missing
@@ -121,15 +122,18 @@ cassette is a loud error, never an empty reply — an empty reply is indistingui
 legitimately found nothing, which would make the demo go green having done nothing at all.
 
 Both providers have been run live across all eight scenarios and both recordings ship. They agree on
-three and disagree on five — and **every disagreement is at Pass 1, the extraction**, never in a gate,
-a plan or a write. See [PROVIDERS.md](PROVIDERS.md) for the measured cost and the pattern in where
-they part company.
+three and disagree on five, and extraction (Pass 1) is where that starts — but a downstream gate can
+now disagree too, because a gate's decision is a function of what the model read. On
+`06-github-activity`, DeepSeek holds two items on `uncertain field(s)`; Claude, given a different
+categorization of the same feed, holds two different items on `category dispute` instead — a
+different gate, not just a different count. See [PROVIDERS.md](PROVIDERS.md) for the measured cost and
+the pattern in where they part company.
 
 ## The eight scenarios
 
 | | What it demonstrates |
 |---|---|
-| `01-meeting-mixed` | A normal standup. Four categories exercised, four cards created, one duplicate skipped. |
+| `01-meeting-mixed` | A normal standup. Four categories exercised, three cards created, one held on a category dispute, one duplicate skipped. |
 | `02-meeting-duplicates` | Both deliverables already on the board under different wording. **The run writes nothing at all.** |
 | `03-meeting-noise` | Pure discussion. Nothing is extracted — the pipeline does not invent work to look useful. |
 | `04-channel-messages` | A channel log through the identical 1 → 2d chain. |
@@ -146,9 +150,13 @@ the parsers, the gates, the plan, the writes, the audit, the idempotency layers.
 *which* reply a model returns.
 
 Holds are the case worth being precise about. A hold that rests on a **judgement** — two independent
-reads disagreeing about an ambiguous item — varies between recordings of the identical fixture, so no
-scenario asserts one. A hold that rests on a **missing field** does not vary that way, and
-`06-github-activity` asserts two of them. The gates themselves are proven separately and
+reads disagreeing about an ambiguous item — varies between recordings of the identical fixture.
+`01-meeting-mixed` and `08-drive-activity` each assert one today, but neither pins the judgement
+itself: a future re-recording could see the two reads agree instead, and the hold would disappear —
+three consecutive re-recordings of `01-meeting-mixed` gave three different answers before the dispute
+gate widened to catch what it catches now (see [EXTRACTION.md](EXTRACTION.md)). A hold that rests on a
+**missing field** does not vary that way, and `06-github-activity` asserts two of them. The gates
+themselves are proven separately and
 deterministically, with scripted replies, in `contractGates.test.ts` and `run.test.ts`.
 
 ## The five seams

@@ -65,21 +65,44 @@ export function matchesNormOrHr(title: string): string | null {
   return null;
 }
 
+export type EffectiveWriteAction = 'CREATE' | 'COMMENT' | 'CREATE_CHILD' | 'NOTHING' | 'LINK' | 'UNKNOWN';
+export type EffectiveWrite = { action: EffectiveWriteAction; target?: string };
+
 /**
- * A 2a-vs-2b category disagreement holds only when it crosses the **new-vs-existing** boundary — one
- * read says this is new work, the other says it is an existing card. That is a real question.
- *
- * When both reads agree it is an existing-card action and differ only on *how* to annotate it (any
- * mix of DUPLICATE/UPDATE/SUBTASK), trust 2a and proceed. Holding those held back exactly the status
- * updates this pipeline exists to make, for a distinction no human cares about.
+ * What a category actually does to the board, independent of its label. This is the comparison a
+ * dispute needs — not whether two reads chose the same WORD, but whether they'd produce the same
+ * WRITE. `DUPLICATE` deliberately carries no target: it writes nothing either way, so which card it
+ * names is moot for this comparison (DUPLICATE-A vs DUPLICATE-B is not a dispute).
  */
-export function categoryDisputeHolds(
-  cat2a: MeetingCategory | 'UNKNOWN',
-  catBlind: MeetingCategory | 'UNKNOWN'
-): boolean {
-  if (catBlind === 'UNKNOWN' || catBlind === cat2a) return false;
-  const EXISTING_CARD = new Set<string>(['DUPLICATE', 'UPDATE', 'SUBTASK']);
-  return !(EXISTING_CARD.has(cat2a) && EXISTING_CARD.has(catBlind));
+export function effectiveWrite(category: MeetingCategory | 'UNKNOWN', targetId?: string): EffectiveWrite {
+  switch (category) {
+    case 'NEW_TASK': return { action: 'CREATE' };
+    case 'UPDATE': return { action: 'COMMENT', target: targetId };
+    case 'SUBTASK': return { action: 'CREATE_CHILD', target: targetId };
+    case 'DUPLICATE': return { action: 'NOTHING' };
+    case 'RELATE': return { action: 'LINK', target: targetId };
+    default: return { action: 'UNKNOWN' };
+  }
+}
+
+/**
+ * A 2a-vs-blind-read disagreement is a genuine dispute when the two reads would produce DIFFERENT
+ * WRITES — not merely different category labels. This replaces the old new-vs-existing-boundary rule
+ * (which trusted 2a on any DUPLICATE/UPDATE/SUBTASK mismatch): `UPDATE card-A` vs `UPDATE card-B` is
+ * a dispute (same action, different target); `UPDATE card-A` vs `DUPLICATE card-A` is a dispute
+ * (comment vs nothing); `DUPLICATE card-A` vs `DUPLICATE card-B` is NOT a dispute (both write
+ * nothing). Targets are compared only when BOTH reads named one — a verdict that omits a match id
+ * must not manufacture a dispute out of an absence. Returns null when there is no dispute.
+ */
+export function writeDispute(
+  cat2a: MeetingCategory | 'UNKNOWN', id2a: string | undefined,
+  cat2b: MeetingCategory | 'UNKNOWN', id2b: string | undefined,
+): { write2a: EffectiveWrite; write2b: EffectiveWrite } | null {
+  const write2a = effectiveWrite(cat2a, id2a);
+  const write2b = effectiveWrite(cat2b, id2b);
+  if (write2a.action !== write2b.action) return { write2a, write2b };
+  if (write2a.target && write2b.target && write2a.target !== write2b.target) return { write2a, write2b };
+  return null;
 }
 
 // ── Field completeness + gap fill ────────────────────────────────────────────
@@ -449,9 +472,41 @@ export function crossItemGate(
       updatesById.set(it.existingTaskId, bucket);
     }
   }
+  // Fields an UPDATE can actually write beyond the comment body — merging by concatenating only
+  // `finalDesc` silently dropped these for every item but the first.
+  const UPDATE_MERGE_FIELDS = ['status', 'dueDate', 'priority', 'assignee', 'list'] as const;
   for (const [, group] of updatesById) {
     if (group.length < 2) continue;
+    // Mutates the survivor in place, deliberately: `primary` is a reference into `items`, and the
+    // clean set returned below is `items` filtered, not rebuilt — a clone here would compute the
+    // merged fields and then discard them, since nothing would re-insert the clone into `items`.
     const primary = group[0]!;
+    // A field two items in the group both set, to DIFFERENT values, is a genuine conflict — which
+    // one wins is not obvious, and picking silently is exactly what this replaces. Hold the whole
+    // group instead. A field only ONE item set carries forward onto `primary` rather than being lost.
+    const conflicts: string[] = [];
+    for (const field of UPDATE_MERGE_FIELDS) {
+      const values = new Set(group.map((g) => g[field]).filter((v): v is string => !!v));
+      if (values.size > 1) conflicts.push(`${field} (${[...values].join(' vs ')})`);
+      else if (values.size === 1) primary[field] = [...values][0]!;
+    }
+    if (conflicts.length) {
+      for (const g of group) {
+        held.push({
+          item: g.item,
+          title: g.title,
+          category: g.category,
+          gate: 'conflicting updates to the same card',
+          question: formatClarifyAsk({
+            facts: [`Another item from this same run also updates ${g.existingTaskId}, but sets ${conflicts.join(', ')} differently.`],
+            choice: 'Which value should apply, or should these be handled as separate updates?',
+          }),
+          originalItem: g,
+        });
+        drop.add(g.item);
+      }
+      continue;
+    }
     primary.finalDesc = group.map((g) => g.finalDesc).filter(Boolean).join(' ');
     for (const g of group.slice(1)) drop.add(g.item);
     flags.push({

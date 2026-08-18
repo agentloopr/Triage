@@ -130,11 +130,34 @@ one remaining category-dispute hold, and three consecutive re-recordings of the 
 three different answers. The conclusion is not that those fixtures were badly written — it is that
 **no cassette can pin a model judgement.** Whether two independent reads disagree about one genuinely
 ambiguous item is exactly the kind of thing that varies run to run, which is *why* the disagreement is
-worth surfacing to a human in the first place. So no scenario asserts a **dispute** hold. Scenarios pin
-what deterministic code does with a given reply — parsers, gates, plan, writes, audit, idempotency —
-and every gate, including the ones that produce holds, is proven separately with scripted replies in
+worth surfacing to a human in the first place. For a while, the practical upshot was that no scenario
+asserted a **dispute** hold at all: the goldens were rewritten around the coin toss (`07-email-thread`,
+below) rather than pinning it, and `01-meeting-mixed`'s own note said as much.
+
+**That stopped being true when the category-dispute gate widened.** The dispute rule moved from a
+new-vs-existing-boundary check — trust 2a whenever both reads stayed on the same side of it — to a
+write-equivalence check that compares what each read would actually *write* (see ARCHITECTURE.md).
+`01-meeting-mixed` (item 5, 2a=SUBTASK vs blind=UPDATE — a create-child vs a comment, a different write
+either way) and `08-drive-activity` (item 4, 2a=DUPLICATE vs a blind read that would write something —
+nothing vs something) now both pin a `category dispute` hold. Neither pins the underlying *judgement*:
+a future re-recording could see 2b agree with 2a on either item, same as the three-consecutive-answers
+history above, and the hold would disappear again. What they pin is narrower and still real — that the
+gate, given whatever the current recording's blind read happens to say, correctly turns a genuine
+write-level disagreement into a hold. `08-drive-activity` is the sharper case: under the old boundary
+rule, item 4's DUPLICATE read sat on the same "existing card" side as the blind read's answer, so it
+was trusted and skipped with no hold and no trace — a silent duplicate-skip this repo could not
+previously demonstrate on its own scenarios, not a hypothetical one. Scenarios still pin what
+deterministic code does with a given reply — parsers, gates, plan, writes, audit, idempotency — and
+every gate, including the ones that produce holds, is proven separately with scripted replies in
 `contractGates.test.ts` and `run.test.ts`. The alternative was re-recording until a hold appeared,
 which is not evidence of anything except patience.
+
+An optional `disputeArbiter.ts` can now resolve some of these disputes against live tracker state
+instead of holding — a cited card that no longer exists settles it for free; a model step handles what
+that can't, but only at high confidence with a cited live-board fact. It ships **off**
+(`DISPUTE_ARBITER_ENABLED=false` in `.env.example`), so it changes nothing about the goldens above or
+about the "no scenario asserts a hold" history: with the arbiter off, its absence and its presence are
+behaviorally identical.
 
 **That sentence used to read "no scenario asserts a hold", full stop, and the qualifier matters.**
 `06-github-activity` asserts two, and they are a different kind: `uncertain field(s)`, raised because
@@ -142,8 +165,11 @@ a code feed named nobody to own the follow-up work and `fillFieldGaps` refused t
 default owner as though it were a fact. That is deterministic given the manifest — the only model
 input is whether Pass 2a emitted an `ASSIGNEE` line at all, which is far more stable than whether two
 independent reads disagree about an ambiguous category. The distinction worth carrying is not
-"holds are unpinnable" but **"a hold that rests on a judgement is unpinnable; one that rests on a
-missing field is not."**
+"holds are unpinnable" but **"a hold that rests on a judgement can be pinned only as long as the
+current recording happens to land there; one that rests on a missing field does not move."** The two
+category-dispute goldens above are the first kind, current but not durable — they can go stale on the
+next re-recording the way `01-meeting-mixed`'s did three times before, and that is expected, not a bug
+to fix when it happens.
 
 `07-email-thread` was written the wrong way first and is the cheaper illustration. Its original draft
 tied the export work to an onboarding card, and two items came back as category disputes — a coin

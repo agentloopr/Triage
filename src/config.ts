@@ -144,6 +144,19 @@ export const AGENTS_ENABLED = bool('AGENTS_ENABLED', false);
 /** Items handed to a role agent in one run. Each is a model call, so a bad batch cannot run away. */
 export const AGENT_MAX_DELEGATIONS = int('AGENT_MAX_DELEGATIONS', 8);
 
+// ── Dispute arbiter (optional) ───────────────────────────────────────────────
+/**
+ * Resolve a Pass 2a-vs-blind-read write-level dispute against live tracker state instead of holding
+ * it for a human.
+ *
+ * **Off by default.** With it off, every dispute holds — which is the literal PRD §6 policy ("holds
+ * for a human on disagreement") and needs no model call. On, a dispute may resolve automatically, but
+ * only at high confidence with a cited live-board fact; see `gates/disputeArbiter.ts`. The failure
+ * mode either way is "ask a human", so on is not the unsafe direction — off is simply the smaller
+ * claim, and the smaller claim is what this repo defaults to (see `AGENTS_ENABLED` above).
+ */
+export const DISPUTE_ARBITER_ENABLED = bool('DISPUTE_ARBITER_ENABLED', false);
+
 // ── Observability ───────────────────────────────────────────────────────────
 /**
  * Attach prompts and replies to spans.

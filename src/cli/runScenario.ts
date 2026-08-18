@@ -151,6 +151,9 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
     runPass: async ({ prompt, label }) => ({ text: await complete(passKey(label), prompt) }),
     runCategorization: (prompt, label, system) => complete(`2a/${itemKey(label)}`, prompt, system),
     runContractCheck: (prompt, label, system) => complete(`2b/${itemKey(label)}`, prompt, system),
+    // Only ever invoked when DISPUTE_ARBITER_ENABLED is on — see run.ts. Wired unconditionally here,
+    // same as the agent layer above, so turning the flag on needs no change to this file.
+    runDisputeArbiter: (prompt, label) => complete(`arb/${itemKey(label)}`, prompt),
     warmDelayMs: 0,
   });
 

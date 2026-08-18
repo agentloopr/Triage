@@ -197,7 +197,7 @@ board.
 ### The source clients: all three verified live
 
 **GitHub: live-verified, 2026-08-13.** Two reads through the real client, no script standing in for
-it. Against `agentloopr/ops-agent-reference`: 11 commits, every author resolved, every timestamp ISO,
+it. Against `agentloopr/Triage`: 11 commits, every author resolved, every timestamp ISO,
 merged chronologically. Against `vitest-dev/vitest` over one day: **109 events — 85 pull requests, 15
 issues and 9 commits.**
 

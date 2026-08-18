@@ -6,7 +6,7 @@ name: traffic export
 # Uses a PAT (TRAFFIC_TOKEN), not the default GITHUB_TOKEN: the traffic API requires push access,
 # and the automatic token's standing to satisfy that check is not something this workflow should
 # gamble on silently. Set it once:
-#   gh secret set TRAFFIC_TOKEN --repo agentloopr/ops-agent-reference --body "<a PAT with repo scope>"
+#   gh secret set TRAFFIC_TOKEN --repo agentloopr/Triage --body "<a PAT with repo scope>"
 #
 # If the secret is unset, this fails loudly rather than logging nothing — the same rule the
 # IDENTIFIER_PATTERNS guard in ci.yml follows, for the same reason: a workflow that is configured

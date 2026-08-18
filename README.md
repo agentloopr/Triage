@@ -1,4 +1,4 @@
-# ops-agent-reference
+# Triage
 
 A production ops-agent pipeline: meeting transcripts, channel logs, GitHub activity, email threads
 and document activity in — governed tracker writes out, with human-in-the-loop gates on everything

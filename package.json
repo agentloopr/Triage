@@ -1,16 +1,16 @@
 {
-  "name": "ops-agent-reference",
+  "name": "triage",
   "version": "0.1.0",
   "private": true,
   "description": "A production ops agent pipeline: meeting/channel input to governed tracker writes, with human-in-the-loop gates.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agentloopr/ops-agent-reference.git"
+    "url": "git+https://github.com/agentloopr/Triage.git"
   },
-  "homepage": "https://github.com/agentloopr/ops-agent-reference#readme",
+  "homepage": "https://github.com/agentloopr/Triage#readme",
   "bugs": {
-    "url": "https://github.com/agentloopr/ops-agent-reference/issues"
+    "url": "https://github.com/agentloopr/Triage/issues"
   },
   "engines": {
     "node": ">=20"

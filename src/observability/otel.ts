@@ -27,7 +27,7 @@ import type { PipelineEvent, PipelineEvents } from '../pipeline/events';
 import type { CompletionRequest, CompletionResult, ModelClient } from '../providers';
 import { redactSecretsInText } from '../utils/security';
 
-const TRACER_NAME = 'ops-agent-reference';
+const TRACER_NAME = 'triage';
 
 /** Wrap a client so each `complete()` becomes a span. Returns a client, so it composes anywhere. */
 export function traceModelClient(client: ModelClient): ModelClient {

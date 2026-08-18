@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or discussion
-    url: https://github.com/agentloopr/ops-agent-reference/discussions
+    url: https://github.com/agentloopr/Triage/discussions
     about: For "how does X work" or "why does the gate do Y" — searchable and indexed, unlike issues.

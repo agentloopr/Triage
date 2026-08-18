@@ -144,6 +144,8 @@ async function main(): Promise<void> {
     runPass: async ({ prompt, label }) => ({ text: await complete(label, prompt) }),
     runCategorization: (prompt, label, system) => complete(`2a/${label}`, prompt, system),
     runContractCheck: (prompt, label, system) => complete(`2b/${label}`, prompt, system),
+    // Only ever invoked when DISPUTE_ARBITER_ENABLED is on.
+    runDisputeArbiter: (prompt, label) => complete(`arb/${label}`, prompt),
     // Same model and tracker the pipeline uses, so `--agents` exercises the real seam rather than a
     // parallel wiring that could drift from the one the demo proves.
     ...(agents

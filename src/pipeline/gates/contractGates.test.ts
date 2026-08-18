@@ -9,14 +9,15 @@ import type { CategorizationItem } from '../parsing/categorizationManifest';
 import { indexTasks, setTaskUrlBuilder } from './clarify';
 import {
   binaryHoldGate,
-  categoryDisputeHolds,
   classifyLearnableFromContent,
   classifyLearnableGate,
   crossItemGate,
+  effectiveWrite,
   fillFieldGaps,
   matchesNormOrHr,
   routingGate,
   uncertainFieldsGate,
+  writeDispute,
 } from './contractGates';
 
 const DIR = join(tmpdir(), `gates-test-${process.pid}`);
@@ -77,22 +78,58 @@ describe('matchesNormOrHr', () => {
   });
 });
 
-describe('categoryDisputeHolds', () => {
-  // The boundary that matters is new-vs-existing. That is a real question for a human.
-  it('holds when one read says new work and the other says an existing card', () => {
-    expect(categoryDisputeHolds('NEW_TASK', 'DUPLICATE')).toBe(true);
-    expect(categoryDisputeHolds('UPDATE', 'NEW_TASK')).toBe(true);
+describe('effectiveWrite', () => {
+  it('maps each category to the write it actually produces', () => {
+    expect(effectiveWrite('NEW_TASK')).toEqual({ action: 'CREATE' });
+    expect(effectiveWrite('UPDATE', 't1')).toEqual({ action: 'COMMENT', target: 't1' });
+    expect(effectiveWrite('SUBTASK', 't1')).toEqual({ action: 'CREATE_CHILD', target: 't1' });
+    expect(effectiveWrite('DUPLICATE', 't1')).toEqual({ action: 'NOTHING' });
+    expect(effectiveWrite('RELATE', 't1')).toEqual({ action: 'LINK', target: 't1' });
+    expect(effectiveWrite('UNKNOWN')).toEqual({ action: 'UNKNOWN' });
   });
 
-  // Holding these held back exactly the status updates the pipeline exists to make.
-  it('trusts 2a when both reads agree it is an existing card and differ only on how to annotate it', () => {
-    expect(categoryDisputeHolds('UPDATE', 'DUPLICATE')).toBe(false);
-    expect(categoryDisputeHolds('SUBTASK', 'UPDATE')).toBe(false);
+  it('DUPLICATE carries no target — which card it names is moot, it writes nothing either way', () => {
+    expect(effectiveWrite('DUPLICATE', 't1').target).toBeUndefined();
+  });
+});
+
+describe('writeDispute', () => {
+  // A different category almost always means a different write — this is the boundary that matters,
+  // wider than the old new-vs-existing rule (which trusted 2a on any DUPLICATE/UPDATE/SUBTASK mix).
+  it('disputes when one read says new work and the other says an existing card', () => {
+    expect(writeDispute('NEW_TASK', undefined, 'DUPLICATE', 't1')).not.toBeNull();
+    expect(writeDispute('UPDATE', 't1', 'NEW_TASK', undefined)).not.toBeNull();
   });
 
-  it('never holds on agreement or on an unparseable verdict', () => {
-    expect(categoryDisputeHolds('NEW_TASK', 'NEW_TASK')).toBe(false);
-    expect(categoryDisputeHolds('NEW_TASK', 'UNKNOWN')).toBe(false);
+  it('disputes an existing-card mismatch the old category-label rule trusted 2a on', () => {
+    // UPDATE (comment) vs DUPLICATE (nothing) — same "existing card" bucket under the old rule, but
+    // a genuinely different write: one posts a comment, the other writes nothing at all.
+    expect(writeDispute('UPDATE', 't1', 'DUPLICATE', 't1')).not.toBeNull();
+    // UPDATE (comment) vs SUBTASK (create-child) — different action, different write.
+    expect(writeDispute('SUBTASK', 't1', 'UPDATE', 't1')).not.toBeNull();
+  });
+
+  it('disputes the same action on two DIFFERENT cards', () => {
+    expect(writeDispute('UPDATE', 't1', 'UPDATE', 't2')).not.toBeNull();
+  });
+
+  it('does NOT dispute the same action on the same card', () => {
+    expect(writeDispute('UPDATE', 't1', 'UPDATE', 't1')).toBeNull();
+  });
+
+  it('does NOT dispute when only one read named a target — an absence is not a manufactured mismatch', () => {
+    expect(writeDispute('UPDATE', 't1', 'UPDATE', undefined)).toBeNull();
+    expect(writeDispute('UPDATE', undefined, 'UPDATE', 't1')).toBeNull();
+  });
+
+  // Both write NOTHING, so the disagreement about WHICH card is moot — this is the property that
+  // makes an arbiter (rather than a blanket hold) the right shape for the wider rule.
+  it('does NOT dispute DUPLICATE(A) vs DUPLICATE(B) — both write nothing', () => {
+    expect(writeDispute('DUPLICATE', 't1', 'DUPLICATE', 't2')).toBeNull();
+  });
+
+  it('never disputes plain agreement', () => {
+    expect(writeDispute('NEW_TASK', undefined, 'NEW_TASK', undefined)).toBeNull();
   });
 });
 
@@ -315,6 +352,30 @@ describe('crossItemGate', () => {
     expect(out.clean).toHaveLength(1);
     expect(out.clean[0]!.finalDesc).toBe('moved to review ships Friday');
     expect(out.flags.find((f) => f.kind === 'updates_merged')?.items).toEqual([1, 2]);
+  });
+
+  it('merges every UPDATE-writable field forward, not just finalDesc', () => {
+    const items = [
+      item({ item: 1, category: 'UPDATE', existingTaskId: 't100', finalDesc: 'moved to review' }),
+      item({ item: 2, category: 'UPDATE', existingTaskId: 't100', finalDesc: 'ships Friday', status: 'in review', priority: 'high' }),
+    ];
+    const out = crossItemGate(items, SNAP());
+    expect(out.clean).toHaveLength(1);
+    expect(out.clean[0]!.status).toBe('in review');
+    expect(out.clean[0]!.priority).toBe('high');
+  });
+
+  it('HOLDS two UPDATEs on one card that set the same field to different values, rather than silently picking one', () => {
+    const items = [
+      item({ item: 1, category: 'UPDATE', existingTaskId: 't100', finalDesc: 'moved to review', status: 'in review' }),
+      item({ item: 2, category: 'UPDATE', existingTaskId: 't100', finalDesc: 'shipped', status: 'complete' }),
+    ];
+    const out = crossItemGate(items, SNAP());
+    expect(out.clean).toHaveLength(0);
+    expect(out.held).toHaveLength(2);
+    expect(out.held.every((h) => h.gate === 'conflicting updates to the same card')).toBe(true);
+    // Not silently in the digest as a merge — this is a hold, and no updates_merged flag is raised.
+    expect(out.flags.find((f) => f.kind === 'updates_merged')).toBeUndefined();
   });
 
   it('flags over-subtasking without blocking it', () => {

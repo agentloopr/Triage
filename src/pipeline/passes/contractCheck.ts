@@ -36,13 +36,14 @@ import {
   type ContractFlag,
   type HeldItem,
   binaryHoldGate,
-  categoryDisputeHolds,
   crossItemGate,
   fillFieldGaps,
   routingGate,
   uncertainFieldsGate,
+  writeDispute,
 } from '../gates/contractGates';
 import { criticalGate } from '../gates/criticalGate';
+import { type ArbiterDeps, type DisputeOutcome, applyBlindRead, resolveDispute } from '../gates/disputeArbiter';
 import type { CategorizationItem, MeetingCategory } from '../parsing/categorizationManifest';
 import { autoSkippable, legitimacyHolds, parseContractVerdict } from '../parsing/contractVerdict';
 import { buildContractCheckerPrompt } from '../prompts/contractCheck';
@@ -95,6 +96,11 @@ export type ContractCheckOptions = {
   warmDelayMs?: number;
   routingGateEnabled?: boolean;
   onItem?: (held: HeldItem | null, itemNumber: number) => void;
+  /** When present, a write dispute (see `writeDispute`) is arbitrated against live tracker state
+   *  before it holds. When absent (the default — see `DISPUTE_ARBITER_ENABLED`), every dispute holds
+   *  directly, which is the literal PRD §6 policy and the safe default: identical to "the arbiter
+   *  found no evidence". */
+  arbiter?: ArbiterDeps;
 };
 
 /** Matched by the delivery layer to post one summary instead of fanning out unanswerable questions. */
@@ -121,6 +127,35 @@ class UnusableVerdictError extends Error {
     super(`the blind read returned no usable verdict (${shown ? `got: "${shown}"` : 'empty reply'})`);
     this.name = 'UnusableVerdictError';
   }
+}
+
+/**
+ * Shared by both no-independent-read paths — a thrown/unusable blind read, and an item with no
+ * inventory entry to feed it at all. Runs the deterministic gates first (their ordering reasons are
+ * in the catch block above) and falls back to the generic verification-unavailable question only
+ * when none of them held it.
+ */
+function holdOnVerificationUnavailable(
+  m: CategorizationItem,
+  snap: Map<string, BoardTask>,
+  detail: string,
+  gateOpts: DeterministicGateOptions
+): HeldItem {
+  const gated = deterministicGatesForItem(m, snap, gateOpts);
+  return (
+    gated.held ?? {
+      item: m.item,
+      title: m.title,
+      category: m.category,
+      gate: VERIFICATION_UNAVAILABLE_GATE,
+      question: formatClarifyAsk({
+        facts: [`The independent second read could not run for this item: ${detail}`],
+        choice: 'Approve it on the first read alone, or leave it for a re-run once the provider recovers?',
+        hint: 'Every deterministic gate passed. What is missing is the disconfirming check, not the information.',
+      }),
+      originalItem: gated.clean ?? m,
+    }
+  );
 }
 
 const REGISTRY_DEGRADED_QUESTION = [
@@ -166,15 +201,34 @@ export async function runContractCheck(
   const skippedNotTask: SkippedNotTask[] = [];
 
   const processOne = async (idx: number): Promise<void> => {
-    const m = input.manifestItems[idx]!;
+    // Not const — rewritten in place when a write dispute resolves toward the blind read (2b).
+    let m = input.manifestItems[idx]!;
     const inv = invByNum.get(m.item);
     const provenance = input.provenanceByItem?.get(m.item) ?? null;
 
     let heldThis: HeldItem | null = null;
     let skippedThis = false;
 
+    // Every deterministic gate below (fillFieldGaps, binaryHoldGate, routingGate, crossItemGate) is
+    // blind to UNKNOWN — none of them has a branch for it. There is also no "trust 2a" available the
+    // way a real dispute has one: 2a has no opinion to trust here. Hold immediately, before spending
+    // a blind-read call whose only use would be re-deriving a category 2a already failed to produce.
+    if (m.category === 'UNKNOWN') {
+      heldThis = {
+        item: m.item,
+        title: m.title,
+        category: m.category,
+        gate: 'uncategorized',
+        question: formatClarifyAsk({
+          facts: ['I could not confidently categorize this from the source alone.'],
+          choice: 'Is this new work, an update on an existing card, a subtask of one, a duplicate — or not something to track at all?',
+        }),
+        originalItem: m,
+      };
+    }
+
     // ── Check 1 — blind disconfirming re-verification ────────────────────────
-    if (inv) {
+    if (!heldThis && inv) {
       try {
         const parts = buildContractCheckerPrompt(inv, input.boardSnapshot, input.sourceSummary, input.sourceText, {
           ...(input.participantLine ? { participantLine: input.participantLine } : {}),
@@ -192,19 +246,34 @@ export async function runContractCheck(
         // thing: no independent read happened.
         if (!verdict.usable) throw new UnusableVerdictError(reply);
 
-        if (categoryDisputeHolds(m.category, verdict.category)) {
-          heldThis = {
-            item: m.item,
-            title: m.title,
-            category: m.category,
-            gate: 'category dispute',
-            question: formatClarifyAsk({
-              facts: [describeMatchOrLink(snap, verdict.matchIds[0])],
-              choice: `Create this as a new task, or ${actionPhrase(verdict.category)}?`,
-            }),
-            originalItem: m,
-            disputeVerdict: { category: verdict.category as MeetingCategory, matchIds: verdict.matchIds },
-          };
+        const id2a = m.existingTaskId ?? m.parentTaskId;
+        const dispute = writeDispute(m.category, id2a, verdict.category, verdict.matchIds[0]);
+
+        if (dispute) {
+          // See disputeArbiter.ts — a genuine WRITE-level disagreement (not just a label mismatch),
+          // arbitrated against live tracker state when the arbiter is configured, held otherwise.
+          const outcome: DisputeOutcome = opts.arbiter
+            ? await resolveDispute(inv, m, verdict, dispute, opts.arbiter, `arb:item${m.item}`)
+            : { kind: 'hold', reason: 'dispute arbitration not configured for this run' };
+
+          if (outcome.kind === 'resolved') {
+            // Winner '2a' needs no rewrite; winner '2b' does — either way m falls through below to
+            // the SAME grounding/routing checks a non-disputed item goes through.
+            if (outcome.winner === '2b') m = applyBlindRead(m, verdict);
+          } else {
+            heldThis = {
+              item: m.item,
+              title: m.title,
+              category: m.category,
+              gate: 'category dispute',
+              question: formatClarifyAsk({
+                facts: [describeMatchOrLink(snap, dispute.write2a.target ?? dispute.write2b.target), `Checked against the live board: ${outcome.reason}.`],
+                choice: `Create this as a new task, or ${actionPhrase(verdict.category)}?`,
+              }),
+              originalItem: m,
+              disputeVerdict: { category: verdict.category as MeetingCategory, matchIds: verdict.matchIds },
+            };
+          }
         } else if (autoSkippable(verdict, { provenance }) && legitimacyHolds(m.category, verdict.legitimacy, { pass2aConfidence: m.confidence, provenance })) {
           skippedNotTask.push({
             item: m.item,
@@ -228,9 +297,9 @@ export async function runContractCheck(
             originalItem: m,
           };
         } else {
-          if (verdict.category !== 'UNKNOWN' && verdict.category !== m.category) {
-            console.log(`[pass2b] item ${m.item}: existing-card dispute (2a=${m.category} vs blind=${verdict.category}) — trusting 2a, not holding`);
-          }
+          // No write-level dispute — under `writeDispute`, that means the two reads named the same
+          // category (different categories always imply different effective writes), so there is no
+          // "trusting 2a over 2b" case left to log here the way the old category-label rule had.
 
           // Grounding is DETECTION only. The single thing it can escalate is a wrong CARD match
           // hiding behind ungrounded wording — folded into the existing category-dispute gate, so a
@@ -299,25 +368,23 @@ export async function runContractCheck(
         // one. If the gates pass it, the hold carries the GAP-FILLED item, so approving replays
         // something that has been through every deterministic check. The only thing missing is then
         // genuinely the second read.
-        const gated = deterministicGatesForItem(m, snap, {
+        heldThis = holdOnVerificationUnavailable(m, snap, detail, {
           ...(input.todayIso ? { todayIso: input.todayIso } : {}),
           ...(inv ? { inventoryItem: inv } : {}),
           routingGateEnabled: routingOn,
         });
-
-        heldThis = gated.held ?? {
-          item: m.item,
-          title: m.title,
-          category: m.category,
-          gate: VERIFICATION_UNAVAILABLE_GATE,
-          question: formatClarifyAsk({
-            facts: [`The independent second read could not run for this item: ${detail}`],
-            choice: 'Approve it on the first read alone, or leave it for a re-run once the provider recovers?',
-            hint: 'Every deterministic gate passed. What is missing is the disconfirming check, not the information.',
-          }),
-          originalItem: gated.clean ?? m,
-        };
       }
+    } else if (!heldThis) {
+      // No inventory item to feed the blind read against at all — this used to fall straight through
+      // to the deterministic gates with nothing recording that check 1 never ran, so an item whose
+      // number had no matching inventory entry could go clean on one read. Same failure class as a
+      // thrown error or an unusable reply — no independent read happened — so it takes the same path.
+      const detail = 'no inventory item to verify against';
+      console.warn(`[pass2b] item ${m.item}: ${detail} — HOLDING rather than writing unverified`);
+      heldThis = holdOnVerificationUnavailable(m, snap, detail, {
+        ...(input.todayIso ? { todayIso: input.todayIso } : {}),
+        routingGateEnabled: routingOn,
+      });
     }
 
     // ── Checks 2–4 — deterministic ───────────────────────────────────────────

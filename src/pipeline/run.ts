@@ -32,6 +32,8 @@ import { parseEnrichedInventoryItems } from './parsing/inventory';
 import { type CategorizationAgentRunner, runCategorizationPass } from './passes/categorization';
 import type { AuditResult } from './passes/audit';
 import { type ContractCheckerRunner, type SkippedNotTask, applyGates, runContractCheck } from './passes/contractCheck';
+import { DISPUTE_ARBITER_ENABLED } from '../config';
+import type { ArbiterRunner } from './gates/disputeArbiter';
 import { type ExecuteResult, executeOperations, planOperations } from './passes/execute';
 import { finalizeWrite } from './finalize';
 import { type PassRunner, runCleanup, runInventory, runInventoryConsolidator, runInventoryCritic } from './passes/inventory';
@@ -81,6 +83,12 @@ export type PipelineDeps = {
   runCategorization: CategorizationAgentRunner;
   /** Pass 2b. Kept separate so the verification pass can use a different (never weaker) model. */
   runContractCheck: ContractCheckerRunner;
+  /**
+   * The dispute arbiter's model call (see `DISPUTE_ARBITER_ENABLED`). Omit and disputes simply hold
+   * — the same as supplying it while the flag is off. One call per DISPUTE, not per item, so wiring
+   * it costs nothing when it is never invoked.
+   */
+  runDisputeArbiter?: ArbiterRunner;
   /** Set false to plan everything and write nothing — the dry run. */
   execute?: boolean;
   poolSize?: number;
@@ -240,6 +248,9 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
         runAgent: deps.runContractCheck,
         ...(deps.poolSize !== undefined ? { poolSize: deps.poolSize } : {}),
         ...(deps.warmDelayMs !== undefined ? { warmDelayMs: deps.warmDelayMs } : {}),
+        ...(DISPUTE_ARBITER_ENABLED && deps.runDisputeArbiter
+          ? { arbiter: { runAgent: deps.runDisputeArbiter, tracker: deps.tracker } }
+          : {}),
       }
     )
   );

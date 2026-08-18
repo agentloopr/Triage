@@ -67,21 +67,40 @@ and asks the human the agent's own reason. Worth recording as the shape of the f
 deleting silently: the signal was already there and already correct, and what was missing was a path
 from it to a gate.
 
-**No scenario asserts a *model-disagreement* hold**, and the qualifier is the whole sentence. This
-paragraph read "no scenario asserts a human hold" until an outside audit pointed out that
-`06-github-activity` pins two — which it does, and should.
+**Two scenarios now assert a *model-disagreement* hold** — `01-meeting-mixed` (item 5) and
+`08-drive-activity` (item 4) both pin a `category dispute`. This paragraph used to read "no scenario
+asserts a model-disagreement hold", and the qualifier was the whole sentence; it stopped being true
+when the category-dispute gate widened from a new-vs-existing-boundary check to a write-equivalence
+check (`writeDispute()` in `contractGates.ts` — see ARCHITECTURE.md), which catches disputes the old
+rule was blind to. `08-drive-activity`'s case is the sharper one: under the old rule its item 4 was a
+2a=DUPLICATE read the old rule trusted outright and skipped with no hold and no trace, because both
+reads sat on the "existing card" side of the boundary; the write-equivalence rule sees that DUPLICATE
+writes nothing while the blind read's answer would write something, which is exactly the dispute this
+gate exists to catch.
 
-The distinction is which kind of hold can be pinned at all:
+That does not make the gate's output as reproducible as the rest of the suite. Which item, if any,
+trips it is still whatever the current recording's blind read happens to say:
 
 - A hold resting on a **judgement** — two independent reads disagreeing about a genuinely ambiguous
-  item — varies run to run. Three consecutive re-recordings of one identical fixture gave three
-  different answers. That variance is *why* the disagreement goes to a human, and it means no
-  cassette can pin it.
+  item — varies run to run. Three consecutive re-recordings of `01-meeting-mixed` gave three different
+  answers (held, then not, then not) *before* this change, and there is no reason to expect that
+  stopped — a future re-recording could see 2b agree with 2a on both pinned items and the goldens go
+  clean again. That variance is *why* the disagreement goes to a human, and it means no cassette can
+  pin the *outcome*, only what deterministic code does with whatever outcome a given recording
+  produced.
 - A hold resting on a **missing or uncertain field** does not vary that way. `06-github-activity`
   asserts two, because a code feed says who wrote a change and never who owns the follow-up.
 
 The gates themselves are proven separately and deterministically, with scripted replies, in
-`contractGates.test.ts` and `run.test.ts`.
+`contractGates.test.ts` and `run.test.ts` — that coverage is what the two golden holds now corroborate
+on real fixture data rather than substitute for.
+
+**An optional arbiter can resolve some of these disputes instead of holding them — but ships off.**
+`disputeArbiter.ts` checks each cited card against live tracker state (gone card settles it for free)
+and, failing that, asks a model to resolve only at high confidence with a cited live-board fact;
+anything less holds. It is gated by `DISPUTE_ARBITER_ENABLED`, `false` in `.env.example`, and with it
+off the pipeline's behavior is identical to not having the module at all — every detected dispute
+holds for a human, just more of them are detected than before the gate widened.
 
 **The de-tuning A/B never ran, and never can.** The strongest available guard on replacing tuned
 prompts with generic ones is to record each prompt before and after and diff the eval dimensions.

@@ -89,25 +89,29 @@ export function parseContractVerdict(raw: string): ContractVerdict {
     .map((s) => s.replace(/^#/, '').replace(/[^A-Za-z0-9-]/g, ''))
     .filter((s) => s && !/^(none|na|tbd|unknown)$/i.test(s));
 
-  const worth = raw.match(/^\s*WORTH_A_CARD:\s*([a-z_]+)/im)?.[1]?.toLowerCase();
+  const worthMatch = raw.match(/^\s*WORTH_A_CARD:\s*([a-z_]+)/im);
+  const worth = worthMatch?.[1]?.toLowerCase();
   if (worth === 'not_a_task' || worth === 'not_task' || worth === 'notatask') out.legitimacy = 'not_a_task';
   else if (worth === 'unsure') out.legitimacy = 'unsure';
   else out.legitimacy = 'real_task';
 
   // Each of these reads "not explicitly no" — absent, garbled and n/a all mean permissive.
-  out.grounded = raw.match(/^\s*GROUNDED:\s*(yes|no)/im)?.[1]?.toLowerCase() !== 'no';
+  const groundedMatch = raw.match(/^\s*GROUNDED:\s*(yes|no)/im);
+  out.grounded = groundedMatch?.[1]?.toLowerCase() !== 'no';
   out.cardStillMatches = raw.match(/^\s*CARD_STILL_MATCHES:\s*(yes|no|n\/a)/im)?.[1]?.toLowerCase() !== 'no';
   out.routingOk = raw.match(/^\s*ROUTING_OK:\s*(yes|no|n\/a)/im)?.[1]?.toLowerCase() !== 'no';
 
   out.rationale = (raw.match(/^\s*RATIONALE:\s*([\s\S]*?)(?=\n\s*[A-Z_]+:|\n*$)/im)?.[1] ?? '').trim();
   out.tier2Cited = /\b(list-tasks|task-comments)\b|comment history/i.test(out.rationale);
 
-  // **A parsed category, not merely a recognised label.** The first version accepted any known field
-  // with text after it, which let `RATIONALE: looks fine`, `MATCH_TASK_ID: none`, `WORTH_A_CARD: ???`
-  // and `VERDICT_CATEGORY: PROBABLY_NEW` all count as verdicts — none of which states what the blind
-  // read concluded. The category IS the verdict; everything else qualifies it. A reply without one
-  // re-derived nothing, however well-formed it looks.
-  out.usable = out.category !== 'UNKNOWN';
+  // **A parsed category, not merely a recognised label — and not merely a category on its own.** The
+  // first version accepted any reply with a real category, which let a reply carrying nothing but
+  // `VERDICT_CATEGORY: NEW_TASK` count as a full independent read concurring on legitimacy, grounding
+  // AND routing — all three default to "concurs" above, so their absence read as agreement rather
+  // than as the absence it was. Require the mandatory fields to have been PRESENT, not merely
+  // defaulted: a reply missing them is exactly the case the caller's fail-closed path already
+  // handles correctly, and this just routes more genuinely-empty replies there.
+  out.usable = out.category !== 'UNKNOWN' && !!worthMatch && !!groundedMatch && out.rationale.length > 0;
 
   return out;
 }

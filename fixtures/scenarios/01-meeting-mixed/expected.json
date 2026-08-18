@@ -1,6 +1,6 @@
 {
-  "description": "A normal standup: four categories exercised, four cards created, one duplicate skipped, and a post-write audit that confirms the board matches the plan.",
-  "note": "This scenario used to assert a category-dispute hold — Pass 2b's blind read disagreeing with Pass 2a across the new-versus-existing boundary. That expectation was removed after three consecutive re-recordings produced three different answers on the same fixture: held, then not, then not. The disagreement is a model judgement, and a cassette can pin what deterministic code does with a reply, never which reply arrives. Every gate, including the category dispute, is proven deterministically instead — 53 cases in contractGates.test.ts and an end-to-end hold in run.test.ts, all with scripted replies. Treating a lucky recording as a guarantee is how a fixture reads as stable for months and then fails for whoever re-records next, at the exact moment it is hardest to tell from a real regression.\n\nRe-derived 2026-08-12, when the 2a/2b prompts were split into a cacheable system half and a per-item user half. Two things moved and neither was caused by that split. First, Pass 1 sometimes extracted a seventh item from the bare status line \"Main flow is drafted\"; that line was reworded to subordinate it to the actual commitment, which is the same fix scenario 02 got for the same reason — a fixture should be over-determined by its input. Second, item 5 (the flaky-auth-test investigation) now categorizes as SUBTASK of the nightly-build card rather than UPDATE on it, and 2a and 2b genuinely disagree about it: 2b's blind read still says UPDATE, and the dispute gate logs it and trusts 2a because both verdicts sit on the same side of the new-versus-existing boundary. That is the gate working, not failing. The evidence that the system/user split is behaviourally neutral is direct rather than assumed: Pass 1's prompt fingerprint is byte-identical across the change (ced7582a8aee both sides) while its reply differed, and a paired A/B of the same 2a prompt sent split versus joined returned the same verdict on three consecutive runs.",
+  "description": "A normal standup: four categories exercised, three cards created, one item held on a category dispute, one duplicate skipped, and a post-write audit that confirms the board matches the plan.",
+  "note": "History up to 2026-08-12 (the system/user prompt split, and why item 5 categorizes as SUBTASK rather than UPDATE) is unchanged from before and is preserved below.\n\nRe-derived again after the category-dispute gate widened from a new-vs-existing-boundary check to a write-equivalence check: it now compares what each read would actually WRITE (create / comment / create-child / nothing / link), not the category label. Item 5 (the flaky-auth-test investigation) is 2a=SUBTASK (create-child) vs 2b=UPDATE (comment) — a different write either way, so it now HOLDS instead of trusting 2a. This is the gate correctly catching a case the old boundary rule was blind to, not a regression.\n\nThe caveat the old note raised still applies and is worth restating: whether 2b's blind read agrees with 2a on this specific borderline item is a model judgement that varied across three consecutive re-recordings (held, then not, then not) before this change, and there is no reason to expect it stopped varying now — a future re-record could see 2b agree with 2a (both SUBTASK) and this item go clean again. The dispute RULE is proven deterministically regardless — contractGates.test.ts and an end-to-end hold in run.test.ts, all with scripted replies — this golden only pins what the current recording happens to produce.\n\n— Prior note (2026-08-12) — Pass 1 sometimes extracted a seventh item from the bare status line \"Main flow is drafted\"; that line was reworded to subordinate it to the actual commitment, the same fix scenario 02 got for the same reason. The evidence that the system/user prompt split itself was behaviourally neutral: Pass 1's prompt fingerprint is byte-identical across the change (ced7582a8aee both sides) while its reply differed, and a paired A/B of the same 2a prompt sent split versus joined returned the same verdict on three consecutive runs.",
   "inventoryCount": 6,
   "categories": {
     "NEW_TASK": 2,
@@ -8,9 +8,9 @@
     "SUBTASK": 2,
     "DUPLICATE": 1
   },
-  "cleanCount": 6,
-  "heldCount": 0,
+  "cleanCount": 5,
+  "heldCount": 1,
   "skippedNotTaskCount": 0,
-  "createdCount": 4,
-  "heldGates": []
+  "createdCount": 3,
+  "heldGates": ["category dispute"]
 }

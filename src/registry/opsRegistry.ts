@@ -30,7 +30,9 @@ import { atomicWriteJson, readJsonOrNull, withExclusiveFileLock } from '../state
  * read-only role agents in `src/agents/`. Orchestration above them is deterministic code
  * (`selectForDelegation`), not a model.
  *
- * The union values are also the `config/roles/<name>.md` filenames; keep them in lockstep.
+ * `config/roles/<name>.md` is the DEFAULT filename per slot, but the filename is not the key — a
+ * file can be renamed freely as long as it names its slot in an `## Archetype` section (see
+ * `roleProfiles.ts`). What is fixed is the eight slots themselves, not what the files are called.
  */
 export const ROLE_ARCHETYPES = [
   'engineer',

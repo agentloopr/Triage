@@ -3,6 +3,11 @@ name: CodeQL
 # Replaces GitHub's "default setup", which has no branch filter and was scanning every push —
 # including the data-only `metrics` branch (JSON traffic exports, no source to analyze), which
 # failed on every push and left a permanent red X in the Actions tab. Scoped to match ci.yml.
+#
+# Pinned to a commit SHA, same reasoning and convention as ci.yml: a tag is a mutable ref a
+# compromised action can repoint at different code, and this job runs with a checkout of our source
+# plus `security-events: write`. Bump deliberately — read the diff between the pinned SHA and the new
+# one before moving it.
 on:
   pull_request: {}
   push:
@@ -21,8 +26,8 @@ jobs:
       matrix:
         language: [javascript-typescript, actions]
     steps:
-      - uses: actions/checkout@v6
-      - uses: github/codeql-action/init@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4
         with:
           languages: ${{ matrix.language }}
-      - uses: github/codeql-action/analyze@v4
+      - uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4

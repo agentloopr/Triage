@@ -20,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 import { makeDriveClient } from './drive';
 import { decodeBody, firstTextPart, makeGmailClient } from './gmail';
 import { makeGithubClient } from './github';
+import { makeSlackClient } from './slack';
 import type { FetchImpl } from './index';
 
 /** A fake `fetch` that answers from a path→payload table and records what was asked for. */
@@ -48,6 +49,9 @@ describe('every client refuses to construct without its credential', () => {
   });
   it('drive', () => {
     expect(() => makeDriveClient({ token: '', fetchImpl: NO_ROUTES })).toThrow(/GOOGLE_ACCESS_TOKEN/);
+  });
+  it('slack', () => {
+    expect(() => makeSlackClient({ token: '', fetchImpl: NO_ROUTES })).toThrow(/SLACK_BOT_TOKEN/);
   });
 });
 
@@ -120,6 +124,60 @@ describe('github', () => {
     const { impl, calls } = fakeFetch([[/\/issues\?/, []], [/\/commits\?/, []]]);
     await makeGithubClient({ token: 't', fetchImpl: impl }).fetch({ repo: 'acme/api', since: '2026-08-13T00:00:00Z' });
     expect(calls.every((c) => c.includes('since='))).toBe(true);
+  });
+});
+
+describe('slack', () => {
+  const users = {
+    ok: true,
+    members: [
+      { id: 'U1', profile: { display_name: 'avery' } },
+      { id: 'U2', profile: {}, real_name: 'Rowan Diaz' },
+    ],
+  };
+  const history = {
+    ok: true,
+    messages: [
+      { type: 'message', user: 'U1', text: 'shipping the export endpoint', ts: '1786000000.000100' },
+      // A reply: thread_ts differs from its own ts.
+      { type: 'message', user: 'U2', text: 'nice', ts: '1786000010.000200', thread_ts: '1786000000.000100' },
+      // The thread parent carries thread_ts === its own ts — not itself a reply.
+      { type: 'message', user: 'U1', text: 'parent', ts: '1786000020.000300', thread_ts: '1786000020.000300' },
+      // System event — no author's words worth a card.
+      { type: 'message', subtype: 'channel_join', user: 'U2', text: 'Rowan joined', ts: '1786000030.000400' },
+    ],
+    has_more: false,
+  };
+
+  it('resolves a user id to a display name via users.list, not the raw id', async () => {
+    const { impl } = fakeFetch([[/\/users\.list/, users], [/\/conversations\.history/, history]]);
+    const out = await makeSlackClient({ token: 't', fetchImpl: impl }).fetch({ channelId: 'C1' });
+    expect(out.messages[0]?.author).toBe('avery');
+    expect(out.messages[1]?.author).toBe('Rowan Diaz');
+  });
+
+  it('converts Slack float-seconds ts to ISO, not treating it as milliseconds', async () => {
+    const { impl } = fakeFetch([[/\/users\.list/, users], [/\/conversations\.history/, history]]);
+    const out = await makeSlackClient({ token: 't', fetchImpl: impl }).fetch({ channelId: 'C1' });
+    expect(out.messages[0]?.at).toBe(new Date(1786000000_000).toISOString());
+  });
+
+  it('marks a reply by thread_ts differing from its own ts, not merely being present', async () => {
+    const { impl } = fakeFetch([[/\/users\.list/, users], [/\/conversations\.history/, history]]);
+    const out = await makeSlackClient({ token: 't', fetchImpl: impl }).fetch({ channelId: 'C1' });
+    expect(out.messages.find((m) => m.text === 'nice')?.replyToId).toBe('1786000000.000100');
+    expect(out.messages.find((m) => m.text === 'parent')?.replyToId).toBeUndefined();
+  });
+
+  it('drops system events (channel_join etc.), which carry no words worth a card', async () => {
+    const { impl } = fakeFetch([[/\/users\.list/, users], [/\/conversations\.history/, history]]);
+    const out = await makeSlackClient({ token: 't', fetchImpl: impl }).fetch({ channelId: 'C1' });
+    expect(out.messages.some((m) => m.text === 'Rowan joined')).toBe(false);
+  });
+
+  it('treats a 200 with ok:false as the error it is, not a successful empty channel', async () => {
+    const { impl } = fakeFetch([[/\/users\.list/, { ok: false, error: 'invalid_auth' }]]);
+    await expect(makeSlackClient({ token: 'bad', fetchImpl: impl }).fetch({ channelId: 'C1' })).rejects.toThrow(/invalid_auth/);
   });
 });
 
@@ -348,5 +406,28 @@ describe('rate limiting', () => {
     const out = await makeDriveClient({ token: 't', fetchImpl: f.impl, timeoutMs: 20_000 }).fetch({ fileId: 'f-1' });
     expect(out.fileName).toBe('Spec');
     expect(f.calls()).toBeGreaterThan(1);
+  }, 20_000);
+
+  it('slack retries a 429, reading Retry-After in seconds not milliseconds', async () => {
+    // users.list succeeds immediately; conversations.history is the flaky one.
+    let historyCalls = 0;
+    const impl = (async (url: string | URL): Promise<Response> => {
+      const href = String(url);
+      if (href.includes('users.list')) {
+        return new Response(JSON.stringify({ ok: true, members: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      historyCalls++;
+      if (historyCalls === 1) return new Response('slow down', { status: 429, headers: { 'retry-after': '1' } });
+      return new Response(JSON.stringify({ ok: true, messages: [], has_more: false }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }) as unknown as FetchImpl;
+
+    const started = Date.now();
+    const out = await makeSlackClient({ token: 't', fetchImpl: impl, timeoutMs: 20_000 }).fetch({ channelId: 'C1' });
+    const elapsed = Date.now() - started;
+
+    expect(out.messages).toEqual([]);
+    expect(historyCalls).toBeGreaterThan(1);
+    expect(elapsed).toBeGreaterThanOrEqual(900); // it waited the header's ONE second, not one millisecond
+    expect(elapsed).toBeLessThan(3_000);
   }, 20_000);
 });

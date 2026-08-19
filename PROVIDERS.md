@@ -71,10 +71,11 @@ hand-labelled ground truth that does not exist here. See `EVAL.md`.
 
 ### DeepSeek — measured, 2026-08-17
 
-`scripts/measureDeepSeekCost.ts` runs a live pass over all eight current scenarios and tallies real
-API usage. It never touches `fixtures/cassettes` — the metered client wraps the live provider purely
-to sum tokens, so this carries none of the cassette-drift risk a re-record would. Re-run it yourself
-with `DEEPSEEK_API_KEY=... npm run cost:deepseek`.
+`scripts/measureCost.ts --provider deepseek` runs a live pass over all eight current scenarios and
+tallies real API usage. It never touches `fixtures/cassettes` — the metered client wraps the live
+provider purely to sum tokens, so this carries none of the cassette-drift risk a re-record would.
+Re-run it yourself with `DEEPSEEK_API_KEY=... npm run cost:deepseek`. The same script, same method,
+takes the Claude figure below — `ANTHROPIC_API_KEY=... npm run cost:claude`.
 
 80 calls, current post-split prompts:
 
@@ -90,26 +91,41 @@ This run landed entirely inside a peak window. Output token count is larger than
 is a reasoning model and `completion_tokens` includes reasoning tokens, not just visible text, the same
 caveat the Claude figure below already carries.
 
-### Claude — measured, stale baseline
+### Claude — measured, 2026-08-19
 
-| | Claude Sonnet 5 |
-|---|---|
-| Input tokens | **190,200** |
-| Output tokens | **9,986** (includes thinking) |
-| Cost | **$0.48** |
-| Cached input | **0** |
-| Scope | 5 scenarios, 42 calls, pre-split prompt |
+`scripts/measureCost.ts --provider anthropic` — the same script, same method, same eight scenarios as
+the DeepSeek table above, which is what makes the two comparable now. 66 calls, current post-split
+prompts:
 
-This predates the system/user split described below and is kept as the *before* those numbers are
-compared against — a baseline, not current cost. **It is not directly comparable to the DeepSeek
-table above**: different scenario count (5 vs. 8) and a prompt shape from before caching existed. A
-fresh 8-scenario Claude measurement, taken the same way as the DeepSeek one, would make the two
-comparable; it has not been taken.
+| | Tokens | Rate (intro / standard, per 1M) | Cost (intro) | Cost (standard) |
+|---|---|---|---|---|
+| Input, cache miss | 38,401 | $2.00 / $3.00 | $0.077 | $0.115 |
+| Input, cache write (5-min TTL) | 78,165 | $2.50 / $3.75 | $0.195 | $0.293 |
+| Input, cache read | 127,393 | $0.20 / $0.30 | $0.025 | $0.038 |
+| Output | 13,472 | $10.00 / $15.00 | $0.135 | $0.202 |
+| **Total** | | | **$0.43** | **$0.65** |
 
-**The apparent agreement between DeepSeek's off-peak total ($0.48) and this Claude figure ($0.48) is
-coincidence** — different token counts, different rates, different scenario sets producing the same
-rounded number. Do not read it as the two providers costing the same; re-measure both on equal
-footing before drawing that conclusion.
+Intro pricing is in effect through 2026-08-31; standard is what it reverts to. Cache write and cache
+read are separate line items, priced oppositely — a write costs **1.25×** base input (this pipeline's
+cache breakpoint uses the 5-minute TTL, not the 1-hour one, which would be 2×), a read costs **0.1×**.
+Collapsing them into one "cached" bucket, or into "cache miss," would misprice roughly half the
+prompt tokens in this run.
+
+**That collapse is exactly the bug this measurement caught.** The first live run reported a
+*negative* cache-miss token count, because the script's formula — `inputTokens - cachedInputTokens`,
+correct for DeepSeek's `prompt_tokens` (a TOTAL) — assumes a basis Anthropic's `input_tokens` doesn't
+share: Anthropic's is already miss-only, excluding both cache reads and cache writes by definition.
+`cache_creation_input_tokens` (the write count) also wasn't tracked anywhere in this codebase's usage
+type before this measurement — a silent gap that would have under-priced every cache-writing call by
+its 1.25× premium. Both are fixed: `measureCost.ts` computes cache-miss tokens per provider rather
+than with one shared formula, and `cacheCreationInputTokens` is now a real field on `CompletionUsage`,
+mapped in both the streaming and non-streaming paths of `src/providers/anthropic.ts`, with a test
+asserting cache reads and cache writes land in two distinct fields rather than one.
+
+**DeepSeek and Claude no longer coincidentally agree, because they're now measured the same way and
+turn out not to.** DeepSeek: $0.96 peak / $0.48 off-peak. Claude: $0.65 standard / $0.43 intro. Read
+the comparison as "in the same ballpark, priced differently," not as equal — the token counts
+themselves aren't comparable either, see below.
 
 **Token counts are still not comparable across providers**, so any per-token price comparison that
 skips the tokenizer ratio is wrong by whatever that ratio happens to be — regardless of which dollar

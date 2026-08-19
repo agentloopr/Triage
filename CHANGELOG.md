@@ -21,6 +21,36 @@ docs were all verified together.
   resolve only at high confidence with a cited live-board fact — off by default
   (`DISPUTE_ARBITER_ENABLED=false`), so out of the box every detected dispute still holds for a human,
   just more of them are detected than before.
+- `over_subtask` and `near_dup_pair` promoted from flag-only to hold, the same fix `missed_dup`
+  already had — a signal that reaches only a log is a signal a human never sees, and the item got
+  created anyway either way.
+- Added a Slack read client (`makeSlackClient`, `src/sources/slack.ts`) — fetches `conversations.history`
+  and `users.list`, normalizes through the existing `channelSource`. No sixth `IngestSource` kind: a
+  Slack channel log still *is* the `channel` source. Fake-tested only; not live-verified.
+- Added `localRetriever` (`src/pipeline/retrieval/local.ts`), opt-in via `RETRIEVAL_DIR`: ranks a flat
+  directory of `.md`/`.txt` files by the same Jaccard title-overlap the cross-item gates use.
+  `nullRetriever` stays the default; the seam is omitted entirely when unset, so the default prompt
+  stays byte-identical and every cassette keeps replaying.
+- Role profile filenames are no longer locked to `ROLE_ARCHETYPES`: `loadRoleProfiles()` now scans
+  every `*.md` in the roles directory and reads an optional `## Archetype` section (defaulting to the
+  filename stem) to learn which of the eight typed slots a file fills. Two files claiming the same
+  slot warn and the second is dropped, not silently overwritten.
+- Added a cron-able poller (`npm run poll`, `src/cli/poll.ts`) and a signature-verified webhook
+  receiver (`npm run serve`, `src/cli/serve.ts` over `src/transport/webhook.ts`) for GitHub and Slack —
+  HMAC over the raw body, a ±5-minute replay window on Slack's. A verified delivery is a trigger, not a
+  payload to parse: it re-pulls the named repo/channel through the same tested `SourceClient`s rather
+  than parsing a webhook shape this repo has never made a live call against. Reference wiring, not a
+  production ingress — no TLS termination, process supervision, queue durability or OAuth refresh.
+- `scripts/measureDeepSeekCost.ts` generalized into `scripts/measureCost.ts --provider <deepseek|anthropic>`
+  (`npm run cost:claude` alongside `cost:deepseek`), so both providers' cost tables in PROVIDERS.md are
+  taken the same way. Doing so surfaced a real bug: the shared cache-miss formula was correct for
+  DeepSeek's total-basis `prompt_tokens` and silently produced a negative token count against
+  Anthropic's already-miss-only `input_tokens`; separately, `cache_creation_input_tokens` (cache
+  writes, billed at a 1.25× premium) was never tracked anywhere in this codebase's usage type. Both
+  fixed — `measureCost.ts` computes cache-miss tokens per provider, and `cacheCreationInputTokens` is
+  now a real field on `CompletionUsage`, mapped in both of `anthropic.ts`'s streaming and
+  non-streaming paths.
+- CodeQL now pins action SHAs (`.github/workflows/codeql.yml`), matching `ci.yml`'s existing convention.
 
 ## [0.1.0] — 2026-08-14
 

@@ -516,18 +516,35 @@ export function crossItemGate(
     });
   }
 
-  // (b) More than two subtasks under one parent — worth a look, not worth blocking.
-  const subByParent = new Map<string, number[]>();
+  // (b) More than two subtasks under one parent — the flag alone used to reach only a log,
+  // never a human and never the write path, the same failure the (c) comment below calls out for
+  // missed_dup. Kept as a flag too — it's what carries the subtask count into the review digest.
+  const subByParent = new Map<string, CategorizationItem[]>();
   for (const it of items) {
     if (it.category === 'SUBTASK' && it.parentTaskId && !drop.has(it.item)) {
       const bucket = subByParent.get(it.parentTaskId) ?? [];
-      bucket.push(it.item);
+      bucket.push(it);
       subByParent.set(it.parentTaskId, bucket);
     }
   }
-  for (const [parent, nums] of subByParent) {
-    if (nums.length > 2) {
-      flags.push({ kind: 'over_subtask', items: nums, note: `${nums.length} subtasks proposed under parent ${parent} — review for over-subtasking.` });
+  for (const [parent, group] of subByParent) {
+    if (group.length > 2) {
+      const nums = group.map((g) => g.item);
+      flags.push({ kind: 'over_subtask', items: nums, note: `${group.length} subtasks proposed under parent ${parent} — review for over-subtasking.` });
+      for (const g of group) {
+        held.push({
+          item: g.item,
+          title: g.title,
+          category: g.category,
+          gate: 'over-subtasking',
+          question: formatClarifyAsk({
+            facts: [`${group.length} subtasks were proposed under ${taskUrl(parent)} in this run.`],
+            choice: 'Create all of these as subtasks, or should some be merged or dropped?',
+          }),
+          originalItem: g,
+        });
+        drop.add(g.item);
+      }
     }
   }
 
@@ -590,17 +607,34 @@ export function crossItemGate(
   }
 
   // (e) Two near-identical NEW_TASKs on the same list in one run — the consolidation backstop.
+  // Same reasoning as (c): a signal that only reaches a log is a signal a human never sees, and
+  // the pair gets created twice anyway. Holds both items; the flag still carries the score.
   const news = items.filter((it) => it.category === 'NEW_TASK' && !drop.has(it.item));
   for (let i = 0; i < news.length; i++) {
     for (let j = i + 1; j < news.length; j++) {
       const a = news[i]!;
       const b = news[j]!;
+      if (drop.has(a.item) || drop.has(b.item)) continue;
       if (a.list && a.list === b.list && jaccard(a.title, b.title) >= NEAR_DUP_PAIR_FLOOR) {
         flags.push({
           kind: 'near_dup_pair',
           items: [a.item, b.item],
           note: `NEW_TASK items ${a.item} & ${b.item} are near-identical in ${a.list} — possible intra-run duplicate.`,
         });
+        for (const g of [a, b]) {
+          held.push({
+            item: g.item,
+            title: g.title,
+            category: g.category,
+            gate: 'possible intra-run duplicate',
+            question: formatClarifyAsk({
+              facts: [`This item and item ${g === a ? b.item : a.item} both propose a near-identical NEW_TASK in ${a.list} within this same run.`],
+              choice: 'Create both as separate tasks, or should these be merged into one?',
+            }),
+            originalItem: g,
+          });
+          drop.add(g.item);
+        }
       }
     }
   }

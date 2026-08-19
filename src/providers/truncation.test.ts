@@ -101,4 +101,13 @@ describe('usage is reported in the shared shape', () => {
     const res = await anthropicClient({ apiKey: 'test-key' }).complete(REQ);
     expect(res.usage).toMatchObject({ inputTokens: 10, outputTokens: 4 });
   });
+
+  // cache_read and cache_creation are priced oppositely (a discount vs a premium over base input —
+  // see PROVIDERS.md) and Anthropic reports them as two separate fields. Collapsing either into the
+  // other silently mispriced every cost figure this repo publishes the first time this ran live.
+  it('anthropic reports cache reads and cache writes as two separate fields, not one', async () => {
+    respondWith({ ...anthropicReply('end_turn'), usage: { input_tokens: 10, output_tokens: 4, cache_read_input_tokens: 100, cache_creation_input_tokens: 50 } });
+    const res = await anthropicClient({ apiKey: 'test-key' }).complete(REQ);
+    expect(res.usage).toMatchObject({ inputTokens: 10, outputTokens: 4, cachedInputTokens: 100, cacheCreationInputTokens: 50 });
+  });
 });

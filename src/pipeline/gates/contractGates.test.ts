@@ -378,11 +378,22 @@ describe('crossItemGate', () => {
     expect(out.flags.find((f) => f.kind === 'updates_merged')).toBeUndefined();
   });
 
-  it('flags over-subtasking without blocking it', () => {
+  it('HOLDS over-subtasking rather than only flagging it', () => {
     const items = [1, 2, 3].map((n) => item({ item: n, category: 'SUBTASK', parentTaskId: 't200', tier2Cited: true }));
     const out = crossItemGate(items, SNAP());
+    // The flag survives alongside the hold — same pattern as missed_dup — because it carries the count.
     expect(out.flags.find((f) => f.kind === 'over_subtask')?.items).toEqual([1, 2, 3]);
-    expect(out.clean).toHaveLength(3);
+    expect(out.clean).toHaveLength(0);
+    expect(out.held).toHaveLength(3);
+    expect(out.held.every((h) => h.gate === 'over-subtasking')).toBe(true);
+  });
+
+  it('does not hold two subtasks under one parent — over-subtasking needs more than two', () => {
+    const items = [1, 2].map((n) => item({ item: n, category: 'SUBTASK', parentTaskId: 't200', tier2Cited: true }));
+    const out = crossItemGate(items, SNAP());
+    expect(out.flags.find((f) => f.kind === 'over_subtask')).toBeUndefined();
+    expect(out.clean).toHaveLength(2);
+    expect(out.held).toHaveLength(0);
   });
 
   // The headline fix: this positively identifies a duplicate, and it HOLDS rather than only logging.
@@ -414,13 +425,16 @@ describe('crossItemGate', () => {
     expect(out.clean).toHaveLength(0);
   });
 
-  it('flags two near-identical new tasks on the same list', () => {
+  it('HOLDS two near-identical new tasks on the same list, rather than only flagging them', () => {
     const items = [
       item({ item: 1, title: 'Write the launch announcement post', list: 'design' }),
       item({ item: 2, title: 'Write the launch announcement post now', list: 'design' }),
     ];
     const out = crossItemGate(items, SNAP());
     expect(out.flags.find((f) => f.kind === 'near_dup_pair')?.items).toEqual([1, 2]);
+    expect(out.clean).toHaveLength(0);
+    expect(out.held).toHaveLength(2);
+    expect(out.held.every((h) => h.gate === 'possible intra-run duplicate')).toBe(true);
   });
 
   it('does not flag near-identical titles on different lists', () => {

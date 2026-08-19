@@ -128,6 +128,9 @@ export function anthropicClient(opts?: { model?: string; apiKey?: string }): Mod
                 ...(msg.usage.cache_read_input_tokens != null
                   ? { cachedInputTokens: msg.usage.cache_read_input_tokens }
                   : {}),
+                ...(msg.usage.cache_creation_input_tokens != null
+                  ? { cacheCreationInputTokens: msg.usage.cache_creation_input_tokens }
+                  : {}),
               },
             };
           } catch (err) {
@@ -216,6 +219,7 @@ async function streamed(
   let inputTokens = 0;
   let outputTokens = 0;
   let cachedInputTokens: number | undefined;
+  let cacheCreationInputTokens: number | undefined;
 
   // Tool calls arrive split across events: `content_block_start` names the tool, then the arguments
   // stream in as PARTIAL JSON fragments that only parse once the block closes. Parsing early yields
@@ -250,6 +254,9 @@ async function streamed(
       if (event.message.usage.cache_read_input_tokens != null) {
         cachedInputTokens = event.message.usage.cache_read_input_tokens;
       }
+      if (event.message.usage.cache_creation_input_tokens != null) {
+        cacheCreationInputTokens = event.message.usage.cache_creation_input_tokens;
+      }
     } else if (event.type === 'message_delta') {
       outputTokens = event.usage.output_tokens;
       if (event.delta.stop_reason === 'max_tokens') truncated = true;
@@ -265,6 +272,11 @@ async function streamed(
     model,
     provider: 'anthropic',
     truncated,
-    usage: { inputTokens, outputTokens, ...(cachedInputTokens != null ? { cachedInputTokens } : {}) },
+    usage: {
+      inputTokens,
+      outputTokens,
+      ...(cachedInputTokens != null ? { cachedInputTokens } : {}),
+      ...(cacheCreationInputTokens != null ? { cacheCreationInputTokens } : {}),
+    },
   };
 }

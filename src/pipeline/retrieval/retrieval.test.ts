@@ -1,4 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildCategorizationPrompt } from '../prompts/categorization';
 import { buildContractCheckerPrompt } from '../prompts/contractCheck';
 import type { EnrichedInventoryItem } from '../types';
@@ -11,6 +14,7 @@ import {
   nullRetriever,
   retrieveForItems,
 } from './index';
+import { localRetriever } from './local';
 
 const item = (over: Partial<EnrichedInventoryItem> = {}): EnrichedInventoryItem =>
   ({
@@ -96,6 +100,47 @@ describe('retrieved text is the least trusted input in the pipeline', () => {
     const block = formatRetrievedBlock([{ id: 'd1', text: 'context' }]);
     expect(block).toContain('NOT tracker data');
     expect(block).toContain('never cite it as card evidence');
+  });
+});
+
+describe('localRetriever', () => {
+  const DIR = join(tmpdir(), `local-retriever-test-${process.pid}`);
+
+  const write = (name: string, text: string) => writeFileSync(join(DIR, name), text, 'utf8');
+
+  beforeEach(() => {
+    rmSync(DIR, { recursive: true, force: true });
+    mkdirSync(DIR, { recursive: true });
+  });
+  afterEach(() => rmSync(DIR, { recursive: true, force: true }));
+
+  it('ranks .md/.txt files by title similarity to the query, highest first', async () => {
+    write('export.md', 'The export endpoint ships as NDJSON.');
+    write('unrelated.md', 'The office coffee machine is broken again.');
+    const out = await localRetriever(DIR).retrieve({ text: 'Wire the export endpoint', k: 5 });
+
+    expect(out[0]?.id).toBe('export.md');
+    expect(out.some((d) => d.id === 'unrelated.md')).toBe(false);
+  });
+
+  it('ignores files that are neither .md nor .txt', async () => {
+    write('export.md', 'export endpoint format');
+    write('notes.json', '{"export":"endpoint format"}');
+    const out = await localRetriever(DIR).retrieve({ text: 'export endpoint format', k: 5 });
+    expect(out.every((d) => d.id !== 'notes.json')).toBe(true);
+  });
+
+  it('respects k', async () => {
+    for (let i = 0; i < 5; i++) write(`doc${i}.md`, 'the export endpoint format');
+    const out = await localRetriever(DIR).retrieve({ text: 'the export endpoint format', k: 2 });
+    expect(out).toHaveLength(2);
+  });
+
+  it('returns nothing rather than throwing when the directory does not exist', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const out = await localRetriever(join(DIR, 'does-not-exist')).retrieve({ text: 'anything', k: 5 });
+    expect(out).toEqual([]);
+    warn.mockRestore();
   });
 });
 

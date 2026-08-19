@@ -61,6 +61,13 @@ export interface CompletionUsage {
   inputTokens: number;
   outputTokens: number;
   cachedInputTokens?: number;
+  /**
+   * Tokens WRITTEN to cache this call (Anthropic only; billed at a premium over base input — see
+   * PROVIDERS.md). Distinct from `cachedInputTokens`, which is tokens READ from cache at a discount.
+   * `inputTokens` on Anthropic excludes both — a cost total that only adds `inputTokens` and
+   * `cachedInputTokens` silently omits this pool.
+   */
+  cacheCreationInputTokens?: number;
 }
 
 export interface CompletionResult {

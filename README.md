@@ -169,29 +169,38 @@ Everything is injected. Each seam exists because there was a real second impleme
 | `TrackerAdapter` | `memory` · `clickup` · `linear` | [ADAPTERS.md](ADAPTERS.md) |
 | `IdempotencyStore` | `memory` · `jsonFile` | three layers: event, source, content |
 | `IngestSource` | `transcript` · `channel` · `github` · `gmail` · `drive` | payload → `IngestedSource`, pure |
-| `SourceClient` | `github` · `gmail` · `drive` | reads a service. **No write method exists** |
+| `SourceClient` | `github` · `gmail` · `drive` · `slack` | reads a service. **No write method exists** |
 
 **Reading a service and normalizing its payload are separate seams on purpose.** Every fixture in
 this repo is a raw payload, so the entire pipeline is testable with no network and no credential —
-the client is the only thing that ever needs one. Slack has no client of its own because a team-chat
-log *is* the `channel` source; a fifth kind that rendered identically would be a name, not a
-capability.
+the client is the only thing that ever needs one. Slack still has no `IngestSource` of its own,
+deliberately: a team-chat log *is* the `channel` source, so `makeSlackClient()` fetches from Slack and
+hands the result to the same `channelSource.normalize()` a pasted chat log goes through. A fifth
+`IngestSource` kind that rendered identically would be a name, not a capability.
 
-**Transport is still your problem.** Webhooks, polling schedules, cron, OAuth refresh and the queue
-that hands a payload to `runPipeline` are not here, and every team's are different.
+**Transport ships two reference wirings; the rest is still your problem.** `npm run poll` is a
+cron-able loop over a JSON list of targets; `npm run serve` is a signature-verified webhook receiver
+for GitHub and Slack (HMAC over the raw body, a ±5-minute replay window on Slack's — see
+[`src/transport/webhook.ts`](src/transport/webhook.ts)). Neither is a production ingress: TLS
+termination, process supervision, queue durability, horizontal scale and OAuth token refresh are not
+here, and every team's are different.
 
-**One command joins the two seams end to end**, so "this repo reads GitHub" is something you can run
-rather than something you read:
+**Commands join the sources seam to the pipeline**, so "this repo reads GitHub" is something you can
+run rather than something you read:
 
 ```bash
 npm run pull -- --source github --repo owner/name --since 2026-08-01
 npm run pull -- --source gmail --thread <threadId>
 npm run pull -- --source drive --file <fileId> --write   # --write, or it only plans
+npm run pull -- --source slack --channel <channelId> --since 2026-08-01
+
+npm run poll -- --config poll.config.json          # the same reads, on a cron
+GITHUB_WEBHOOK_SECRET=... SLACK_SIGNING_SECRET=... npm run serve   # verify, ack, re-pull, run
 ```
 
-This is the **only** path that needs credentials, and it plans without writing unless you ask. Every
-fixture, test and demo stays offline because they start from a recorded payload rather than a live
-read.
+These are the **only** paths that need credentials. `pull` plans without writing unless you pass
+`--write`; `poll` and `serve` write by default (`poll --dry-run` to plan only). Every fixture, test
+and demo stays offline because they start from a recorded payload rather than a live read.
 
 **An optional agent layer** (PRD §5) sits between the gates and the writer: a board agent that
 delegates to eight role agents with **read-only** tools. It is off by default. It may **propose** a

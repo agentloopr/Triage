@@ -156,3 +156,62 @@ describe('degradation', () => {
     expect(getRoleProfile('engineer')).toBeNull();
   });
 });
+
+/**
+ * §5 of the PRD checklist: renaming used to mean filenames must match `ROLE_ARCHETYPES`, which was
+ * narrower than "renameable" as written. An optional `## Archetype` section, defaulting to the
+ * filename stem, frees the filename while the eight typed slots — which routing, `roleState.ts` and
+ * the agent layer all key off — stay exactly as load-bearing as before.
+ */
+describe('filenames freed from the archetype union', () => {
+  const PROFILE = (archetype?: string) =>
+    `# Growth Hacker\n${archetype ? `\n## Archetype\n${archetype}\n` : ''}\n` +
+    '## Owns\nGrowth experiments, funnels and the metrics that say whether one worked, end to end.\n\n' +
+    '## Watches for\nA channel that worked once being treated as a channel that always works, with no re-test.\n\n' +
+    '## Routing keywords\ngrowth, funnel, activation, retention, experiment\n\n' +
+    '## Update style\nStates the experiment, the metric it moved, and whether it is being kept or killed.\n';
+
+  it('loads a renamed file into the slot its Archetype section names', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const rolesDir = join(DIR, 'roles');
+    mkdirSync(rolesDir, { recursive: true });
+    writeFileSync(join(rolesDir, 'growth-hacker.md'), PROFILE('marketer'), 'utf8');
+    setRolesDir(rolesDir);
+
+    const p = getRoleProfile('marketer');
+    expect(p?.title).toBe('Growth Hacker');
+    expect(p?.role).toBe('marketer');
+  });
+
+  it('falls back to the filename stem when no Archetype section is present', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const rolesDir = join(DIR, 'roles');
+    mkdirSync(rolesDir, { recursive: true });
+    writeFileSync(join(rolesDir, 'marketer.md'), PROFILE(), 'utf8');
+    setRolesDir(rolesDir);
+
+    expect(getRoleProfile('marketer')?.title).toBe('Growth Hacker');
+  });
+
+  it('warns and drops the second file when two files claim the same slot, rather than silently overwriting', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const rolesDir = join(DIR, 'roles');
+    mkdirSync(rolesDir, { recursive: true });
+    writeFileSync(join(rolesDir, 'marketer.md'), PROFILE(), 'utf8');
+    writeFileSync(join(rolesDir, 'growth-hacker.md'), PROFILE('marketer'), 'utf8');
+    setRolesDir(rolesDir);
+
+    expect(getRoleProfile('marketer')).not.toBeNull(); // one of the two survives, not neither
+    expect(warn.mock.calls[0]?.[0]).toMatch(/also claims "marketer"/);
+  });
+
+  it('rejects an Archetype section naming something outside ROLE_ARCHETYPES', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const rolesDir = join(DIR, 'roles');
+    mkdirSync(rolesDir, { recursive: true });
+    writeFileSync(join(rolesDir, 'growth-hacker.md'), PROFILE('growth-hacker'), 'utf8');
+    setRolesDir(rolesDir);
+
+    expect(loadRoleProfiles().size).toBe(0);
+  });
+});

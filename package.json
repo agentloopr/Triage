@@ -28,8 +28,11 @@
     "board": "tsx src/cli/board.ts",
     "correct": "tsx src/cli/correct.ts",
     "pull": "tsx src/cli/pull.ts",
+    "poll": "tsx src/cli/poll.ts",
+    "serve": "tsx src/cli/serve.ts",
     "answer": "tsx src/cli/answer.ts",
-    "cost:deepseek": "tsx scripts/measureDeepSeekCost.ts",
+    "cost:deepseek": "tsx scripts/measureCost.ts --provider deepseek",
+    "cost:claude": "tsx scripts/measureCost.ts --provider anthropic",
     "smoke:tracker": "tsx scripts/smokeTracker.ts",
     "smoke:tracker:write": "tsx scripts/smokeTrackerWrite.ts"
   },

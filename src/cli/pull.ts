@@ -23,18 +23,13 @@
  * than a live read.
  */
 import { delegateToRoleAgents } from '../agents/boardAgent';
-import { AGENT_MAX_DELEGATIONS, MODEL_PROVIDER, TRACKER } from '../config';
+import { AGENT_MAX_DELEGATIONS, MODEL_PROVIDER, RETRIEVAL_DIR, TRACKER } from '../config';
 import { buildLiveDeps } from './liveDeps';
-import type { IngestedSource } from '../ingest';
-import { driveSource } from '../ingest/drive';
-import { githubSource } from '../ingest/github';
-import { gmailSource } from '../ingest/gmail';
 import { PipelineEvents } from '../pipeline/events';
+import { localRetriever } from '../pipeline/retrieval/local';
 import { runPipeline } from '../pipeline/run';
 import { makeModelClient, type ProviderName } from '../providers/factory';
-import { makeDriveClient } from '../sources/drive';
-import { makeGithubClient } from '../sources/github';
-import { makeGmailClient } from '../sources/gmail';
+import { readSource, type SourceTarget } from './readSource';
 import { makeTracker } from '../trackers/factory';
 import { printEvent } from './runScenario';
 
@@ -49,44 +44,33 @@ function required(argv: string[], name: string, why: string): string {
   return v;
 }
 
-const USAGE = `usage: npm run pull -- --source <github|gmail|drive> [options]
+const USAGE = `usage: npm run pull -- --source <github|gmail|drive|slack> [options]
 
   --source github --repo <owner/name> [--since <ISO>]   repository activity
   --source gmail  --thread <threadId>                   one email thread
   --source drive  --file <fileId>     [--since <ISO>]   comments and revisions
+  --source slack  --channel <channelId> [--since <ISO>] channel history
 
   --write        actually write to the tracker (default: plan only, nothing written)
   --agents       run the optional agent layer (PRD §5)
 
-Credentials come from .env: GITHUB_TOKEN, or GOOGLE_ACCESS_TOKEN for gmail/drive.
+Credentials come from .env: GITHUB_TOKEN, GOOGLE_ACCESS_TOKEN for gmail/drive, or SLACK_BOT_TOKEN.
 Read scopes are sufficient — these clients have no write method.`;
 
-/** Fetch the raw payload from the service, then normalize it. Both halves of the seam, in order. */
-async function read(argv: string[], source: string): Promise<IngestedSource> {
+/** argv → the typed target `readSource` (shared with `poll.ts`) actually wants. */
+function targetFromArgv(argv: string[], source: string): SourceTarget {
+  const since = arg(argv, 'since');
   switch (source) {
-    case 'github': {
-      const raw = await makeGithubClient().fetch({
-        repo: required(argv, 'repo', 'for --source github (e.g. --repo acme/api)'),
-        ...(arg(argv, 'since') ? { since: arg(argv, 'since')! } : {}),
-      });
-      console.log(`  ${raw.events.length} event(s) from ${raw.repo}`);
-      return githubSource.normalize(raw);
-    }
-    case 'gmail': {
-      const raw = await makeGmailClient().fetch({ threadId: required(argv, 'thread', 'for --source gmail') });
-      console.log(`  ${raw.messages.length} message(s) in "${raw.subject}"`);
-      return gmailSource.normalize(raw);
-    }
-    case 'drive': {
-      const raw = await makeDriveClient().fetch({
-        fileId: required(argv, 'file', 'for --source drive'),
-        ...(arg(argv, 'since') ? { since: arg(argv, 'since')! } : {}),
-      });
-      console.log(`  ${raw.events.length} event(s) on "${raw.fileName}"`);
-      return driveSource.normalize(raw);
-    }
+    case 'github':
+      return { source: 'github', repo: required(argv, 'repo', 'for --source github (e.g. --repo acme/api)'), ...(since ? { since } : {}) };
+    case 'gmail':
+      return { source: 'gmail', thread: required(argv, 'thread', 'for --source gmail') };
+    case 'drive':
+      return { source: 'drive', file: required(argv, 'file', 'for --source drive'), ...(since ? { since } : {}) };
+    case 'slack':
+      return { source: 'slack', channel: required(argv, 'channel', 'for --source slack'), ...(since ? { since } : {}) };
     default:
-      throw new Error(`unknown --source "${source}" — expected github | gmail | drive`);
+      throw new Error(`unknown --source "${source}" — expected github | gmail | drive | slack`);
   }
 }
 
@@ -102,7 +86,7 @@ async function main(): Promise<void> {
   const agents = argv.includes('--agents');
 
   console.log(`\n▶ reading ${source} (tracker: ${TRACKER})`);
-  const ingested = await read(argv, source);
+  const ingested = await readSource(targetFromArgv(argv, source));
 
   if (!ingested.text.trim()) {
     // An empty read is not a run worth making model calls over, and reporting it as "0 items" would
@@ -146,6 +130,9 @@ async function main(): Promise<void> {
     runContractCheck: (prompt, label, system) => complete(`2b/${label}`, prompt, system),
     // Only ever invoked when DISPUTE_ARBITER_ENABLED is on.
     runDisputeArbiter: (prompt, label) => complete(`arb/${label}`, prompt),
+    // Omitted, not `nullRetriever`, when unset — see `retrieval/local.ts`. That is what keeps a
+    // default `npm run pull` byte-identical to one run before this seam existed.
+    ...(RETRIEVAL_DIR ? { retrieval: localRetriever(RETRIEVAL_DIR) } : {}),
     // Same model and tracker the pipeline uses, so `--agents` exercises the real seam rather than a
     // parallel wiring that could drift from the one the demo proves.
     ...(agents

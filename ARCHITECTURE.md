@@ -7,11 +7,16 @@ idempotency (event) → idempotency (source) → Pass 0 → idempotency (content
   → Pass 1 → 1.5 → 1.7 → evidence prefetch → Pass 2a → 2b → 2c → 2d
 ```
 
-**Transport** is out of scope — webhooks, polling schedules, cron, OAuth refresh and retry policy are
-product surface, and every team's are different. **Reading a service and normalizing its payload are
-not**: [`src/sources/`](src/sources) reads GitHub, Gmail and Drive, and [`src/ingest/`](src/ingest)
-turns five payload shapes into one `IngestedSource`. The pipeline starts there, and at a
-`TrackerAdapter`.
+**Reading a service and normalizing its payload**: [`src/sources/`](src/sources) reads GitHub, Gmail,
+Drive and Slack, and [`src/ingest/`](src/ingest) turns five payload shapes into one `IngestedSource`.
+The pipeline starts there, and at a `TrackerAdapter`.
+
+**Transport** ships two reference wirings on top of that seam — a cron-able poller
+(`npm run poll`, [`src/cli/poll.ts`](src/cli/poll.ts)) and a signature-verified webhook receiver
+(`npm run serve`, [`src/cli/serve.ts`](src/cli/serve.ts) over
+[`src/transport/webhook.ts`](src/transport/webhook.ts)) — but TLS termination, process supervision,
+queue durability and horizontal scale are still yours; see LIMITATIONS.md for exactly what that
+means.
 
 ## The passes
 
@@ -69,15 +74,13 @@ tidy.
 | [`TrackerAdapter`](src/trackers/index.ts) | `memory`, `clickup`, `linear` | Three adapters, one contract suite. See [ADAPTERS.md](ADAPTERS.md). |
 | [`IdempotencyStore`](src/idempotency/index.ts) | `memory`, `jsonFile` | Three layers, below. |
 | [`IngestSource`](src/ingest/index.ts) | `transcript`, `channel`, `github`, `gmail`, `drive` | Five payload shapes, one 1 → 2d chain, and no pass that branches on which. |
-| [`SourceClient`](src/sources/index.ts) | `github`, `gmail`, `drive` | Reads a live service. The interface has **no write method**, so read-only is a type, not a policy. |
+| [`SourceClient`](src/sources/index.ts) | `github`, `gmail`, `drive`, `slack` | Reads a live service. The interface has **no write method**, so read-only is a type, not a policy. |
+| [`Retriever`](src/pipeline/retrieval/index.ts) | `null` (default), `local` | An external knowledge layer, wired into passes 2a/2b. Neither implementation is the live vector substrate production runs — see LIMITATIONS.md. |
 
-[`Retriever`](src/pipeline/retrieval/index.ts) is **not** in that table, deliberately: it has one
-implementation and that implementation returns nothing. It is a declared interface for an external
-knowledge layer, wired into passes 2a/2b so a real retriever needs no other change — and it stays out
-of the seams table because a seam here means *there was a second implementation to write*, and there
-was not. Omit `deps.retrieval` and no retrieval happens at all: no call, no block, and a prompt
-byte-identical to one built before the interface existed. A test asserts that byte-identity, because
-it is what keeps every recorded cassette replaying.
+`localRetriever` is opt-in via `RETRIEVAL_DIR`; unset, `deps.retrieval` is omitted entirely, so no
+retrieval happens at all: no call, no block, and a prompt byte-identical to one built before the
+interface existed. A test asserts that byte-identity, because it is what keeps every recorded
+cassette replaying.
 
 ### The rule that makes the tracker seam real
 
@@ -374,8 +377,9 @@ whatever runs your agents, and nothing above it changes.
 
 ## What is deliberately not here
 
-Retrieval is a null interface and ingestion *transport* is out of scope — the reads and the
-normalizers ship; the webhooks, schedules and token refresh do not. Passes 2a and 2b are plain completions
+Retrieval has no live-evaluated implementation, and ingestion *transport* is only a reference wiring —
+a poller and a signature-verified webhook receiver ship; TLS termination, process supervision, queue
+durability, horizontal scale and OAuth token refresh do not. Passes 2a and 2b are plain completions
 with evidence pre-fetched host-side; an optional agent layer sits above them, off by default and
 unable to write — see [AGENTS.md](AGENTS.md). See [LIMITATIONS.md](LIMITATIONS.md) for
 what each of those costs, and [EXTRACTION.md](EXTRACTION.md) for how the production system differs.

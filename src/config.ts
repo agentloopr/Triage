@@ -91,6 +91,22 @@ export const TRACKER_TIMEOUT_MS = int('TRACKER_TIMEOUT_MS', 60_000);
 export const GITHUB_TOKEN = str('GITHUB_TOKEN', '');
 /** One Google OAuth access token, carrying `gmail.readonly` and `drive.readonly`. */
 export const GOOGLE_ACCESS_TOKEN = str('GOOGLE_ACCESS_TOKEN', '');
+/** A bot token (`xoxb-…`) with `channels:history` and `users:read`. Read-only, same as the others. */
+export const SLACK_BOT_TOKEN = str('SLACK_BOT_TOKEN', '');
+
+// ── Webhook receiver (src/transport, src/cli/serve.ts) ──────────────────────
+// Signing secrets for the two verified routes. `serve.ts` refuses to start with either unset —
+// accepting a delivery with no way to verify it wrote it is worse than not accepting it at all.
+export const GITHUB_WEBHOOK_SECRET = str('GITHUB_WEBHOOK_SECRET', '');
+export const SLACK_SIGNING_SECRET = str('SLACK_SIGNING_SECRET', '');
+export const SERVE_PORT = int('SERVE_PORT', 3_000);
+
+// ── Retrieval (src/pipeline/retrieval) ──────────────────────────────────────
+/**
+ * A directory of `.md`/`.txt` files for `localRetriever`. Empty by default, and emptiness means the
+ * retrieval seam is omitted entirely, not pointed at nothing — see `retrieval/local.ts`.
+ */
+export const RETRIEVAL_DIR = str('RETRIEVAL_DIR', '');
 
 // ── Routing ─────────────────────────────────────────────────────────────────
 /**
@@ -171,7 +187,7 @@ export const OTEL_CAPTURE_IO_MAX_CHARS = int('OTEL_CAPTURE_IO_MAX_CHARS', 8_000)
 
 // ── Paths ───────────────────────────────────────────────────────────────────
 export const OPS_REGISTRY_PATH = resolve(str('OPS_REGISTRY_PATH', './config/ops-registry.json'));
-/** One `<archetype>.md` per entry in ROLE_ARCHETYPES. Rename them to your team; keep the filenames. */
+/** One `*.md` per entry in ROLE_ARCHETYPES. Rename the files freely — see `roleProfiles.ts`. */
 export const ROLES_DIR = resolve(str('ROLES_DIR', './config/roles'));
 export const STATE_DIR = resolve(str('STATE_DIR', './.state'));
 export const CORRECTIONS_PATH = resolve(str('CORRECTIONS_PATH', `${STATE_DIR}/corrections.json`));

@@ -20,10 +20,17 @@
  * Missing or malformed profiles **fail open**: the prompt loses context and says so in a warning,
  * rather than a run dying because a markdown file was edited badly. Nothing here can produce a wrong
  * write — the routing gate still validates every assignee against the registry afterwards.
+ *
+ * **Filenames are not the archetype key.** The directory is scanned for every `*.md` file; which of
+ * the eight typed slots (`ROLE_ARCHETYPES`) a file fills is an optional `## Archetype` section,
+ * defaulting to the filename stem when absent. That is what lets a team rename `marketer.md` to
+ * `growth-hacker.md` (with `## Archetype\nmarketer`) without touching the eight-slot union routing,
+ * `roleState.ts` and the agent layer all key off — renaming the *slot* would trade real type safety
+ * for nothing, since every consumer still needs to know which of the eight it got.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROLE_ARCHETYPES, type RoleArchetype, getMembers } from './opsRegistry';
+import { ROLE_ARCHETYPES, type RoleArchetype, getMembers, isRoleArchetype } from './opsRegistry';
 import { roleStateLines } from '../state/roleState';
 import { ROLES_DIR } from '../config';
 
@@ -52,7 +59,8 @@ function dir(): string {
   return overrideDir ?? ROLES_DIR;
 }
 
-function parseProfile(role: RoleArchetype, markdown: string): RoleProfile | null {
+/** `fallbackArchetype` is the filename stem, used when the file has no `## Archetype` section. */
+function parseProfile(markdown: string, fallbackArchetype: string): { archetype: RoleArchetype; profile: RoleProfile } | null {
   const title = markdown.match(/^#\s+(.+)$/m)?.[1]?.trim();
   if (!title) return null;
 
@@ -69,17 +77,23 @@ function parseProfile(role: RoleArchetype, markdown: string): RoleProfile | null
     if (!sections.get(name)) return null;
   }
 
+  const archetype = sections.get('Archetype')?.trim() || fallbackArchetype;
+  if (!isRoleArchetype(archetype)) return null;
+
   return {
-    role,
-    title,
-    owns: sections.get('Owns')!,
-    watchesFor: sections.get('Watches for')!,
-    routingKeywords: sections
-      .get('Routing keywords')!
-      .split(',')
-      .map((k) => k.trim())
-      .filter(Boolean),
-    updateStyle: sections.get('Update style')!,
+    archetype,
+    profile: {
+      role: archetype,
+      title,
+      owns: sections.get('Owns')!,
+      watchesFor: sections.get('Watches for')!,
+      routingKeywords: sections
+        .get('Routing keywords')!
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean),
+      updateStyle: sections.get('Update style')!,
+    },
   };
 }
 
@@ -87,22 +101,40 @@ export function loadRoleProfiles(): Map<RoleArchetype, RoleProfile> {
   if (cache) return cache;
 
   const loaded = new Map<RoleArchetype, RoleProfile>();
-  const missing: string[] = [];
+  // Which file claimed each slot, so a second file claiming the same one is a warning, not a
+  // silent overwrite decided by directory listing order.
+  const claimedBy = new Map<RoleArchetype, string>();
+  const problems: string[] = [];
 
-  for (const role of ROLE_ARCHETYPES) {
-    const path = join(dir(), `${role}.md`);
-    if (!existsSync(path)) {
-      missing.push(role);
-      continue;
-    }
-    const parsed = parseProfile(role, readFileSync(path, 'utf8'));
-    if (parsed) loaded.set(role, parsed);
-    else missing.push(`${role} (missing a required section)`);
+  let files: string[];
+  try {
+    files = readdirSync(dir()).filter((f) => f.endsWith('.md'));
+  } catch {
+    files = [];
   }
 
-  if (missing.length) {
+  for (const file of files) {
+    const parsed = parseProfile(readFileSync(join(dir(), file), 'utf8'), file.slice(0, -3));
+    if (!parsed) {
+      problems.push(`${file} (missing a required section, or names an archetype outside ROLE_ARCHETYPES)`);
+      continue;
+    }
+    const existing = claimedBy.get(parsed.archetype);
+    if (existing) {
+      problems.push(`${file} also claims "${parsed.archetype}" — already claimed by ${existing}, ignored`);
+      continue;
+    }
+    claimedBy.set(parsed.archetype, file);
+    loaded.set(parsed.archetype, parsed.profile);
+  }
+
+  for (const role of ROLE_ARCHETYPES) {
+    if (!loaded.has(role)) problems.push(role);
+  }
+
+  if (problems.length) {
     console.warn(
-      `[roles] ${missing.length} profile(s) unavailable: ${missing.join(', ')} — routing context will be thinner. Expected in ${dir()}`
+      `[roles] ${problems.length} profile(s) unavailable: ${problems.join(', ')} — routing context will be thinner. Expected in ${dir()}`
     );
   }
 

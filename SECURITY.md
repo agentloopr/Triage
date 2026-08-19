@@ -31,7 +31,7 @@ categorization. It cannot author a write.
 
 ## Which commands touch a live service
 
-Eight, not the four an earlier version of this file claimed — that version predated
+Eleven, not the four an earlier version of this file claimed — that version predated
 `scripts/`, and the count drifted again the moment those shipped without this table being updated.
 Whatever this number says next, verify it against `package.json`'s `scripts` block rather than
 trusting it on its own:
@@ -40,12 +40,21 @@ trusting it on its own:
 |---|---|---|---|
 | `npm run board` | tracker | tracker token | no — read-only |
 | `npm run pull` | source + model provider + tracker | source, model, tracker | **only with `--write`**; plans otherwise |
+| `npm run poll` | source(s) + model provider + tracker | source, model, tracker | **yes, by default** (cron shouldn't silently only-plan); `--dry-run` plans instead |
+| `npm run serve` | inbound HTTP + source + model provider + tracker | `GITHUB_WEBHOOK_SECRET`, `SLACK_SIGNING_SECRET`, source, model, tracker | **yes** — a verified delivery triggers a live write, same as `poll` |
 | `npm run answer` | tracker | tracker token | **yes** — `--approve` executes a held write |
 | `npm run record` | model provider | model key | writes cassettes to disk, not to a tracker |
 | `npm run record:regression` | model provider | model key | writes cassettes to disk, not to a tracker |
 | `npm run cost:deepseek` | model provider (DeepSeek) | `DEEPSEEK_API_KEY` | no — tallies token usage only |
+| `npm run cost:claude` | model provider (Anthropic) | `ANTHROPIC_API_KEY` | no — tallies token usage only |
 | `npm run smoke:tracker` | tracker | tracker token | no — read-only, `apply()` is never called |
 | `npm run smoke:tracker:write` | tracker | tracker token, plus `--list`/`--team`/`--member` | **yes** — creates a real task/issue, exercises `setStatus`/`setAssignees`/`addComment`, then deletes what it created. Point it only at a workspace you know is disposable |
+
+**`npm run serve` is the one command that listens rather than only calling out**, and it is the only
+row above with an *inbound* network surface. It speaks plain HTTP — no TLS termination — and accepts
+a request from anyone who can reach the port; the two signing secrets are what stand between that and
+a forged delivery triggering a real write. See LIMITATIONS.md for what deploying it actually requires
+(a reverse proxy for TLS, process supervision, and the rest).
 
 Everything else — `demo`, `test`, `eval`, `lint`, `typecheck` — runs with no network and no key. That
 is enforced in CI rather than asserted here: the `build` job has no secrets in its environment and

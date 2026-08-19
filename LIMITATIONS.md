@@ -50,15 +50,11 @@ stay green while the model quietly gets worse at the judgement the prompt asks f
 needs a re-record and an eval diff, which is the workflow [EVAL.md](EVAL.md) prescribes. Do not read
 a green run as "that prompt change was safe."
 
-**Two cross-item flags compute and never block.** The pipeline raises `over_subtask` (more than two
-subtasks proposed under one parent) and `near_dup_pair` (two near-identical `NEW_TASK`s on the same
-list in one run) as *flags* — emitted as events, printed by the runner, stopping nothing. Only
-`missed_dup` was promoted to a hold that actually drops the item. So a run can print a near-duplicate
-warning and create both cards anyway.
-
-These are named here because the alternative is finding them on your own board: a signal that reaches
-a log and not a human is the failure mode the `missed_dup` fix exists to correct, and two siblings
-still have it.
+*Two more cross-item flags used to be on this list.* `over_subtask` (more than two subtasks proposed
+under one parent) and `near_dup_pair` (two near-identical `NEW_TASK`s on the same list in one run)
+used to compute and never block — the same failure `missed_dup` was promoted out of. Both now hold,
+the same as `missed_dup`; the flag stays alongside each hold because it carries the count or score
+needed to tune the floor.
 
 *A third used to be on this list.* A role agent's `ownershipDoubt` — "this is not that person's
 work" — reached the run summary and stopped nothing, so a card landed on the wrong person unless a
@@ -147,23 +143,42 @@ not-duplicate pairs. Nothing in the pipeline *writes* one: a human does, with `n
 There is no Slack button and no approval UI here, because the surface that captures a correction is
 product, and every team's is different.
 
-**Ingestion transport is out of scope; reads and normalization are not.** No webhooks, no polling
-schedules, no cron, no OAuth refresh, and no queue — those are product surface. What does ship is
-[`src/sources/`](src/sources) (GitHub, Gmail and Drive read clients) and [`src/ingest/`](src/ingest)
-(five payload shapes → one `IngestedSource`). Scheduling a read and handing the result to
-`runPipeline` is your problem.
+**Ingestion transport is a reference wiring, not a production ingress.** `npm run poll`
+([`src/cli/poll.ts`](src/cli/poll.ts)) loops a JSON list of targets on whatever schedule you point
+cron at it; `npm run serve` ([`src/cli/serve.ts`](src/cli/serve.ts) over
+[`src/transport/webhook.ts`](src/transport/webhook.ts)) verifies a GitHub or Slack webhook signature,
+acks, and re-pulls the named repo or channel through the same read clients. What is still **not**
+here: TLS termination (put `serve` behind a reverse proxy — it speaks plain HTTP), process
+supervision and restart-on-crash, queue durability if the process dies mid-delivery, horizontal scale
+(each instance verifies and re-pulls independently — safe, but redundant), and OAuth token refresh
+for any of the four clients. What ships underneath both: [`src/sources/`](src/sources) (GitHub,
+Gmail, Drive and Slack read clients) and [`src/ingest/`](src/ingest) (five payload shapes → one
+`IngestedSource`).
+
+**The webhook receiver re-pulls rather than parsing the delivery payload as data.** GitHub's and
+Slack's webhook payload shapes are ones this repo has never made a live call against — the same risk
+the source clients themselves carry, one level less tested. `serve.ts` treats a verified delivery as
+a trigger only: it names a repo or channel, and the handler re-pulls that target through the
+already-tested REST/API client with a 24-hour lookback. The `source` and `content` idempotency layers
+`runPipeline` already runs absorb the overlap with whatever the last poll or delivery already saw.
 
 This distinction is narrower than an earlier version of this file drew it. "Ingestion is out of scope
 entirely" was written once and then cited as though it were a requirement, and the repo shipped two
 sources on the strength of it — which is how a source-agnostic pipeline came to look like a meeting
 pipeline with a second entry point.
 
-**All three source clients were verified live by hand** (not by any test — see the table below).
-The GitHub client made real reads on
+**Three of the four source clients were verified live by hand** (not by any test — see the table
+below). The GitHub client made real reads on
 2026-08-13, including one against a busy public repo that returned **85 pull requests, 15 issues and
 9 commits** — which is the only way to exercise the mapping that matters, since the `/issues`
 endpoint returns PRs and issues in one stream and this repo's own history contains neither. See
 [ADAPTERS.md](ADAPTERS.md#the-source-clients-all-three-verified-live).
+
+**Slack is the fourth, and it is NOT live-verified.** It shipped after the 2026-08-13 smoke round,
+against fakes only — the two vendor quirks its own tests are built around (`ok: false` inside a 200,
+float-seconds `ts`) are read from Slack's published docs, the same standard and the same limitation
+the other three clients carried before their live pass. No live call has confirmed either quirk
+against a real workspace.
 
 **Gmail is live-verified too**, on a real six-message thread: every sender resolved, every timestamp
 ISO and none epoch-zero (so `internalDate` was really present), and all six bodies extracted through
@@ -194,7 +209,7 @@ does not measure the wait is a test that a loop exists**, and the assertions now
 read-scoped credential. It exists because without it the clients had **zero call sites outside their
 own tests**, which is this repo's recurring failure shape and not something to ship a third time.
 Point it at a repo you can read and the GitHub half of this section is reproducible on your own
-credential; the Gmail and Drive halves are waiting for someone to do the same.
+credential; the Gmail, Drive and Slack halves are waiting for someone to do the same.
 
 **All three normalizers now run end-to-end** — `06-github-activity`, `07-email-thread` and
 `08-drive-activity` each go through the full 1 → 2d chain offline, so "the pipeline does not care
@@ -205,8 +220,8 @@ Both sentences were reaching for a real distinction and neither stated it. Once,
 
 | | |
 |---|---|
-| **Automated tests** | fakes only. Every scenario replays a recorded payload; **no test has ever called GitHub, Gmail or Drive** |
-| **Live verification** | performed by hand on 2026-08-13 against real accounts, described above |
+| **Automated tests** | fakes only. Every scenario replays a recorded payload; **no test has ever called GitHub, Gmail, Drive or Slack** |
+| **Live verification** | GitHub, Gmail, Drive: performed by hand on 2026-08-13 against real accounts, described above. **Slack: none** |
 | **Reproducible from this repo** | **no** — the smokes left no committed script or log, so treat them as testimony |
 
 The way to settle it on your own credential is `npm run pull`. See
@@ -222,15 +237,20 @@ amplifies whatever extraction bias your model already has.
 replaying it into an empty result, because an absence reported as a divergence is worse than one
 reported as an absence. There are none at present.)*
 
-**Retrieval is a null interface.** [`Retriever`](src/pipeline/retrieval/index.ts) is declared and
-wired into passes 2a/2b, and the only implementation that ships returns **no documents, ever**. The
-production system runs a live vector substrate, but its retrieval quality has never been measured, so
-any claim made here would be unfalsifiable. Better an obvious hole than a number nobody checked.
+**Retrieval ships with two implementations, and neither is what production runs.**
+[`Retriever`](src/pipeline/retrieval/index.ts) is declared and wired into passes 2a/2b.
+`nullRetriever` — no documents, ever — is still what runs by default; `localRetriever`
+([`retrieval/local.ts`](src/pipeline/retrieval/local.ts)) is opt-in via `RETRIEVAL_DIR` and ranks a
+flat directory of `.md`/`.txt` files by Jaccard title overlap, the same scoring the cross-item gates
+already use. The production system runs a live vector substrate, and neither implementation here is
+that, nor has either's retrieval quality been measured. Better an obvious hole than a number nobody
+checked.
 
-So: **nothing in this repo demonstrates that retrieval helps.** The interface exists to show the
-architecture accommodates a knowledge layer, and that is the entire claim — swapping in a real
-retriever is a change nobody here has evaluated the output of. Retrieved text also never satisfies
-the evidence-citation gate: that gate wants card comment history, and a document is not one.
+So: **nothing in this repo demonstrates that retrieval helps.** Both implementations exist to show
+the architecture accommodates a knowledge layer, and that is the entire claim — swapping in either
+one, or a real vector store, is a change nobody here has evaluated the output of. Retrieved text also
+never satisfies the evidence-citation gate: that gate wants card comment history, and a document is
+not one.
 
 ## Model behaviour
 

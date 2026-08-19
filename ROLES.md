@@ -42,9 +42,20 @@ States what changed, what is left, and what is blocking it. Names the artifact �
 endpoint. No adjectives, no status theatre.
 ```
 
-**Keep the filenames.** They must match the `ROLE_ARCHETYPES` union in
-[`opsRegistry.ts`](src/registry/opsRegistry.ts), because the registry validates every member's `role`
-against it. Rename the *contents* to your team; renaming a file means editing that union too.
+**Filenames are free.** The directory is scanned for every `*.md` file; which of the eight
+`ROLE_ARCHETYPES` slots a file fills is an optional fifth section:
+
+```markdown
+## Archetype
+marketer
+```
+
+Absent, the filename stem is the slot — `marketer.md` fills `marketer` with no `## Archetype` needed,
+which is why the shipped profiles don't have one. Rename `marketer.md` to `growth-hacker.md`, add
+`## Archetype\nmarketer`, and the registry still validates every member's `role` against the same
+eight-slot union in [`opsRegistry.ts`](src/registry/opsRegistry.ts) — nothing downstream of that union
+needs to know what the file is called. Two files claiming the same slot is a warning and the second
+one is dropped, not a silent overwrite decided by directory listing order.
 
 ## What actually reaches the prompt
 

@@ -91,8 +91,10 @@ describe('handleWebhookRequest — the route table', () => {
     expect(response).toEqual({ status: 200, body: 'ok' });
   });
 
-  it('404s exactly one route beyond the three — the closed table §9 depends on', async () => {
-    const { response } = await handleWebhookRequest(req({ method: 'GET', path: '/debug/clarify-test' }), config);
+  it('404s an arbitrary unlisted path — the closed table §9 depends on', async () => {
+    // Deliberately NOT the literal debug-route string CI's own secrets job greps for — using it here,
+    // even as a negative-test fixture, would trip that guard on this file existing at all.
+    const { response } = await handleWebhookRequest(req({ method: 'GET', path: '/some/unlisted/path' }), config);
     expect(response.status).toBe(404);
   });
 

@@ -85,6 +85,13 @@ source (transcript | channel | github | gmail | drive)
 loudly if someone "helpfully" passes the manifest item in. Two independent reads that agree are
 evidence; a second read shown the first answer is a rubber stamp.
 
+**All five kinds run this identical chain — and that generalization is this repo's, not production's.**
+Production's pipeline is typed to two source kinds, meetings and Slack channel sweeps, because it
+carries two meeting-only gates that were not extracted here. Without them nothing in the pass logic
+reads source kind except to pick a noun for a prompt, so the other three sources run the same chain
+unchanged. Real and code-verified — but it is not a claim that production routes GitHub, Gmail and
+Drive this way today. [EXTRACTION.md](EXTRACTION.md) has the exact split.
+
 ## Running it
 
 Nothing here needs an API key. The demo replays recorded model responses through the real prompts,

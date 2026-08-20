@@ -11,6 +11,12 @@ idempotency (event) → idempotency (source) → Pass 0 → idempotency (content
 Drive and Slack, and [`src/ingest/`](src/ingest) turns five payload shapes into one `IngestedSource`.
 The pipeline starts there, and at a `TrackerAdapter`.
 
+All five kinds run the identical chain above, because no pass reads source kind except to pick a noun
+for a prompt. **That generalization belongs to this repo.** Production's pipeline is typed to two
+kinds — meetings and Slack channel sweeps — since it carries two meeting-only gates (ASR
+speaker-confidence provenance, visual grounding) that were not extracted; GitHub, Gmail and Drive
+reach the board there via a separate agent runtime. See [EXTRACTION.md](EXTRACTION.md).
+
 **Transport** ships two reference wirings on top of that seam — a cron-able poller
 (`npm run poll`, [`src/cli/poll.ts`](src/cli/poll.ts)) and a signature-verified webhook receiver
 (`npm run serve`, [`src/cli/serve.ts`](src/cli/serve.ts) over

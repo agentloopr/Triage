@@ -225,7 +225,7 @@ Both sentences were reaching for a real distinction and neither stated it. Once,
 | **Reproducible from this repo** | **no** — the smokes left no committed script or log, so treat them as testimony |
 
 The way to settle it on your own credential is `npm run pull`. See
-[ADAPTERS.md](ADAPTERS.md#the-source-clients-have-had-no-live-call-at-all).
+[ADAPTERS.md](ADAPTERS.md#the-source-clients-all-three-verified-live).
 
 **Both providers now have all eight scenarios**, and the three source ones diverge more than the five
 meeting ones — Claude extracts fewer items from a feed that states no commitments out loud. See

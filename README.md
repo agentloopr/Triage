@@ -4,10 +4,6 @@ A production ops-agent pipeline: meeting transcripts, channel logs, GitHub activ
 and document activity in — governed tracker writes out, with human-in-the-loop gates on everything
 it is not sure about.
 
-**Not a product. Not a maintained service. A reference that runs.** There is no support channel and
-no compatibility promise; the point is that you can read it, run it offline, and take the parts that
-are useful.
-
 ![Eight scenarios running offline through the real prompts, parsers and gates, then a redelivery that costs zero tokens](assets/demo.gif)
 
 *Real captured output, replayed at reading speed — the actual run takes ~40ms. Nothing above is staged.*

@@ -16,8 +16,9 @@ npm run demo -- --twice  # a redelivery costs zero tokens
 
 From real trace data across 49 production runs — 48 meetings and one channel log — totalling 711
 items, measured 2026-08-17: **14.5 items per run, 62.6% applied automatically, 27.3% held for a
-human, 8.2% skipped as a duplicate, 2.0% failed.** It runs for a team of 12, which is the roster size
-in the routing registry that governs it.
+human, 8.2% skipped as a duplicate, 2.0% failed.** That production system's roster was 12 people at
+measurement time. The registry shipped here (`config/ops-registry.example.json`) is sized for the
+eight role archetypes below, not a headcount claim about this repo.
 
 Those four dispositions partition every item — 445 + 194 + 58 + 14 = 711, so a fifth outcome would
 show up as a gap. (The rounded percentages sum to 100.1; the counts are the claim.)
@@ -189,9 +190,12 @@ termination, process supervision, queue durability, horizontal scale and OAuth t
 here, and every team's are different.
 
 **Commands join the sources seam to the pipeline**, so "this repo reads GitHub" is something you can
-run rather than something you read:
+run rather than something you read. Past the demo, these need a routing registry — the demo scenarios
+each carry their own, but a live run reads `OPS_REGISTRY_PATH` (`.env.example`), which points at a
+file that isn't in the repo:
 
 ```bash
+cp config/ops-registry.example.json config/ops-registry.json   # edit in your own roles, then
 npm run pull -- --source github --repo owner/name --since 2026-08-01
 npm run pull -- --source gmail --thread <threadId>
 npm run pull -- --source drive --file <fileId> --write   # --write, or it only plans

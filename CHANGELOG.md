@@ -75,7 +75,7 @@ send. Patterns are compiled constants reachable by no env var, correction, promp
 
 **Cross-process locking.** Every file this repo writes — holds, idempotency, corrections, role
 memory, the roster — shares one lock (`withExclusiveFileLock`), replacing an in-process lock that
-858 single-process tests could not tell apart from the real thing. Found by starting real processes:
+hundreds of single-process tests could not tell apart from the real thing. Found by starting real processes:
 20 workers racing one delivery key against a grown state file all 20 accepted it as new. Five defects
 in the lock itself, each an interaction between two individually correct rules, are recorded in
 `ARCHITECTURE.md`.

@@ -328,8 +328,10 @@ them sits directly under the claim that human-in-the-loop is this system's stron
 
 ### The approval surface is a CLI, not a chat app
 
-**The gates that decide to hold are here in full.** All fifteen of them, with the ordering, the
-questions, and the persistence. What is not here is production's asking-and-answering surface: ten
+**The gates that decide to hold are here in full.** All of them — twenty-two pure-code, two decided
+by a model's verdict (see [ARCHITECTURE.md](ARCHITECTURE.md#human-holds) for the count and how to
+re-derive it yourself) — with the ordering, the questions, and the persistence. What is not here is
+production's asking-and-answering surface: ten
 Block Kit modules — clarify, duplicate-resolution, critical approval, task rating — with modals,
 per-actor authorisation so the wrong person cannot resolve someone else's question, and TTLs on
 pending slots. Roughly 4,600 lines.

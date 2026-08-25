@@ -112,9 +112,11 @@ add/rem against the current assignees.
 
 **Status vocabulary is per list, and casing is load-bearing.** ClickUp rejects a status whose
 spelling does not match that list's own vocabulary. The adapter reads the vocabulary and sends back
-the tracker's exact casing, with the fallback chain `not started` → `to do` → `todo` → first
-`type=="open"`. A status that does not exist **fails loudly**, rather than leaving the card where it
-was and reporting success.
+the tracker's exact casing. When the model asks for `not started` (what it emits by default; every
+board spells it differently), the adapter tries exact-name matches against the list's own vocabulary
+in order: `to do` → `todo` → `open`. It matches on the status's name, not its ClickUp `type` field —
+a list whose "open" bucket is spelled anything else won't match. A status that does not exist
+**fails loudly**, rather than leaving the card where it was and reporting success.
 
 **Auth headers differ and neither is guessable.** ClickUp takes the raw token with **no `Bearer`
 prefix**. The ClickUp fake rejects a `Bearer ` prefix specifically, so an adapter that adds one fails
@@ -229,8 +231,8 @@ timestamp ISO and none of them epoch-zero — which is the check that matters, b
 which exercises the multipart walk and the base64url decode against mail a person actually sent
 rather than a fixture built to be walkable.
 
-**Drive: live-verified, 2026-08-13**, against a sheet carrying two comments — one open, one resolved,
-with a reply on the resolved one. File metadata, revisions and comments all confirmed: the name
+**Drive: live-verified, 2026-08-13**, against a sheet carrying two comments, each with one reply —
+one thread open, one resolved. File metadata, revisions and comments all confirmed: the name
 resolves, revisions carry an author and an ISO `modifiedTime`, and the comment came back with author,
 content and timestamp intact.
 

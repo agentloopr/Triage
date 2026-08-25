@@ -1,16 +1,16 @@
 # Triage
 
-A production ops-agent pipeline: meeting transcripts, channel logs, GitHub activity, email threads
-and document activity in — governed tracker writes out, with human-in-the-loop gates on everything
-it is not sure about.
+Built by [Agent Loopr](https://github.com/agentloopr). A production ops-agent pipeline: meeting
+transcripts, channel logs, GitHub activity, email threads and document activity in — governed tracker
+writes out, with human-in-the-loop gates on everything it is not sure about.
 
 ![Eight scenarios running offline through the real prompts, parsers and gates, then a redelivery that costs zero tokens](assets/demo.gif)
 
-*Real captured output, replayed at reading speed — the actual run takes ~40ms. Nothing above is staged.*
+*Real captured output, replayed at reading speed — the actual run takes under a second. Nothing above is staged.*
 
 ```bash
 npm ci
-npm run demo             # 8 scenarios, offline, ~40ms, no API key
+npm run demo             # 8 scenarios, offline, under a second, no API key
 npm run demo -- --twice  # a redelivery costs zero tokens
 ```
 
@@ -40,8 +40,9 @@ does not exist, and the only alternative — a model grading a model — is a sy
 itself. Volume and hold rate are honest; accuracy is not reported. See
 [LIMITATIONS.md](LIMITATIONS.md).
 
-It is extracted from a system that has been running in production. **The architecture is identical to
-what we run; the tuned few-shot examples are replaced with generic ones.**
+It is extracted from a system that has been running in production. **The core structure is what we
+run** — the passes, the gates, the blind second read — **with the tuned few-shot examples replaced by
+generic ones and one real generalization on top** (see below).
 [EXTRACTION.md](EXTRACTION.md) records exactly what changed on the way out and why.
 
 ### What this is one half of
@@ -52,7 +53,7 @@ shapes of input:
 | | Agent path | This repo |
 |---|---|---|
 | Input | one conversational request, ambiguous, a human present | 6–14 items, uniform policy, nobody watching |
-| Decides by | a model, over a long tool-using loop | deterministic code, in passes 2a/2b |
+| Decides by | a model, over a long tool-using loop | deterministic code, in two passes — categorize, then a blind re-check (the shape is below) |
 | Reaches the tracker via | the same single writer | the same single writer |
 
 **This repo is the second path**, and it is the one worth publishing: an agent is good at one
@@ -96,10 +97,10 @@ the real parsers and the real gates:
 
 ```bash
 npm ci
-npm run demo                           # all eight scenarios, offline, ~40ms
+npm run demo                           # all eight scenarios, offline, under a second
 npm run demo -- --twice                # proves a redelivery costs zero tokens
 npm run demo -- --provider anthropic   # the same scenarios, replayed from a Claude recording
-npm run demo -- --agents               # with the agent layer on (PRD §5), also offline
+npm run demo -- --agents               # with the agent layer on (see AGENTS.md), also offline
 ```
 
 ```
@@ -209,7 +210,7 @@ These are the **only** paths that need credentials. `pull` plans without writing
 `--write`; `poll` and `serve` write by default (`poll --dry-run` to plan only). Every fixture, test
 and demo stays offline because they start from a recorded payload rather than a live read.
 
-**An optional agent layer** (PRD §5) sits between the gates and the writer: a board agent that
+**An optional agent layer** sits between the gates and the writer: a board agent that
 delegates to eight role agents with **read-only** tools. It is off by default. It may **propose** a
 different category, list, assignee or description — and every proposal is re-run through the same
 gates, so one the gates refuse becomes a hold rather than a write. **The agent never writes, and

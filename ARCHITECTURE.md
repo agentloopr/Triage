@@ -209,14 +209,17 @@ only one of them involves a model at the moment of blocking.
 
 | | Gates | Decided by |
 |---|---|---|
-| **Pure code over structured data** | unknown list key · assignee not in team roster · assignee not valid for list · referenced/parent/RELATE task id not on the board · subtask list ≠ parent list · RELATE self-link · evidence not cited · uncertain field(s) · vague update — card not confirmed · update — card match not confident · possible missed duplicate · registry degraded · **critical — credentials / client PII / production deploy / client-facing send** |  The board, the registry, and a literal read of the manifest. No model is consulted. |
+| **Pure code over structured data** | unknown list key · assignee not in team roster · assignee not valid for list · referenced task id not on the board · parent task id not on the board · RELATE link id not on the board · subtask list ≠ parent list · RELATE self-link · evidence not cited · uncertain field(s) · unresolvable field(s) · vague update — card not confirmed · update — card match not confident · possible missed duplicate · possible intra-run duplicate · over-subtasking · conflicting updates to the same card · uncategorized · registry degraded · independent verification unavailable · **critical — credentials / client PII / production deploy / client-facing send** |  The board, the registry, and a literal read of the manifest. No model is consulted. |
 | **A code rule over a model's stated verdict** | legitimacy — may not be a trackable task | `legitimacyHolds()` combines Pass 2b's legitimacy verdict with 2a's confidence and the source's ASR provenance — but its `not_a_task` branch fires on the verdict alone, no other input required. Genuinely a model decision, not a softened one. |
 | **Two independent model reads disagreeing** | category dispute | A different *shape* of model decision — a disagreement between two reads, not a threshold on one — but not the only gate a live model verdict can decide. |
 
 **This is the opposite of what the design anticipated.** The system this was extracted from expected
-deterministic blocking to be the rare case and model judgement the norm; here thirteen of fifteen
-gates never ask a model anything. That is not an accident of porting — it is what happens when the
-model's job is narrowed to producing a *manifest* and every structural claim in that manifest is
+deterministic blocking to be the rare case and model judgement the norm; here twenty-two of
+twenty-four named gates never ask a model anything (`grep -rohE "gate: [\`'\"][^\`'\"]*[\`'\"]"
+src/pipeline/gates/ src/pipeline/passes/contractCheck.ts | sort -u | wc -l`, plus the two
+constant-named gates it misses — re-derive it yourself rather than trust this number, since it has
+already drifted once as gates were added). That is not an accident of porting — it is what happens
+when the model's job is narrowed to producing a *manifest* and every structural claim in that manifest is
 checked against data the pipeline already holds.
 
 The practical consequence: **most holds are reproducible.** Feed the same manifest and board twice

@@ -128,11 +128,13 @@ happened to say on one day; if the feature needed a model to disagree in order t
 the demonstration would be the weather. But it does mean the honest claim is **"the path is proven by
 test, not by recording"** — and a reader who wants to see it fire should run the tests, not the demo.
 
-### This is what §5's "authority to write" means
+### This is what "authority to write" means
 
-PRD §5 describes the Board agent as *"the orchestrator above the role agents, holding board state and
-authority to write."* Read literally that sounds like a write handle, and building it that way would
-put a model in the write path and cost the guarantee the README leads with.
+The internal spec this repo was built from describes the Board agent as *"the orchestrator above the
+role agents, holding board state and authority to write."* Read literally that sounds like a write
+handle, and building it that way would put a model in the write path and cost the guarantee the
+README leads with. (That spec is private and not shipped in this repo — the quote is given here in
+full so the argument stands on its own without it.)
 
 **Production does not work that way either.** Its board agent proposes, and one script enforces the
 protected-status guard, the duplicate check and read-only mode. "Authority to write" there means *its

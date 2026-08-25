@@ -21,12 +21,12 @@ written. Re-derive it with `npm run demo` and `npm run demo -- --provider anthro
 
 | Scenario | DeepSeek | Claude | |
 |---|---|---|---|
-| `01-meeting-mixed` | 6 items · 4 created | 6 items · **3 created** (UPDATE 2 / SUBTASK 1 vs 1 / 2) | differs |
+| `01-meeting-mixed` | 6 items · 3 created | 6 items · **3 created** (UPDATE 2 / SUBTASK 1 vs 1 / 2) | differs |
 | `02-meeting-duplicates` | 2 items · 0 created | 2 items · 0 created | identical |
 | `03-meeting-noise` | 0 items | 0 items | identical |
 | `04-channel-messages` | 4 items · 3 created | **3 items · 2 created** | differs |
 | `05-corrections` | 1 item · 1 created | 1 item · 1 created | identical |
-| `06-github-activity` | 4 items · 0 created · 2 held | 4 items · **1 created · 1 held** | differs |
+| `06-github-activity` | 4 items · 0 created · 2 held | 4 items · **1 created · 2 held** | differs |
 | `07-email-thread` | 2 items · 1 created | **1 item** · 1 created | differs |
 | `08-drive-activity` | 4 items · 2 created | **1 item · 0 created** | differs |
 

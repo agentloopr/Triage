@@ -15,7 +15,7 @@
  */
 import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
-import { AGENTS_ENABLED, CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
+import { AGENTS_ENABLED, BOARD_AGENT_WRITES, CASSETTE_DIR, CASSETTE_DIR_AGENTS, CASSETTE_DIR_AGENTS_ANTHROPIC, CASSETTE_DIR_ANTHROPIC } from '../config';
 import { listScenarios, loadScenario } from '../fixtures';
 import { cassetteClient } from '../providers/cassette';
 import { runScenario } from './runScenario';
@@ -28,6 +28,7 @@ async function main(): Promise<void> {
   // you get an agent run replaying a non-agent recording, which fails as a missing cassette
   // rather than as the configuration mistake it actually is.
   const agents = args.includes('--agents') || AGENTS_ENABLED;
+  const boardWrites = args.includes('--board-writes') || BOARD_AGENT_WRITES;
   const providerIdx = args.indexOf('--provider');
   const provider = providerIdx !== -1 ? args[providerIdx + 1] : 'deepseek';
   const only = args.filter((a) => !a.startsWith('--')).find((a) => a !== provider);
@@ -45,10 +46,20 @@ async function main(): Promise<void> {
 
   if (agents) {
     console.log(
-      '\nAgent layer ON (PRD §5). A board agent delegates to role agents, which have READ-ONLY tools —\n' +
-        'Pass 2c is still the only writer. This is the one part of the repo built rather than extracted;\n' +
-        'see AGENTS.md and LIMITATIONS.md.'
+      boardWrites
+        ? '\nAgent layer ON, and the BOARD AGENT IS THE WRITER (BOARD_AGENT_WRITES) — this is PRD §5\'s\n' +
+            '"authority to write" and the shape production runs. Role agents are still read-only; every\n' +
+            'write the board agent originates is re-run through the same deterministic gates first, so a\n' +
+            'write the gates refuse becomes a hold. See AGENTS.md.'
+        : '\nAgent layer ON (PRD §5). A board agent delegates to role agents, which have READ-ONLY tools —\n' +
+            'Pass 2c is still the only writer. This is the one part of the repo built rather than extracted;\n' +
+            'see AGENTS.md and LIMITATIONS.md.'
     );
+  }
+
+  if (boardWrites && !agents) {
+    console.error('--board-writes needs the agent layer: add --agents (the board agent is the writer).');
+    process.exit(1);
   }
 
   if (comparing) {
@@ -91,7 +102,7 @@ async function main(): Promise<void> {
     console.log(`\n▶ ${name} — ${scenario.expected.description}`);
 
     const model = cassetteClient(join(cassettes, name));
-    const run = await runScenario(scenario, { model, idempotencyPath: statePath, agents });
+    const run = await runScenario(scenario, { model, idempotencyPath: statePath, agents, boardWrites });
 
     if (run.mismatches.length && (comparing || agents)) {
       // Not counted as a failure, for the same reason in both cases: the goldens describe ONE
@@ -130,7 +141,7 @@ async function main(): Promise<void> {
     if (twice) {
       // `agents` is threaded through deliberately: without it the second pass ran the non-agent
       // path, so `--twice --agents` silently proved nothing about the agent path's idempotency.
-      const second = await runScenario(scenario, { model, idempotencyPath: statePath, quiet: true, agents });
+      const second = await runScenario(scenario, { model, idempotencyPath: statePath, quiet: true, agents, boardWrites });
       const ok = second.result.status === 'skipped' && second.modelCalls === 0;
       if (!ok) failures++;
       // The layer is READ from the run, never hardcoded. It used to print 'source' unconditionally

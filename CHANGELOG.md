@@ -59,7 +59,7 @@ to what runs internally, the tuned few-shot examples are replaced with generic o
 [EXTRACTION.md](EXTRACTION.md)).
 
 **Pipeline.** Eight passes, 0 through 2d: cleanup, inventory, critic, consolidator, categorization,
-a **blind** contract check that never sees the categorization answer, the only writer, and a
+a **blind** contract check that never sees the categorization answer, the writer, and a
 post-write audit. Eight offline scenarios replay real recorded model responses through the real
 prompts, parsers and gates — `npm run demo`.
 
@@ -88,6 +88,14 @@ live source to running the pipeline over it, planning by default, writing only w
 **An optional agent layer**, off by default: a board agent delegating to eight read-only role agents.
 It may propose a different category, list, assignee or description; every proposal is re-run through
 the same gates, so a proposal the gates refuse becomes a hold, never a write.
+
+**Board-agent write authority (`BOARD_AGENT_WRITES`), also off by default.** PRD §5 gives the board
+agent "authority to write", and production means that literally — its board agent runs a create
+command behind a guard layer. This flag is that shape: the board agent gets write tools behind
+`governedTracker`, which rebuilds every write it originates into a manifest item and re-runs the full
+deterministic gate set over it, so a write the gates refuse becomes a hold. Off, Pass 2c writes and no
+model reaches the tracker at all. The prompt-injection guarantee differs between the two modes, and
+`SECURITY.md` now states each one exactly rather than stating the stronger one twice.
 
 **No accuracy claimed.** Volume and hold rate are reported from 711 real items across 49 production
 runs; precision and recall are not, because the only alternative to a hand-labelled ground truth that

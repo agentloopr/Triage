@@ -25,9 +25,31 @@ documents, and every tool result:
   copies the content it flagged is a second store of the thing worth protecting.
 
 **This is not a sandbox.** The pattern list is regexes; a rephrased attack walks past it. What bounds
-the damage is structural and downstream: the writer is deterministic, every write passes the gates,
-and Pass 2b re-derives the categorization blind. A successful injection can mislead a
-categorization. It cannot author a write.
+the damage is structural and downstream: every write passes the gates, and Pass 2b re-derives the
+categorization blind.
+
+**In the default configuration, the writer is deterministic and the guarantee is absolute:**
+
+> A successful injection can mislead a categorization. It cannot author a write.
+
+There is no code path from a model turn to a mutation, because no write tool exists for one to reach.
+
+**With `BOARD_AGENT_WRITES` on, the guarantee narrows, and the narrower version is the one to hold us
+to:**
+
+> A successful injection cannot author a write **the deterministic gates would not already have
+> approved.**
+
+That mode hands the board agent write tools, so a model does reach the tracker. Every write it
+originates is rebuilt into a manifest item and re-run through the same gates the pipeline's own
+answer faced — routing, roster, evidence, duplicate, critical — and a write those gates refuse
+becomes a hold. What an injection could still do is steer a write that passes every gate: a
+plausible card, on a real list, for a real person. What it cannot do is rotate a credential, reach an
+off-roster assignee, or invent a list. The gate list in `ARCHITECTURE.md` is the actual boundary, and
+it is worth reading before turning the flag on rather than after.
+
+The flag is off by default, and the paragraph above is the reason it is a flag rather than the
+default.
 
 ## Which commands touch a live service
 

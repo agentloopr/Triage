@@ -297,8 +297,11 @@ That is why `AGENTS_ENABLED` defaults to **false**. What turning it on can and c
 - It **can** propose a description, a category, a list or an assignee, and raise an ownership doubt.
 - Every proposal is re-run through `applyGates` — the same gates Pass 2b uses, not a copy — so one
   the gates refuse becomes a human hold rather than a write.
-- It **cannot** write anything, and **cannot un-hold**: agents only ever see items that already
-  passed the gates, so there is no path from an agent to an item a gate stopped.
+- It **cannot un-hold**: agents only ever see items that already
+  passed the gates, so there is no path from an agent to an item a gate stopped. A **role** agent
+  cannot write in any configuration. The **board** agent cannot either, unless `BOARD_AGENT_WRITES`
+  is on — with it on, it performs the write, and every write it originates is re-gated first. See
+  AGENTS.md, and SECURITY.md for how the injection guarantee narrows in that mode.
 
 Measured across both recordings and all eight scenarios, **no proposal has changed a final
 category** — `agentReplay.test.ts` compares each item's final category against Pass 2a's and fails

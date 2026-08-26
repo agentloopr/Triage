@@ -70,6 +70,15 @@ export type PipelineDeps = {
    */
   agents?: { delegate(items: CategorizationItem[]): Promise<DelegationResult[]> };
   /**
+   * The board agent as writer (`BOARD_AGENT_WRITES`). Omit and Pass 2c writes, which is the default
+   * and the configuration every claim about "no model in the write path" describes.
+   *
+   * Supplied, it replaces Pass 2c and must return the same `ExecuteResult`, because everything after
+   * the write — the `executed` event, the audit, role memory — is shared and should not know which
+   * writer ran. What it may write is bounded by `governedTracker`, not by this seam.
+   */
+  writeBoard?: (items: CategorizationItem[]) => Promise<ExecuteResult>;
+  /**
    * The retrieval seam (PRD §8) — an external knowledge layer feeding extra context to passes 2a/2b.
    *
    * Omit it and no retrieval happens at all: not a null call, no block, and a prompt byte-identical
@@ -352,9 +361,14 @@ export async function runPipeline(source: IngestedSource, deps: PipelineDeps): P
     if (regated.flags.length) emit({ type: 'flags', flags: regated.flags });
   }
 
-  // ── Pass 2c — the only writer ────────────────────────────────────────────
-  const exec = await timed('2c-execute', () =>
-    executeOperations(planOperations(writable, { ...(source.todayIso ? { todayIso: source.todayIso } : {}) }), deps.tracker)
+  // ── The write ────────────────────────────────────────────────────────────
+  // Pass 2c by default — deterministic, no model. `deps.writeBoard` swaps in the board agent, which
+  // is PRD §5's "authority to write" and what production runs; either way the result shape is the
+  // same, so nothing downstream branches on which one ran.
+  const exec = await timed(deps.writeBoard ? '2c-execute (board agent)' : '2c-execute', () =>
+    deps.writeBoard
+      ? deps.writeBoard(writable)
+      : executeOperations(planOperations(writable, { ...(source.todayIso ? { todayIso: source.todayIso } : {}) }), deps.tracker)
   );
   emit({ type: 'executed', ...exec });
 

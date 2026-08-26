@@ -9,6 +9,7 @@ writes out, with human-in-the-loop gates on everything it is not sure about.
 *Real captured output, replayed at reading speed — the actual run takes under a second. Nothing above is staged.*
 
 ```bash
+git clone https://github.com/agentloopr/Triage.git && cd Triage
 npm ci
 npm run demo             # 8 scenarios, offline, under a second, no API key
 npm run demo -- --twice  # a redelivery costs zero tokens
@@ -103,6 +104,20 @@ npm run demo -- --twice                # proves a redelivery costs zero tokens
 npm run demo -- --provider anthropic   # the same scenarios, replayed from a Claude recording
 npm run demo -- --agents               # with the agent layer on (see AGENTS.md), also offline
 ```
+
+`--twice` is the one worth running second. The second pass prints:
+
+```
+✓ re-run: skipped at layer 'event' — 0 model calls, $0.00
+```
+
+A redelivery costs nothing, and the check that stops it runs *before* the first token is spent
+rather than discarding a finished run at the end.
+
+**`--board-writes` has no recorded cassettes and will not replay offline.** The flag is real (see
+[AGENTS.md](AGENTS.md)), but recording that mode needs live API keys against both providers, so
+`npm run demo -- --agents --board-writes` stops on a missing cassette rather than running green
+having done nothing. That error is the intended behaviour, not a broken build.
 
 ```
 ▶ 01-meeting-mixed — A normal standup: four categories exercised, four cards created, one duplicate
@@ -229,11 +244,15 @@ taxonomy is tracker-blind because of it.
 
 ## Documentation
 
+**If you read two of these, read `LIMITATIONS.md` and `EXTRACTION.md`.** The first is what this repo
+cannot tell you; the second is what differs from the system it came out of. They are the two that
+tell you whether to trust the other six.
+
 | | |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The passes, the seams, idempotency, fail-open vs fail-closed |
 | [LIMITATIONS.md](LIMITATIONS.md) | **What this cannot tell you.** Read before trusting a green run |
-| [EXTRACTION.md](EXTRACTION.md) | What differs from production, what was de-tuned, and how it was checked |
+| [EXTRACTION.md](EXTRACTION.md) | **What differs from the system this came out of**, what was de-tuned, and how it was verified |
 | [ADAPTERS.md](ADAPTERS.md) | The tracker contract, the capability matrix, writing a fourth |
 | [PROVIDERS.md](PROVIDERS.md) | Measured cost, and where DeepSeek and Claude disagree |
 | [ROLES.md](ROLES.md) | The eight role archetypes and how they reach the prompt |

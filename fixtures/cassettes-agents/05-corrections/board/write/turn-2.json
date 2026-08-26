@@ -1,0 +1,15 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_sp7pq5pTNcPGL1QWMaWy7411",
+      "name": "create_task",
+      "arguments": {
+        "title": "Fix the billing invoice API endpoint totals field",
+        "list_key": "backend",
+        "assignee": "Rowan Diaz",
+        "description": "Fix the totals field on the billing invoice API endpoint so it returns the correct computed value."
+      }
+    }
+  ]
+}

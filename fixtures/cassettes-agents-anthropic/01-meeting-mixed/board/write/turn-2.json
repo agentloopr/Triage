@@ -1,0 +1,33 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "toolu_01F9TqfjGHTutbqfWR29AG6q",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t200",
+        "body": "Rate limiting sign-off pending."
+      }
+    },
+    {
+      "id": "toolu_017k9qZfz7DFk7pNJrVm8vpx",
+      "name": "create_task",
+      "arguments": {
+        "title": "Add request-size cap on upload endpoint",
+        "list_key": "backend",
+        "assignee": "Avery Chen",
+        "description": "Add a request-size cap on the upload endpoint to prevent oversized uploads."
+      }
+    },
+    {
+      "id": "toolu_01URuuNrGnqASXeubumyUosS",
+      "name": "create_task",
+      "arguments": {
+        "title": "Write spec for usage-based billing idea",
+        "list_key": "product",
+        "assignee": "Jules Kim",
+        "description": "Write a spec exploring the usage-based billing idea."
+      }
+    }
+  ]
+}

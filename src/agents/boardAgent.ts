@@ -26,7 +26,7 @@
 import { type ExecuteResult, type ExecutedAction, type PlanContext, planOperations } from '../pipeline/passes/execute';
 import type { CategorizationItem } from '../pipeline/parsing/categorizationManifest';
 import type { HeldItem } from '../pipeline/gates/contractGates';
-import { approvedOpSet, governedTracker } from '../pipeline/gates/governedTracker';
+import { approvedOpSet, governedTracker, opSignature } from '../pipeline/gates/governedTracker';
 import type { DeterministicGateOptions } from '../pipeline/passes/contractCheck';
 import { READ_ONLY_TOOLS, WRITE_TOOLS, makeToolLoopRunner } from '../pipeline/toolLoop';
 import { screenedPrimary } from '../utils/security';
@@ -298,16 +298,37 @@ export function buildBoardWritePrompt(items: CategorizationItem[], boardText: st
   ].join('\n');
 }
 
+/**
+ * Do two operations of the same kind concern the same thing?
+ *
+ * Deliberately coarse — the card id for anything touching an existing card, the exact title for a
+ * create. It answers "did the agent do this item's work", not "did it do it the way we planned",
+ * because the second question is Pass 2d's and it should get to ask it independently.
+ */
+function sameTarget(a: TrackerOperation, b: TrackerOperation): boolean {
+  const target = (op: TrackerOperation): string =>
+    'taskId' in op ? op.taskId : op.kind === 'createTask' ? op.title.trim().toLowerCase() : '';
+  const t = target(a);
+  return t !== '' && t === target(b);
+}
+
 /** Fold the operations the tracker actually performed back into per-action results. */
 function tally(plan: ReturnType<typeof planOperations>, performed: Array<{ op: TrackerOperation; outcome: OpOutcome }>): ExecuteResult {
   const counts = { created: 0, commented: 0, skipped: 0, refused: 0, failed: 0, unsupported: 0 };
   const left = [...performed];
 
   const actions: ExecutedAction[] = plan.map((action) => {
-    // An op belongs to the action that planned it. Agent-originated ops match nothing here and are
-    // gathered into their own action below rather than being silently attributed to a planned item.
+    // An op belongs to the action that planned it — matched first exactly, then by **target**.
+    //
+    // Exact-only matching was a bug with a misleading symptom. The agent is invited to reword, so it
+    // commented on the right card with its own phrasing; the signature did not match, the op fell
+    // into the agent-originated bucket, and Pass 2d then reported "no comment landed on t200" for a
+    // comment that had demonstrably landed on t200. The write was fine and the *attribution* was
+    // wrong, which is the worse of the two failures to ship: it makes a working run look broken and
+    // trains a reader to discount the audit.
     const results = action.ops.flatMap((planned) => {
-      const i = left.findIndex((p) => p.op === planned || JSON.stringify(p.op) === JSON.stringify(planned));
+      let i = left.findIndex((p) => opSignature(p.op) === opSignature(planned));
+      if (i === -1) i = left.findIndex((p) => p.op.kind === planned.kind && sameTarget(p.op, planned));
       return i === -1 ? [] : left.splice(i, 1);
     });
     return { ...action, results, ok: results.length > 0 && results.every((r) => r.outcome.status === 'applied' || r.outcome.status === 'unchanged') };

@@ -1,0 +1,1 @@
+Both items were accounted for as duplicates of existing cards. I read t500 and t600 (and their comment histories) and added a comment to each card noting the pipeline's duplicate decision — no new cards were created.

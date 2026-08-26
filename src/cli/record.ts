@@ -27,6 +27,10 @@ async function main(): Promise<void> {
   const provider = (arg('provider') ?? 'deepseek') as ProviderName;
   const fresh = process.argv.includes('--fresh');
   const agents = process.argv.includes('--agents');
+  // Records into the SAME agent set. The board-write turns are additional keys (`board/write/...`),
+  // not replacements, so every cassette recorded before this flag existed replays untouched and the
+  // two modes share one directory rather than doubling the sets to four.
+  const boardWrites = process.argv.includes('--board-writes');
   const scenarios = process.argv.includes('--all') ? listScenarios() : [arg('scenario') ?? ''].filter(Boolean);
 
   if (scenarios.length === 0) {
@@ -43,12 +47,15 @@ async function main(): Promise<void> {
     const dir = join(root, name);
     if (fresh) rmSync(dir, { recursive: true, force: true });
 
-    console.log(`\n▶ recording ${name} against ${provider}${agents ? ' (agent layer ON)' : ''}`);
+    console.log(
+      `\n▶ recording ${name} against ${provider}${agents ? ' (agent layer ON)' : ''}` +
+        `${boardWrites ? ' (board agent writes)' : ''}`
+    );
 
     // A miss records through the live provider; a hit replays. That makes re-running cheap and makes
     // a partially-recorded scenario finishable rather than all-or-nothing.
     const model = cassetteClient(dir, { record: makeModelClient({ provider }) });
-    const run = await runScenario(scenario, { model, agents });
+    const run = await runScenario(scenario, { model, agents, boardWrites });
 
     console.log(`  ${run.modelCalls} model call(s)`);
 

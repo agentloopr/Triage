@@ -114,10 +114,18 @@ npm run demo -- --agents               # with the agent layer on (see AGENTS.md)
 A redelivery costs nothing, and the check that stops it runs *before* the first token is spent
 rather than discarding a finished run at the end.
 
-**`--board-writes` has no recorded cassettes and will not replay offline.** The flag is real (see
-[AGENTS.md](AGENTS.md)), but recording that mode needs live API keys against both providers, so
-`npm run demo -- --agents --board-writes` stops on a missing cassette rather than running green
-having done nothing. That error is the intended behaviour, not a broken build.
+**The board agent can also do the writing, and that replays offline too:**
+
+```bash
+npm run demo -- --agents --board-writes   # PRD §5's "authority to write", the shape production runs
+```
+
+Worth watching rather than skimming. The agent reads the cards and their comment history *before*
+writing, then departs from the plan where the board tells it something the pipeline could not — on
+`01-meeting-mixed` it comments on the duplicate's card instead of silently skipping it, and files the
+email copy as a subtask of the redesign it had just read. Every write it originates is re-run through
+the same deterministic gates first, so one the gates refuse becomes a hold rather than a card. Off by
+default; see [AGENTS.md](AGENTS.md) and [SECURITY.md](SECURITY.md) for what each mode guarantees.
 
 ```
 ▶ 01-meeting-mixed — A normal standup: four categories exercised, four cards created, one duplicate

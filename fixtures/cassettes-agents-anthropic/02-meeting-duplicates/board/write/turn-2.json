@@ -1,0 +1,21 @@
+{
+  "text": "Both items are duplicates of existing cards. I'll comment on each rather than create new cards.",
+  "toolCalls": [
+    {
+      "id": "toolu_01Rf1qepasrCmkw3GFFVCTGH",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t500",
+        "body": "Duplicate reported: \"Own onboarding revamp\" — this is the same work as this card (first-run experience for new signups). Tracking here instead of a new card."
+      }
+    },
+    {
+      "id": "toolu_015xtxhC1nJN8syLrnmkHqg8",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t600",
+        "body": "Duplicate reported: \"Handle partial deploy failures in pipeline\" — this is the same work as this card (deploy pipeline resilience to partial failures). Tracking here instead of a new card."
+      }
+    }
+  ]
+}

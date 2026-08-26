@@ -1,0 +1,19 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_mZvCo18rgaSrbdP6Ym4o2284",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "billing invoice API endpoint totals"
+      }
+    },
+    {
+      "id": "call_01_6vZoiB9MXtPp2viWFMO30410",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "invoice totals field"
+      }
+    }
+  ]
+}

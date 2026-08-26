@@ -1,0 +1,19 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "toolu_01FAMhpQbuN8Gtp58bcoJx4P",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t500"
+      }
+    },
+    {
+      "id": "toolu_0162ggDZvNBA224ZuQ7ExvmB",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t600"
+      }
+    }
+  ]
+}

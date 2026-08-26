@@ -1,0 +1,15 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "toolu_018jAs3kiPpqNa6ASuEZfxrC",
+      "name": "create_task",
+      "arguments": {
+        "title": "Fix billing invoice API endpoint field bug",
+        "list_key": "backend",
+        "assignee": "Rowan Diaz",
+        "description": "Fix a field bug in the billing invoice API endpoint."
+      }
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Both items are written:
+
+- t910: the go-live on 28 August was already in the card description, so I commented on t910 rather than duplicating the work.
+- New card created: "Add pagination to export endpoint" in `backend`, assigned to Avery Chen.

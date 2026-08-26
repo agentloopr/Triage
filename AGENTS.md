@@ -136,6 +136,21 @@ happened to say on one day; if the feature needed a model to disagree in order t
 the demonstration would be the weather. But it does mean the honest claim is **"the path is proven by
 test, not by recording"** — and a reader who wants to see it fire should run the tests, not the demo.
 
+**The same is true of the board-write recordings, and for a reason worth recording.** Across all eight
+scenarios on both providers, `--board-writes` produces **zero refused writes**. Every write the board
+agent originates passes the gates.
+
+The first recorded attempt was not like that: it produced five refusals in a single scenario, all of
+them `unresolvable field(s): FINAL_DESC`. That was not the model failing the gate — `create_task`
+listed `description` as optional while the gate requires it, so the tool was lying about what a valid
+write looks like and the model believed it. Fixing the schema took the refusals to zero.
+
+Which leaves the same honest position as above: the governed write path is wired and exercised end to
+end, and **no shipped recording shows a gate refusing a write.** What proves it does is
+`governedTracker.test.ts` with scripted replies — an off-roster assignee, an unknown list key, a
+credential-touching title, a subtask whose parent history was never read, and an operation with no
+manifest form at all. Each is refused, and the inner adapter is asserted never to have seen it.
+
 ### This is what "authority to write" means
 
 The internal spec this repo was built from describes the Board agent as *"the orchestrator above the

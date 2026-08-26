@@ -46,6 +46,13 @@ jobs:
       # read-only guarantee would be asserted only by unit tests, never by a whole run.
       - run: npm run demo -- --agents
       - run: npm run demo -- --agents --provider anthropic
+      # The board agent as writer, replayed offline on both providers. Same reasoning as the two
+      # steps above, with more riding on it: this is the only mode in which a model reaches the
+      # tracker, so it is the only mode where a whole run demonstrates the governed write path
+      # refusing what the gates refuse. Off by default in normal use, so nothing else would exercise
+      # these recordings.
+      - run: npm run demo -- --agents --board-writes
+      - run: npm run demo -- --agents --board-writes --provider anthropic
       # Never --labels here: that path calls a judge model, and this job has no secrets.
       - run: npm run eval
 
@@ -57,13 +64,14 @@ jobs:
       # warning. A recording made against a prompt the code no longer sends is a reply that may not
       # be representative — the demo's entire claim is that it replays the real prompts.
       #
-      # If this fails: either re-record (`npm run record -- --all --agents --provider <p>`) or work
+      # If this fails: either re-record (`npm run record -- --all --agents [--board-writes] --provider <p>`) or work
       # out why the prompt moved. Do not silence it.
       - name: no cassette drift
         run: |
           set -uo pipefail
           drift=0
-          for mode in "" "--twice" "--provider anthropic" "--agents" "--agents --provider anthropic"; do
+          for mode in "" "--twice" "--provider anthropic" "--agents" "--agents --provider anthropic" \
+                      "--agents --board-writes" "--agents --board-writes --provider anthropic"; do
             # shellcheck disable=SC2086
             n=$(npm run demo --silent -- $mode 2>&1 | grep -c "recorded against a different prompt" || true)
             echo "demo ${mode:-(default)}: $n drifted cassette(s)"

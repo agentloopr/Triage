@@ -153,12 +153,32 @@ export const TOOL_LOOP_MAX_ITERATIONS = int('TOOL_LOOP_MAX_ITERATIONS', 6);
  * front of every reader.
  *
  * On, it costs one model call per delegated item and reads card history the deterministic path never
- * fetches. It cannot write: role agents get `readOnlyTracker`, and Pass 2c remains the only writer.
+ * fetches. Role agents still cannot write: they get `readOnlyTracker`, and with `BOARD_AGENT_WRITES`
+ * off — the default — Pass 2c remains the only writer.
  */
 export const AGENTS_ENABLED = bool('AGENTS_ENABLED', false);
 
 /** Items handed to a role agent in one run. Each is a model call, so a bad batch cannot run away. */
 export const AGENT_MAX_DELEGATIONS = int('AGENT_MAX_DELEGATIONS', 8);
+
+/**
+ * Let the **board agent** perform the writes, instead of Pass 2c.
+ *
+ * **Off by default.** Off, this repo's headline property holds literally: no model is in the write
+ * path at all, because no write tool exists for one to reach. On, the board agent is handed the
+ * already-gated plan and writes it through `governedTracker`, which is the shape PRD §5 describes
+ * ("authority to write") and the shape production actually runs — its board agent calls a write
+ * command, and a guard layer decides whether that command lands.
+ *
+ * **What stays true with it on.** Every write the agent originates is rebuilt into a
+ * `CategorizationItem` and re-run through the same deterministic gates the pipeline's own answer
+ * faced. A write those gates refuse becomes a hold, exactly as it would have upstream. So the
+ * guarantee narrows honestly — from *an injection cannot author a write* to *an injection cannot
+ * author a write the gates would not already have approved* — rather than disappearing.
+ *
+ * Requires `AGENTS_ENABLED`; on without it is a configuration error, not a silent no-op.
+ */
+export const BOARD_AGENT_WRITES = bool('BOARD_AGENT_WRITES', false);
 
 // ── Dispute arbiter (optional) ───────────────────────────────────────────────
 /**

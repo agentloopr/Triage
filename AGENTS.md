@@ -18,8 +18,8 @@ npm run demo -- --agents     # replays the agent recording, offline
 |---|---|---|
 | How many | one per run | one per archetype |
 | Decides | which items need a closer look | how an item reads to its owner |
-| Tools | none — it orchestrates | `get_task`, `get_task_comments`, `search_tasks` |
-| Can write | **no** | **no** |
+| Tools | none by default; the read tools **plus writes** under `BOARD_AGENT_WRITES` | `get_task`, `get_task_comments`, `search_tasks` |
+| Can write | **no** by default · **yes, through the gates** under `BOARD_AGENT_WRITES` | **no**, in every configuration |
 | Built from | `boardAgent.ts` | the loop + its profile + its state |
 
 A role agent is the existing tool loop given three things that already existed: its **profile**
@@ -29,7 +29,8 @@ memory, and `readOnlyTracker` as its tools. See [ROLES.md](ROLES.md).
 ## Where it sits
 
 ```
-… 2a categorization → 2b contract check → [ AGENT LAYER ] → 2c execute → 2d audit
+default                 … 2a → 2b → [ AGENT LAYER ] → 2c execute ───────────→ 2d audit
+BOARD_AGENT_WRITES=1    … 2a → 2b → [ AGENT LAYER ] → board agent writes ──→ 2d audit
 ```
 
 **After every gate, before the writer.** Both halves of that matter:
@@ -40,16 +41,23 @@ memory, and `readOnlyTracker` as its tools. See [ROLES.md](ROLES.md).
 
 ## Two guarantees, both structural
 
-### 1. An agent cannot write
+### 1. A role agent cannot write
 
 Not because the prompt asks it not to — because `readOnlyTracker` wraps the adapter and refuses every
 `apply()`, and no write tool is offered in the first place. Prompt text is a request; a wrapper is a
 guarantee. A model that has been jailbroken, confused, or fed a malicious transcript still has no
-code path to a mutation.
+code path to a mutation. This holds in every configuration; there is no flag that gives a role agent
+a write tool.
 
-**Pass 2c remains the only writer, and it has no model in it.** The agent decides; deterministic code
-executes. That is also what production does: its board agent *proposes*, and a script enforces the
-protected-status guard, the duplicate check and read-only mode.
+**By default, Pass 2c is the only writer and it has no model in it.** The agent decides;
+deterministic code executes.
+
+**`BOARD_AGENT_WRITES` changes who performs the write, and only for the board agent.** On, the board
+agent is handed the already-gated plan plus write tools, and writes it through `governedTracker` —
+which re-runs every deterministic gate over anything it originates, so a write the gates refuse
+becomes a hold rather than a card. That is the shape PRD §5 describes and the shape production runs.
+Off — the default — none of that code is in the process at all. The guarantee in each mode is stated
+exactly in `SECURITY.md`, including how the second one is smaller than the first.
 
 ### 2. An agent cannot claim a write that did not happen
 
@@ -131,16 +139,24 @@ test, not by recording"** — and a reader who wants to see it fire should run t
 ### This is what "authority to write" means
 
 The internal spec this repo was built from describes the Board agent as *"the orchestrator above the
-role agents, holding board state and authority to write."* Read literally that sounds like a write
-handle, and building it that way would put a model in the write path and cost the guarantee the
-README leads with. (That spec is private and not shipped in this repo — the quote is given here in
-full so the argument stands on its own without it.)
+role agents, holding board state and authority to write."* (That spec is private and not shipped
+here — the quote is given in full so the argument stands without it.)
 
-**Production does not work that way either.** Its board agent proposes, and one script enforces the
-protected-status guard, the duplicate check and read-only mode. "Authority to write" there means *its
-decisions result in writes* — not that it performs them. Pass 2c is this repo's equivalent of that
-script. Proposing into the gates is the faithful port: the agent genuinely decides, and something
-deterministic and auditable is still the only thing that writes.
+**Production means that literally.** Its board agent runs a create command, and a guard layer decides
+whether the command lands: the protected-status guard, the duplicate check, read-only mode. The agent
+performs the write; the guards govern it. An earlier version of this file claimed production's board
+agent only *proposed* and never performed writes. That was wrong, and it mattered — it was used here
+to argue that a read-only board agent was the faithful port when it was actually the divergent one.
+
+`BOARD_AGENT_WRITES` is that shape, ported. On, the board agent writes through `governedTracker`,
+which is this repo's equivalent of that guard layer: every write it originates is rebuilt into a
+manifest item and re-run through the same gates the pipeline's own answer faced.
+
+**The default is still off, and that is a deliberate smaller claim rather than the faithful one.**
+Nothing here has governed a real board for months, the way the pipeline has. Defaulting a model into
+the write path of a repo people clone and point at their own tracker is not a claim this repo has
+earned. Off, no model reaches the tracker at all and the README's headline property is literal; on,
+it is the production shape and `SECURITY.md` states precisely what narrows.
 
 An earlier version of this layer could change one prose field. That was safe, and it was not
 orchestration.

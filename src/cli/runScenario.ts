@@ -14,16 +14,16 @@ import { pendingHumanStore } from '../state/pendingHuman';
 import { type Scenario, diffExpected } from '../fixtures';
 import { traceEvents, traceModelClient } from '../observability/otel';
 import { PipelineEvents, type PipelineEvent } from '../pipeline/events';
-import { setTaskUrlBuilder } from '../pipeline/gates/clarify';
+import { indexTasks, setTaskUrlBuilder } from '../pipeline/gates/clarify';
 import { type PipelineResult, runPipeline } from '../pipeline/run';
 import type { ModelClient } from '../providers';
 import { setOpsRegistryPath } from '../registry/opsRegistry';
 import { setCorrectionsPath } from '../state/corrections';
 import { fileRoleStateStore, setRoleStateDir } from '../state/roleState';
-import { delegateToRoleAgents } from '../agents/boardAgent';
-import { AGENT_MAX_DELEGATIONS, AGENTS_ENABLED } from '../config';
+import { delegateToRoleAgents, writeBoard } from '../agents/boardAgent';
+import { AGENT_MAX_DELEGATIONS, AGENTS_ENABLED, BOARD_AGENT_WRITES } from '../config';
 import { memoryTracker } from '../trackers/memory';
-import { categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
+import { type CategorizationItem, categoryBreakdown } from '../pipeline/parsing/categorizationManifest';
 
 export type RunScenarioOptions = {
   model: ModelClient;
@@ -46,6 +46,14 @@ export type RunScenarioOptions = {
    * a developer left in their `.env`.
    */
   agents?: boolean;
+  /**
+   * Let the board agent perform the writes (`BOARD_AGENT_WRITES`). Defaults to the env flag, false.
+   *
+   * Requires `agents`. On without it is a configuration error rather than a silent no-op, because
+   * "I turned the write flag on and nothing changed" is the kind of quiet nothing this repo tries
+   * hard not to ship.
+   */
+  boardWrites?: boolean;
 };
 
 export type ScenarioRun = {
@@ -121,6 +129,15 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
     return r.text;
   };
 
+  const agentsOn = opts.agents ?? AGENTS_ENABLED;
+  const boardWrites = opts.boardWrites ?? BOARD_AGENT_WRITES;
+  if (boardWrites && !agentsOn) {
+    throw new Error(
+      'BOARD_AGENT_WRITES is on but the agent layer is off. The board agent is the writer in that ' +
+        'mode, so this combination would silently do nothing — set AGENTS_ENABLED=1 or pass --agents.'
+    );
+  }
+
   const tracker = memoryTracker({ tasks: scenario.board });
 
   const result = await runPipeline(scenario.source, {
@@ -130,7 +147,7 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
     ...(opts.pendingHumanPath ? { pendingHuman: pendingHumanStore(opts.pendingHumanPath) } : {}),
     // Same `model` and `tracker` the pipeline uses, so the agent path is the real thing behind the
     // same seams rather than a parallel implementation that could drift from it.
-    ...(opts.agents ?? AGENTS_ENABLED
+    ...(agentsOn
       ? {
           agents: {
             delegate: (items) =>
@@ -145,6 +162,23 @@ export async function runScenario(scenario: Scenario, opts: RunScenarioOptions):
                 },
               }),
           },
+        }
+      : {}),
+    ...(boardWrites
+      ? {
+          writeBoard: (items: CategorizationItem[]) =>
+            writeBoard(items, {
+              model,
+              tracker,
+              snapshot: indexTasks(scenario.board),
+              ...(scenario.source.todayIso ? { planCtx: { todayIso: scenario.source.todayIso } } : {}),
+              onHold: (h, op) =>
+                emitter.emit({ type: 'alert', detail: `board agent write refused (${op.kind}): ${h.gate}` }),
+              onEvent: (e) => {
+                if (e.kind === 'tool') emitter.emit({ type: 'agent:tool', name: e.name, args: e.args });
+                else emitter.emit({ type: 'alert', detail: `board agent hit its ${e.iterations}-turn cap` });
+              },
+            }),
         }
       : {}),
     events: emitter,

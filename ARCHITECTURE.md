@@ -35,11 +35,14 @@ means.
 | — | evidence prefetch | Fetch card history for the candidates 2a will need. Host-side, so 2a is a plain completion. |
 | **2a** | categorization | `NEW_TASK` / `DUPLICATE` / `SUBTASK` / `UPDATE` / `RELATE`, against the live board. |
 | **2b** | contract check | An independent **blind** re-derivation. Disagreement becomes a human hold. |
-| **2c** | execute | The only writer. Deterministic — **no model in the write path.** |
+| **2c** | execute | The writer. Deterministic — **no model in the write path.** `BOARD_AGENT_WRITES` substitutes the board agent here; see AGENTS.md. |
 | **2d** | audit | Did the board end up how 2c said it would? |
 
-Passes 0–1.7 read; 2a–2b decide; 2c writes; 2d verifies. A model never touches the write itself — 2c
-takes a plan and applies it, which is why a wrong write requires a wrong *plan*, not a stray token.
+Passes 0–1.7 read; 2a–2b decide; 2c writes; 2d verifies. By default a model never touches the write
+itself — 2c takes a plan and applies it, which is why a wrong write requires a wrong *plan*, not a
+stray token. Under `BOARD_AGENT_WRITES` the board agent performs the write instead, and the
+equivalent statement is that a wrong write needs a wrong plan that *also survives every gate a second
+time*.
 
 ## Pass 2b is blind, and that is the headline claim
 

@@ -14,7 +14,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { type DelegationResult, MAX_DELEGATIONS, delegateToRoleAgents, selectForDelegation, summariseRun } from './boardAgent';
+import { type DelegationResult, MAX_DELEGATIONS, delegateToRoleAgents, selectForDelegation, summariseRun, writeBoard } from './boardAgent';
 import { type RoleEnrichment, buildRoleAgentPrompt, parseRoleReply, roleOf, runRoleAgent } from './roleAgent';
 import { applyProposals } from '../pipeline/run';
 import { applyGates } from '../pipeline/passes/contractCheck';
@@ -498,5 +498,111 @@ describe('the run summary reports the executor, never the intention', () => {
     );
     expect(out).toMatch(/held for a human: Something ambiguous \(possible missed duplicate\)/);
     expect(out).toMatch(/ownership doubts raised: Avery Chen — looks like design work/);
+  });
+});
+
+/**
+ * The board agent as writer (`BOARD_AGENT_WRITES`).
+ *
+ * The read-only guarantee above describes the default and still holds there. These cover the one
+ * configuration where a model reaches the tracker, and the property that matters most in it is not
+ * "the write worked" — it is that the *count* of writes comes from the tracker rather than from the
+ * model's account of itself. A model narrating its own run will describe what it meant to do.
+ */
+describe('writeBoard', () => {
+  const board = () => memoryTracker({ tasks: [] });
+
+  const createCall = (title: string, id = 'c1') => ({
+    toolCalls: [
+      {
+        id,
+        name: 'create_task',
+        arguments: { title, list_key: 'backend', assignee: 'Avery Chen', description: 'a real description' },
+      },
+    ],
+  });
+
+  it('writes the approved plan and counts what the tracker actually did', async () => {
+    const tracker = board();
+    const model = scripted([createCall('Add rate limiting'), { text: 'done' }]);
+
+    const out = await writeBoard([item()], { model, tracker, snapshot: new Map() });
+
+    expect(out.created).toBe(1);
+    expect(await tracker.listTasks()).toHaveLength(1);
+  });
+
+  /**
+   * The anti-fabrication rule, at the one place it could actually be violated. The model claims two
+   * creates in prose and performs one; the tally must follow the tracker.
+   */
+  it('counts the write, not the claim', async () => {
+    const tracker = board();
+    const model = scripted([
+      createCall('Add rate limiting'),
+      { text: 'Created 5 tasks: rate limiting, dashboards, alerts, docs, and the runbook.' },
+    ]);
+
+    const out = await writeBoard([item()], { model, tracker, snapshot: new Map() });
+
+    expect(out.created).toBe(1);
+    expect(await tracker.listTasks()).toHaveLength(1);
+  });
+
+  /** A write the gates refuse is counted as refused and never reaches the board. */
+  it('refuses an off-roster write and reports it as refused', async () => {
+    const tracker = board();
+    const model = scripted([
+      {
+        toolCalls: [
+          {
+            id: 'c1',
+            name: 'create_task',
+            arguments: { title: 'Ship it', list_key: 'backend', assignee: 'Mallory Stranger', description: 'x' },
+          },
+        ],
+      },
+      { text: 'done' },
+    ]);
+
+    const out = await writeBoard([], { model, tracker, snapshot: new Map() });
+
+    expect(out.refused).toBe(1);
+    expect(out.created).toBe(0);
+    expect(await tracker.listTasks()).toHaveLength(0);
+  });
+
+  /**
+   * The refusal has to reach the model as a refusal. Told nothing, it retries the same rejected
+   * write until the turn cap; told why, it can do something else.
+   */
+  it('tells the model why a write was refused', async () => {
+    const model = scripted([
+      {
+        toolCalls: [
+          {
+            id: 'c1',
+            name: 'create_task',
+            arguments: { title: 'Ship it', list_key: 'backend', assignee: 'Mallory Stranger', description: 'x' },
+          },
+        ],
+      },
+      { text: 'understood' },
+    ]);
+
+    await writeBoard([], { model, tracker: board(), snapshot: new Map() });
+
+    const toolReply = model.seen[1]?.messages.find((m) => m.role === 'tool');
+    expect(String(toolReply?.content)).toMatch(/REFUSED/);
+    expect(String(toolReply?.content)).toMatch(/roster/i);
+  });
+
+  it('offers the write tools alongside the read ones', async () => {
+    const model = scripted([{ text: 'nothing to do' }]);
+    await writeBoard([], { model, tracker: board(), snapshot: new Map() });
+
+    const offered = (model.seen[0]?.tools ?? []).map((t) => t.name);
+    expect(offered).toContain('create_task');
+    expect(offered).toContain('get_task');
   });
 });

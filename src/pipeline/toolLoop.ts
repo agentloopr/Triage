@@ -84,10 +84,83 @@ export const READ_ONLY_TOOLS: ToolSpec[] = [
   },
 ];
 
+/**
+ * The write half, offered **only** to the board agent and **only** when `BOARD_AGENT_WRITES` is on.
+ *
+ * These reach a `governedTracker`, never a raw adapter: every write is rebuilt into a manifest item
+ * and re-run through the deterministic gates before it lands. See `gates/governedTracker.ts` for the
+ * exact guarantee that buys, which is narrower than the read-only path's and stated as such.
+ *
+ * Deliberately four, not the adapter's full surface. `linkTasks` and `moveList` have no manifest form
+ * this layer can gate, so offering them would mean either an ungated write or a tool that always
+ * refuses — and a tool that always refuses is worse than no tool, because the model spends turns
+ * discovering it.
+ */
+export const WRITE_TOOLS: ToolSpec[] = [
+  {
+    name: 'create_task',
+    description:
+      'Create a new board card. Only for work that is genuinely not on the board yet — check first.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        list_key: { type: 'string', description: 'Which list the card belongs on.' },
+        assignee: { type: 'string', description: 'Canonical name of the owner.' },
+        description: { type: 'string' },
+        parent_id: { type: 'string', description: 'Set to make this a subtask of an existing card.' },
+      },
+      required: ['title', 'list_key', 'assignee'],
+    },
+  },
+  {
+    name: 'add_comment',
+    description:
+      'Comment on an existing card. The right call when the work is already tracked and this is news about it.',
+    parameters: {
+      type: 'object',
+      properties: { task_id: { type: 'string' }, body: { type: 'string' } },
+      required: ['task_id', 'body'],
+    },
+  },
+  {
+    name: 'set_status',
+    description: "Move an existing card to a different status.",
+    parameters: {
+      type: 'object',
+      properties: { task_id: { type: 'string' }, status: { type: 'string' } },
+      required: ['task_id', 'status'],
+    },
+  },
+  {
+    name: 'set_assignees',
+    description: 'Replace the owners of an existing card. Replaces, never appends.',
+    parameters: {
+      type: 'object',
+      properties: {
+        task_id: { type: 'string' },
+        assignees: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['task_id', 'assignees'],
+    },
+  },
+];
+
 export interface ToolLoopOptions {
   model: ModelClient;
-  /** Wrapped in `readOnlyTracker` internally — passing a writable adapter is safe. */
+  /**
+   * Wrapped in `readOnlyTracker` internally **unless** `tools` is given — passing a writable adapter
+   * to the default loop is safe. A caller that supplies its own tool list is responsible for the
+   * wrapper too, which in practice means `governedTracker`.
+   */
   tracker: TrackerAdapter;
+  /**
+   * Defaults to `READ_ONLY_TOOLS`, and that default is load-bearing: the tool list is part of the
+   * prompt fingerprint, so every existing caller keeps replaying its recorded cassettes byte for byte.
+   */
+  tools?: ToolSpec[];
+  /** Skip the read-only wrapper. Only meaningful with `tools`; the caller has already governed writes. */
+  writable?: boolean;
   maxIterations?: number;
   onEvent?: (e: { kind: 'tool'; name: string; args: Record<string, unknown> } | { kind: 'cap-hit'; iterations: number }) => void;
 }
@@ -97,7 +170,8 @@ export interface ToolLoopOptions {
  * so nothing downstream knows or cares whether tools were used.
  */
 export function makeToolLoopRunner(opts: ToolLoopOptions): (prompt: string, label: string) => Promise<string> {
-  const tracker = readOnlyTracker(opts.tracker);
+  const tracker = opts.writable ? opts.tracker : readOnlyTracker(opts.tracker);
+  const tools = opts.tools ?? READ_ONLY_TOOLS;
   const maxIterations = opts.maxIterations ?? TOOL_LOOP_MAX_ITERATIONS;
 
   return async function run(prompt: string, label: string): Promise<string> {
@@ -112,7 +186,7 @@ export function makeToolLoopRunner(opts: ToolLoopOptions): (prompt: string, labe
         key: `${label}/turn-${i + 1}`,
         messages,
         determinism: 'strict',
-        tools: READ_ONLY_TOOLS,
+        tools,
       });
 
       if (!res.toolCalls?.length) return res.text;
@@ -124,7 +198,7 @@ export function makeToolLoopRunner(opts: ToolLoopOptions): (prompt: string, labe
         messages.push({
           role: 'tool',
           toolCallId: call.id,
-          content: await dispatch(tracker, call.name, call.arguments),
+          content: await dispatch(tracker, call.name, call.arguments, tools),
         });
       }
     }
@@ -143,10 +217,34 @@ export function makeToolLoopRunner(opts: ToolLoopOptions): (prompt: string, labe
   };
 }
 
+/**
+ * Turn a write outcome into the sentence the model reads next.
+ *
+ * Every status is reported, including the ones that are not success. A model told nothing about a
+ * refusal will retry the same rejected write until the turn cap; a model told *why* can comment
+ * instead of creating, or stop. `refused` is deliberately worded as a decision rather than an error,
+ * because that is what it is — the gate did its job.
+ */
+function renderOutcome(tool: string, outcome: OpOutcome): string {
+  switch (outcome.status) {
+    case 'applied':
+      return `${tool}: applied${outcome.resultId ? ` (id ${outcome.resultId})` : ''}`;
+    case 'unchanged':
+      return `${tool}: already in that state — nothing to do`;
+    case 'refused':
+      return `${tool}: REFUSED — ${'detail' in outcome ? outcome.detail : 'a guard declined it'}`;
+    case 'unsupported':
+      return `${tool}: this tracker cannot express that operation`;
+    default:
+      return `${tool}: failed — ${'detail' in outcome ? outcome.detail : 'unknown error'}`;
+  }
+}
+
 async function dispatch(
   tracker: TrackerAdapter,
   name: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  available: ToolSpec[] = READ_ONLY_TOOLS
 ): Promise<string> {
   try {
     switch (name) {
@@ -198,10 +296,60 @@ async function dispatch(
           : `no open task title contains "${q}"`;
       }
 
+      // ── Writes. Present only when the caller offered WRITE_TOOLS, and reaching a governed
+      // adapter in that case — `apply` here is `governedTracker.apply`, not a raw one.
+      //
+      // Every outcome is reported back verbatim, refusals included. A refused write must read to the
+      // model as a refusal it can respond to, not as a silence it retries: the gate's question is the
+      // most useful thing it could be told, and hiding it would produce a loop that writes the same
+      // rejected card until the turn cap.
+      case 'create_task': {
+        const assignee = String(args.assignee ?? '').trim();
+        const outcome = await tracker.apply({
+          kind: 'createTask',
+          listKey: String(args.list_key ?? ''),
+          title: String(args.title ?? ''),
+          assignees: assignee ? [assignee] : [],
+          ...(args.description ? { description: String(args.description) } : {}),
+          ...(args.parent_id ? { parentId: String(args.parent_id) } : {}),
+        });
+        return renderOutcome('create_task', outcome);
+      }
+
+      case 'add_comment':
+        return renderOutcome(
+          'add_comment',
+          await tracker.apply({
+            kind: 'addComment',
+            taskId: String(args.task_id ?? ''),
+            body: String(args.body ?? ''),
+          })
+        );
+
+      case 'set_status':
+        return renderOutcome(
+          'set_status',
+          await tracker.apply({
+            kind: 'setStatus',
+            taskId: String(args.task_id ?? ''),
+            status: String(args.status ?? ''),
+          })
+        );
+
+      case 'set_assignees':
+        return renderOutcome(
+          'set_assignees',
+          await tracker.apply({
+            kind: 'setAssignees',
+            taskId: String(args.task_id ?? ''),
+            assignees: Array.isArray(args.assignees) ? args.assignees.map(String) : [],
+          })
+        );
+
       default:
         // Naming what IS available turns a hallucinated tool into a corrected next turn rather than
         // a dead end the model tries to work around.
-        return `no tool named "${name}". Available: ${READ_ONLY_TOOLS.map((t) => t.name).join(', ')}`;
+        return `no tool named "${name}". Available: ${available.map((t) => t.name).join(', ')}`;
     }
   } catch (err) {
     // **The error message is screened too.** It is the one path out of `dispatch` that skipped

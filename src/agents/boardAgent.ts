@@ -23,9 +23,14 @@
  * agent is handed the outcome rather than asked what happened. The rule is enforced by construction
  * rather than by asking, which is the same reasoning as `readOnlyTracker`.
  */
-import type { ExecuteResult } from '../pipeline/passes/execute';
+import { type ExecuteResult, type ExecutedAction, type PlanContext, planOperations } from '../pipeline/passes/execute';
 import type { CategorizationItem } from '../pipeline/parsing/categorizationManifest';
 import type { HeldItem } from '../pipeline/gates/contractGates';
+import { approvedOpSet, governedTracker } from '../pipeline/gates/governedTracker';
+import type { DeterministicGateOptions } from '../pipeline/passes/contractCheck';
+import { READ_ONLY_TOOLS, WRITE_TOOLS, makeToolLoopRunner } from '../pipeline/toolLoop';
+import { screenedPrimary } from '../utils/security';
+import type { BoardTask, OpOutcome, TrackerAdapter, TrackerOperation } from '../trackers';
 import { type RoleEnrichment, type RoleAgentDeps, roleOf, runRoleAgent } from './roleAgent';
 
 export interface BoardAgentDeps extends RoleAgentDeps {
@@ -157,3 +162,186 @@ export function summariseRun(exec: ExecuteResult, held: HeldItem[], delegations:
 
   return lines.join('\n');
 }
+
+// ── The board agent as writer (BOARD_AGENT_WRITES) ───────────────────────────
+//
+// Everything above this line runs whenever the agent layer is on. Everything below runs only when
+// `BOARD_AGENT_WRITES` is also on, and it is the one configuration in which a model reaches the
+// tracker at all.
+//
+// **Why this exists.** PRD §5 gives the board agent "authority to write", and production means that
+// literally: its board agent runs a create command and a guard layer decides whether the command
+// lands. This is that shape. The default — Pass 2c, no model — is the smaller claim, and it stays
+// the default for the reason `AGENTS_ENABLED` is off: it is the claim this repo can make without
+// asking anyone to trust a model with a mutation.
+//
+// **What the agent adds over Pass 2c.** Pass 2c applies a plan exactly. The agent can look at the
+// board first and change its mind: comment on the card that already covers this instead of creating
+// a second one, or merge two items that turned out to be the same work. That is judgement Pass 2c
+// structurally cannot exercise, and it is what production's board agent spends its turns on.
+//
+// **What it cannot do.** Originate a write the gates refuse. See `gates/governedTracker.ts`.
+
+export interface BoardWriteDeps {
+  model: RoleAgentDeps['model'];
+  tracker: TrackerAdapter;
+  snapshot: Map<string, BoardTask>;
+  gateOpts?: DeterministicGateOptions;
+  planCtx?: PlanContext;
+  maxIterations?: number;
+  onHold?: (held: HeldItem, op: TrackerOperation) => void;
+  onEvent?: RoleAgentDeps['onEvent'];
+}
+
+const OUTCOME_ORDER: Array<OpOutcome['status']> = ['failed', 'refused', 'unsupported', 'applied', 'unchanged'];
+
+/**
+ * Have the board agent write the approved plan.
+ *
+ * Returns the same `ExecuteResult` Pass 2c returns, so Pass 2d, the `executed` event, role-state and
+ * the run summary all work unchanged — none of them should need to know which writer ran.
+ *
+ * **The tally is built from outcomes, never from the model's account of itself.** That is the
+ * anti-fabrication rule from `summariseRun` above, and it matters more here than anywhere else in the
+ * repo: this is the one place a model could claim a card it never created.
+ */
+export async function writeBoard(items: CategorizationItem[], deps: BoardWriteDeps): Promise<ExecuteResult> {
+  const plan = planOperations(items, deps.planCtx ?? {});
+
+  // Which cards the agent actually opened the history of. Becomes `tier2Cited` at the gate, so the
+  // evidence check here is a fact about what it read rather than a claim it made in prose.
+  const commentsRead = new Set<string>();
+
+  const performed: Array<{ op: TrackerOperation; outcome: OpOutcome }> = [];
+  const governed = governedTracker(deps.tracker, {
+    approvedOps: approvedOpSet(plan.flatMap((a) => a.ops)),
+    snapshot: deps.snapshot,
+    ...(deps.gateOpts ? { gateOpts: deps.gateOpts } : {}),
+    readComments: (id) => commentsRead.has(id),
+    ...(deps.onHold ? { onHold: deps.onHold } : {}),
+  });
+
+  // Record-and-forward, so the tally below counts what the tracker did rather than what the loop
+  // believes it asked for.
+  const recording: TrackerAdapter = {
+    ...governed,
+    async apply(op) {
+      const outcome = await governed.apply(op);
+      performed.push({ op, outcome });
+      return outcome;
+    },
+  };
+
+  const run = makeToolLoopRunner({
+    model: deps.model,
+    tracker: recording,
+    tools: [...READ_ONLY_TOOLS, ...WRITE_TOOLS],
+    writable: true, // `recording` is already governed; wrapping it read-only would refuse everything
+    ...(deps.maxIterations != null ? { maxIterations: deps.maxIterations } : {}),
+    onEvent: (e) => {
+      if (e.kind === 'tool' && e.name === 'get_task_comments') commentsRead.add(String(e.args.task_id ?? ''));
+      deps.onEvent?.(e);
+    },
+  });
+
+  try {
+    await run(buildBoardWritePrompt(items, deps.tracker.renderSnapshot([...deps.snapshot.values()])), 'board/write');
+  } catch (err) {
+    // **A loop that wrote nothing rethrows.** It reached the tracker zero times, so there is no
+    // partial result to report and every number below would be a zero that looks like a decision.
+    // A missing cassette lands here, and it has to be as loud as it is everywhere else in this repo:
+    // swallowing it produced a run that printed a tidy "0 created" and left Pass 2d to infer the
+    // problem from four mismatches, which is precisely the quiet-wrong-number failure the cassette
+    // client refuses to ship.
+    if (performed.length === 0) throw err;
+
+    // Some writes did land. Those are real, they are on the board, and the honest move is to report
+    // them and let Pass 2d name the gap — a half-written run that counts itself correctly is
+    // recoverable in a way one that claims success is not.
+    deps.onEvent?.({ kind: 'cap-hit', iterations: performed.length });
+  }
+
+  return tally(plan, performed);
+}
+
+/**
+ * The prompt. Deliberately short on encouragement and specific about the one thing that differs from
+ * Pass 2c: it may disagree with the plan, and the interesting case is when it should.
+ */
+export function buildBoardWritePrompt(items: CategorizationItem[], boardText: string): string {
+  return [
+    'You are the board agent. The pipeline has already decided what should happen to each item below,',
+    'and every one of them has passed every deterministic gate. Your job is to write them to the board.',
+    '',
+    'THE BOARD RIGHT NOW:',
+    screenedPrimary(boardText, 'board-write-snapshot'),
+    '',
+    'WHAT THE PIPELINE DECIDED:',
+    ...items.map((it) => {
+      const target = it.existingTaskId ?? it.parentTaskId;
+      return `  [${it.item}] ${it.category}: ${screenedPrimary(it.title, `board-write-item-${it.item}`)}` +
+        `${target ? ` → ${target}` : ''}${it.assignee ? ` · ${it.assignee}` : ''}${it.list ? ` · ${it.list}` : ''}`;
+    }),
+    '',
+    'Write each one. Applying the plan as given is the right answer for almost all of them.',
+    '',
+    'You may depart from it where looking at the board tells you something the pipeline could not:',
+    'if a card already covers an item, comment on that card instead of creating a duplicate; if two',
+    'items are the same work, write one. Read a card before you claim it covers something — an',
+    'update whose history you have not opened will be refused.',
+    '',
+    'Anything you write that the pipeline did not plan is re-checked by the same gates it passed.',
+    'A refusal comes back with the reason. Respond to it — do not retry the same write.',
+    '',
+    'Stop when every item is written or accounted for. Do not summarise; the summary is generated',
+    'from what the board actually did, not from what you say here.',
+  ].join('\n');
+}
+
+/** Fold the operations the tracker actually performed back into per-action results. */
+function tally(plan: ReturnType<typeof planOperations>, performed: Array<{ op: TrackerOperation; outcome: OpOutcome }>): ExecuteResult {
+  const counts = { created: 0, commented: 0, skipped: 0, refused: 0, failed: 0, unsupported: 0 };
+  const left = [...performed];
+
+  const actions: ExecutedAction[] = plan.map((action) => {
+    // An op belongs to the action that planned it. Agent-originated ops match nothing here and are
+    // gathered into their own action below rather than being silently attributed to a planned item.
+    const results = action.ops.flatMap((planned) => {
+      const i = left.findIndex((p) => p.op === planned || JSON.stringify(p.op) === JSON.stringify(planned));
+      return i === -1 ? [] : left.splice(i, 1);
+    });
+    return { ...action, results, ok: results.length > 0 && results.every((r) => r.outcome.status === 'applied' || r.outcome.status === 'unchanged') };
+  });
+
+  if (left.length) {
+    actions.push({
+      item: -1,
+      category: 'UNKNOWN',
+      title: 'agent-originated writes',
+      ops: left.map((p) => p.op),
+      outcome: 'planned',
+      results: left,
+      ok: left.every((r) => r.outcome.status === 'applied' || r.outcome.status === 'unchanged'),
+    });
+  }
+
+  for (const { op, outcome } of performed) {
+    if (outcome.status === 'applied') {
+      if (op.kind === 'createTask') counts.created++;
+      else if (op.kind === 'addComment') counts.commented++;
+    } else if (outcome.status === 'refused') counts.refused++;
+    else if (outcome.status === 'unsupported') counts.unsupported++;
+    else if (outcome.status === 'failed') counts.failed++;
+  }
+
+  // A planned action whose ops never reached the tracker is not a success. The agent chose not to
+  // write it, and that is exactly the kind of quiet omission Pass 2d exists to catch — so it is
+  // counted as skipped and left visible rather than folded into a total.
+  counts.skipped += plan.filter((a) => a.outcome === 'skipped_duplicate').length;
+
+  return { actions, ...counts };
+}
+
+/** Ordering helper for traces: worst outcome first, so a refusal is never buried under successes. */
+export const worstOutcomeFirst = (a: OpOutcome['status'], b: OpOutcome['status']): number =>
+  OUTCOME_ORDER.indexOf(a) - OUTCOME_ORDER.indexOf(b);

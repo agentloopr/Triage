@@ -75,7 +75,8 @@ source (transcript | channel | github | gmail | drive)
      Pass 1.7  consolidator     ─ merge, dedupe, anchor
      Pass 2a   categorization   ─ NEW_TASK | DUPLICATE | SUBTASK | UPDATE, against the live board
      Pass 2b   contract check   ─ a BLIND re-derivation; a genuinely different WRITE holds
-     Pass 2c   execute          ─ the only writer. Deterministic. No model in the write path.
+     Pass 2c   execute          ─ the writer. Deterministic. No model in the write path.
+                                  (BOARD_AGENT_WRITES hands this to the board agent instead.)
      Pass 2d   audit            ─ did the board end up how 2c said it would?
 ```
 
@@ -213,8 +214,14 @@ and demo stays offline because they start from a recorded payload rather than a 
 **An optional agent layer** sits between the gates and the writer: a board agent that
 delegates to eight role agents with **read-only** tools. It is off by default. It may **propose** a
 different category, list, assignee or description — and every proposal is re-run through the same
-gates, so one the gates refuse becomes a hold rather than a write. **The agent never writes, and
-never un-holds.** See [AGENTS.md](AGENTS.md).
+gates, so one the gates refuse becomes a hold rather than a write. **Role agents never write, and no
+agent ever un-holds.**
+
+A second flag, `BOARD_AGENT_WRITES`, hands the write itself to the board agent — the "authority to
+write" PRD §5 describes, and the shape production runs. It is also off by default. On, the agent gets
+write tools behind `governedTracker`, which re-runs every deterministic gate over anything it
+originates; a write the gates refuse becomes a hold. Off, no model reaches the tracker at all. See
+[AGENTS.md](AGENTS.md), and [SECURITY.md](SECURITY.md) for exactly which guarantee each mode buys.
 
 **The rule that makes the tracker seam real:** the pipeline speaks canonical member names and list
 keys; only an adapter ever sees a tracker id. Every gate, prompt, parser and the whole categorization

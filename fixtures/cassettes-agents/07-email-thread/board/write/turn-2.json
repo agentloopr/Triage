@@ -1,0 +1,19 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_2zT7WKDgxyJjh2kTF2Y19043",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "pagination"
+      }
+    },
+    {
+      "id": "call_01_rfqxtNgFrMZ2QsuajDDU9730",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "export endpoint"
+      }
+    }
+  ]
+}

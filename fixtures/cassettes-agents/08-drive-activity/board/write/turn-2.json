@@ -1,0 +1,27 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_OmuIcuDVhHcZK60xG9aC2193",
+      "name": "create_task",
+      "arguments": {
+        "title": "Add declined-card and expired-session error state screens to the spec",
+        "list_key": "design",
+        "assignee": "Rowan Diaz",
+        "description": "Add declined-card and expired-session error state screens to the checkout redesign spec, ahead of engineering pickup.",
+        "parent_id": "t920"
+      }
+    },
+    {
+      "id": "call_01_avrpCbo7FpXsw3DhpBi78184",
+      "name": "create_task",
+      "arguments": {
+        "title": "Fix the 'reciept' typo in the second paragraph",
+        "list_key": "design",
+        "assignee": "Rowan Diaz",
+        "description": "Fix the 'reciept' typo in the second paragraph of the checkout redesign spec.",
+        "parent_id": "t920"
+      }
+    }
+  ]
+}

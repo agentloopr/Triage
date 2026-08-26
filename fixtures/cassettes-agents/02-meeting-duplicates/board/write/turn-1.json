@@ -1,0 +1,33 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_xYqNiToFVHHWwkW1QWKS7389",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t500"
+      }
+    },
+    {
+      "id": "call_01_hXS0pWiLOoM6dmLUkzOu5618",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t600"
+      }
+    },
+    {
+      "id": "call_02_S1y17injNETRTXABoiks5136",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t500"
+      }
+    },
+    {
+      "id": "call_03_O9gmszRVuP9twgR4hOVW1889",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t600"
+      }
+    }
+  ]
+}

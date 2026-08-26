@@ -107,10 +107,22 @@ export const WRITE_TOOLS: ToolSpec[] = [
         title: { type: 'string' },
         list_key: { type: 'string', description: 'Which list the card belongs on.' },
         assignee: { type: 'string', description: 'Canonical name of the owner.' },
-        description: { type: 'string' },
-        parent_id: { type: 'string', description: 'Set to make this a subtask of an existing card.' },
+        description: {
+          type: 'string',
+          description: 'What the work actually is. Required — a card with no body is refused.',
+        },
+        parent_id: {
+          type: 'string',
+          description:
+            'Set to make this a subtask of an existing card. Read that card\'s comments first, or the ' +
+            'evidence gate refuses the write.',
+        },
       },
-      required: ['title', 'list_key', 'assignee'],
+      // `description` is required here because the gate requires it: a create with no FINAL_DESC is
+      // refused as an unresolvable field. Listing it optional made the tool lie about what a valid
+      // write looks like, and the model believed the tool — five refusals in one recorded run, every
+      // one of them the schema's fault rather than the model's.
+      required: ['title', 'list_key', 'assignee', 'description'],
     },
   },
   {

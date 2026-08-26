@@ -1,0 +1,21 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_4qmhTyGSsebeRhTl7mHF2253",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t500",
+        "body": "Pipeline flagged \"Own the onboarding revamp\" as a duplicate of this card — no new card created."
+      }
+    },
+    {
+      "id": "call_01_8Qy3nVSvSXBtH8ClTZar4522",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t600",
+        "body": "Pipeline flagged \"Make the pipeline handle partial failure properly\" as a duplicate of this card — no new card created."
+      }
+    }
+  ]
+}

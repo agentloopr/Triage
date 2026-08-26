@@ -1,0 +1,1 @@
+No items were listed under the pipeline's decisions section — there is nothing to write to the board. Since the task is empty, there's nothing to reconcile against the existing card (t920), and no action is needed.

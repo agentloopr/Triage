@@ -1,0 +1,40 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_p27lH6hsrRNbCFR7Fcs44473",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t800"
+      }
+    },
+    {
+      "id": "call_01_WstR976qXmTnPzmHPi3W4016",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t800"
+      }
+    },
+    {
+      "id": "call_02_EsFrxxZpCxvzpUcH3V3z7334",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "pool size"
+      }
+    },
+    {
+      "id": "call_03_FL7qN8BwXXq1XgulaMei8384",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "pool exhaustion"
+      }
+    },
+    {
+      "id": "call_04_0YsiySmUWDkUpZw0UD652246",
+      "name": "search_tasks",
+      "arguments": {
+        "query": "runbook"
+      }
+    }
+  ]
+}

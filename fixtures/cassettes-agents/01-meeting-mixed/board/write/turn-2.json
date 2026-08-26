@@ -1,0 +1,52 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_ecCSAu6kJP5TiaVIlCuj0017",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t200",
+        "body": "Update: ship Public API rate limiting this Friday."
+      }
+    },
+    {
+      "id": "call_01_sD8qZVPDd1sWssuF6vnv2545",
+      "name": "create_task",
+      "arguments": {
+        "title": "Add a hard request-size cap to the upload endpoint",
+        "list_key": "backend",
+        "assignee": "Avery Chen",
+        "description": "Add a hard cap on request body size for the upload endpoint and reject requests over the limit."
+      }
+    },
+    {
+      "id": "call_02_ZtgN0G2i8n2R1S2pe88B0648",
+      "name": "create_task",
+      "arguments": {
+        "title": "Write welcome email copy for the onboarding revamp",
+        "list_key": "design",
+        "assignee": "Rowan Diaz",
+        "description": "Draft the welcome email copy that goes out to new users as part of the onboarding flow redesign.",
+        "parent_id": "t100"
+      }
+    },
+    {
+      "id": "call_03_yTdtIHst29wejYpGNTLk9243",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t300",
+        "body": "Duplicate item noted: \"Refresh pricing page copy this week\" is already covered by this card."
+      }
+    },
+    {
+      "id": "call_04_KE4hyMT05FKDSdgKjxCe7071",
+      "name": "create_task",
+      "arguments": {
+        "title": "Write a written spec for usage-based billing",
+        "list_key": "product",
+        "assignee": "Jules Kim",
+        "description": "Produce a written specification for usage-based billing."
+      }
+    }
+  ]
+}

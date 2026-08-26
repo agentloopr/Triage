@@ -1,0 +1,47 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_yMj3lgtFZpwRYLClWztX0716",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t100"
+      }
+    },
+    {
+      "id": "call_01_xxZWYBmhme2Jznem4iJg9805",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t200"
+      }
+    },
+    {
+      "id": "call_02_4HjHHTZuhCpekQ1GmGZJ0984",
+      "name": "get_task",
+      "arguments": {
+        "task_id": "t300"
+      }
+    },
+    {
+      "id": "call_03_DRFP3TYcf5IGiLD5GPG33727",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t100"
+      }
+    },
+    {
+      "id": "call_04_t7fOMwqZTZb3u2QOl9rZ8162",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t200"
+      }
+    },
+    {
+      "id": "call_05_vWvn4BmbjY2fNv7XbQiL0478",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t300"
+      }
+    }
+  ]
+}

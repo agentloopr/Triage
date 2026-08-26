@@ -1,0 +1,12 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "toolu_012ayRxi2JsPjr68i4tJVSPE",
+      "name": "get_task_comments",
+      "arguments": {
+        "task_id": "t800"
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "text": "",
+  "toolCalls": [
+    {
+      "id": "call_00_DkmmNn8Vz3Mz3UCAem812034",
+      "name": "create_task",
+      "arguments": {
+        "title": "Add pagination to export endpoint",
+        "list_key": "backend",
+        "assignee": "Avery Chen",
+        "description": "Add pagination support to the export endpoint so large result sets are returned in pages rather than a single response."
+      }
+    },
+    {
+      "id": "call_01_JvBedSpvbFFENzsPpIkB6986",
+      "name": "add_comment",
+      "arguments": {
+        "task_id": "t910",
+        "body": "Go-live confirmed for 28 August (already reflected in the card description)."
+      }
+    }
+  ]
+}

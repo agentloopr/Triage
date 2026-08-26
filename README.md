@@ -242,6 +242,32 @@ originates; a write the gates refuse becomes a hold. Off, no model reaches the t
 keys; only an adapter ever sees a tracker id. Every gate, prompt, parser and the whole categorization
 taxonomy is tracker-blind because of it.
 
+## Three things that went wrong
+
+Not a highlights reel — these are the three defects that shaped the most code in this repo, and the
+writeups are worth more than the passing tests are.
+
+**A lock that only worked inside one process.** Three stores this pipeline persists to disk shared a
+lock that was an in-process promise chain, on files that exist *specifically because* the next reader
+is usually a different process. Every test ran in a single process, where the broken thing and the
+working thing are indistinguishable — green the entire time the bug existed. Found by spawning 20
+real processes and racing them: against a realistically grown state file, **all 20 wrongly accepted
+the same delivery as new**, every round. The fix, the probe and the numbers are in commit `5a3ae48`.
+The test for the fix then had a bug of the same shape one level up.
+
+**A human-in-the-loop that didn't loop.** The pipeline could raise a hold, persist it, and store the
+exact decision needed to finish it. `resumeHold` was written, tested, and correct. **Nothing called
+it.** The headline feature was half-wired behind a green suite. That is the fourth time this repo
+shipped a module with real code and real tests that nothing reachable imported, which is why
+[`reachable.test.ts`](src/reachable.test.ts) now fails on any module only a test imports.
+
+**A number that was measured, reproducible, and wrong.** The model-call counter behind the cost table
+sat at one call site instead of on the seam, so the agent layer — which holds the client directly —
+was never counted. Agents on and agents off both reported 16 calls for scenario 01 while the recording
+held 21 replies. It under-reported paid calls by a fifth and looked authoritative doing it.
+
+[LIMITATIONS.md](LIMITATIONS.md) has the rest, including what is still not measured.
+
 ## Documentation
 
 **If you read two of these, read `LIMITATIONS.md` and `EXTRACTION.md`.** The first is what this repo
